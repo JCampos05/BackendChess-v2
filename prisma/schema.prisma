@@ -1,0 +1,876 @@
+// ============================================================
+// SCHEMA PRISMA — Sistema de Gestión Comité de Ajedrez Ahome
+// Versión: 2.1.0
+// Última actualización: 2026-03-29
+//
+// TABLAS NUEVAS:
+//   zonas_horaria, config_gral, patrocinadores,
+//   torneo_patrocinador, usuario_torneo
+//
+// TABLAS MODIFICADAS:
+//   usuario, torneos, categorias, jugadores,
+//   inscripciones, torneo_categorias
+//
+// TABLAS ELIMINADAS:
+//   premios (datos migrados a torneo_categorias)
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// ZONA HORARIA Y CONFIGURACIÓN GENERAL
+// ============================================================
+
+model ZonaHoraria {
+  idZonaHoraria   Int       @id @db.UnsignedTinyInt
+  nombreZona      String    @unique @db.VarChar(50)
+  offsetUTC       Decimal   @db.Decimal(3, 1)
+  nombreMostrar   String    @db.VarChar(100)
+  fechaCreado     DateTime  @default(now())
+  fechaActualizado DateTime @updatedAt
+
+  // Relaciones
+  config_gral     ConfigGral[]
+  torneos         Torneo[]
+
+  @@index([nombreZona])
+  @@map("zonas_horaria")
+}
+
+// Tabla de configuración general del sistema — siempre una sola fila (id = 1)
+model ConfigGral {
+  idConfig         Int       @id @default(autoincrement())
+
+  // Zona horaria del sistema
+  idZonaHoraria    Int       @db.UnsignedTinyInt
+  zona_horaria     ZonaHoraria @relation(fields: [idZonaHoraria], references: [idZonaHoraria], onUpdate: Cascade)
+
+  // Redes sociales
+  facebook         String?   @db.VarChar(255)
+  instagram        String?   @db.VarChar(255)
+  twitter          String?   @db.VarChar(255)
+  youtube          String?   @db.VarChar(255)
+  whatsapp         String?   @db.VarChar(20)
+
+  // Nombre y datos del comité
+  nombreComite     String    @default("Comité Municipal de Ajedrez Ahome") @db.VarChar(255)
+  descripcion      String?   @db.Text
+  telefono         String?   @db.VarChar(20)
+  email            String?   @db.VarChar(100)
+  ciudad           String?   @db.VarChar(100)
+  estado           String?   @db.VarChar(100)
+  pais             String    @default("México") @db.VarChar(100)
+
+  // Configuración de torneos
+  diasAutoDesactivar Int     @default(3) // @comment("Días después del torneo para desactivarlo automáticamente")
+
+  // Extensible — para futuros requerimientos
+  extras           Json?
+
+  fechaCreado      DateTime  @default(now())
+  fechaActualizado DateTime  @updatedAt
+
+  @@map("config_gral")
+}
+
+// ============================================================
+// AUTENTICACIÓN Y ROLES
+// ============================================================
+
+model Usuario {
+  idUsuario           Int           @id @default(autoincrement())
+  telefono            String        @unique @db.VarChar(15)
+  password            String        @db.VarChar(255)
+  rol                 RolUsuario    @default(adminTorneo)
+  activo              Boolean       @default(true)
+  fecha_actualizacion DateTime?
+  fecha_registro      DateTime?
+  ultimo_acceso       DateTime?
+
+  // Relaciones
+  sesiones            SesionActiva[]
+  historial_accesos   HistorialAcceso[]
+  logs                LogSistema[]
+  torneos_asignados   UsuarioTorneo[]
+
+  @@index([rol])
+  @@index([activo])
+  @@map("usuario")
+}
+
+// Tabla puente: adminTorneo asignado a torneos específicos
+model UsuarioTorneo {
+  idUsuarioTorneo  Int      @id @default(autoincrement())
+  idUsuario        Int
+  idTorneo         Int
+  fechaAsignacion  DateTime @default(now())
+  activo           Boolean  @default(true)
+  notas            String?  @db.VarChar(255)
+
+  usuario          Usuario  @relation(fields: [idUsuario], references: [idUsuario], onDelete: Cascade, onUpdate: Cascade)
+  torneo           Torneo   @relation(fields: [idTorneo], references: [idTorneo], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([idUsuario, idTorneo])
+  @@index([idUsuario])
+  @@index([idTorneo])
+  @@index([activo])
+  @@map("usuario_torneo")
+}
+
+model SesionActiva {
+  idSesion         Int       @id @default(autoincrement())
+  idUsuario        Int
+  token            String    @db.VarChar(500)
+  ip               String?   @db.VarChar(45)
+  navegador        String?   @db.VarChar(255)
+  dispositivo      String?   @db.VarChar(255)
+  ultimo_acceso    DateTime
+  fecha_expiracion DateTime?
+  activa           Int       @default(1) @db.TinyInt
+
+  usuario          Usuario   @relation(fields: [idUsuario], references: [idUsuario], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([token(length: 100)])
+  @@index([activa])
+  @@map("sesiones_activas")
+}
+
+model HistorialAcceso {
+  idAcceso    Int                 @id @default(autoincrement())
+  idUsuario   Int?
+  tipo        HistorialAccesoTipo @default(login_exitoso)
+  ip          String?             @db.VarChar(45)
+  navegador   String?             @db.VarChar(255)
+  dispositivo String?             @db.VarChar(255)
+  ubicacion   String?             @db.VarChar(100)
+  fecha       DateTime
+
+  usuario     Usuario?            @relation(fields: [idUsuario], references: [idUsuario], onDelete: SetNull, onUpdate: Cascade)
+
+  @@index([idUsuario])
+  @@index([fecha])
+  @@map("historial_accesos")
+}
+
+model LogSistema {
+  idLog     Int      @id @default(autoincrement())
+  idUsuario Int?
+  accion    String   @db.VarChar(100)
+  entidad   String   @db.VarChar(50)
+  idEntidad Int?
+  detalles  String?  @db.Text
+  nivel     LogNivel @default(info)
+  ip        String?  @db.VarChar(45)
+  fecha     DateTime
+
+  usuario   Usuario? @relation(fields: [idUsuario], references: [idUsuario], onDelete: SetNull, onUpdate: Cascade)
+
+  @@index([nivel])
+  @@index([entidad])
+  @@index([fecha])
+  @@map("logs_sistema")
+}
+
+// ============================================================
+// CATÁLOGOS
+// ============================================================
+
+model Categoria {
+  idCategoria          Int                  @id @default(autoincrement())
+  nombre               String               @unique @db.VarChar(100)
+  costo                Decimal              @db.Decimal(10, 2)
+  nota                 String?              @db.Text
+
+  // Restricciones de edad
+  edadMinima           Int?
+  edadMaxima           Int?
+
+  // CRÍTICO: Cómo se valida la edad para esta categoría
+  // anio_torneo  → edad = año_torneo - año_nacimiento (estándar FIDE juvenil)
+  // fecha_exacta → edad exacta a la fecha del torneo
+  tipo_validacion_edad TipoValidacionEdad   @default(anio_torneo)
+
+  // Relaciones
+  jugadores            Jugador[]
+  inscripciones        Inscripcion[]
+  torneo_categorias    TorneoCategoria[]
+
+  @@map("categorias")
+}
+
+model RitmoJuego {
+  idRitmoJuego   Int       @id @default(autoincrement())
+  nombre         String    @unique @db.VarChar(50)
+  descripcion    String?   @db.VarChar(255)
+  minutos        Int
+  incremento     Int       @default(0)
+  activo         Boolean   @default(true)
+  fecha_creacion DateTime?
+
+  ligas          InfoLiga[]
+
+  @@index([activo])
+  @@map("ritmos_juego")
+}
+
+model SistemaCompetencia {
+  idSisCompetencia Int       @id @default(autoincrement())
+  nombre           String    @unique @db.VarChar(100)
+  descripcion      String?   @db.Text
+  activo           Boolean   @default(true)
+  fecha_creacion   DateTime?
+
+  @@index([activo])
+  @@map("sistemas_competencia")
+}
+
+model SistemaDesempate {
+  idDesempate    Int       @id @default(autoincrement())
+  nombre         String    @unique @db.VarChar(100)
+  descripcion    String?   @db.Text
+  activo         Boolean   @default(true)
+  fecha_creacion DateTime?
+
+  @@index([activo])
+  @@map("sistemas_desempate")
+}
+
+model SistemaPago {
+  idSistemaPago  Int       @id @default(autoincrement())
+  nombreCuenta   String    @db.VarChar(100)
+  banco          String    @db.VarChar(75)
+  numeroCuenta   String    @db.VarChar(20)
+  clabe          String    @db.VarChar(18)
+  telefono       String    @db.VarChar(15)
+  activo         Boolean   @default(true)
+  fecha_registro DateTime?
+  actualizacion  DateTime?
+
+  torneos        Torneo[]
+
+  @@index([activo])
+  @@map("sistema_pago")
+}
+
+// ============================================================
+// PATROCINADORES
+// ============================================================
+
+model Patrocinador {
+  idPatrocinador Int      @id @default(autoincrement())
+  nombre         String   @db.VarChar(150)
+  logo_url       String?  @db.VarChar(500)
+  sitio_web      String?  @db.VarChar(255)
+  descripcion    String?  @db.Text
+  contacto       String?  @db.VarChar(100)
+  activo         Boolean  @default(true)
+  fecha_registro DateTime @default(now())
+  actualizacion  DateTime @updatedAt
+
+  // Relaciones
+  torneos        TorneoPatrocinador[]
+
+  @@index([activo])
+  @@map("patrocinadores")
+}
+
+// Tabla puente: un patrocinador puede estar en múltiples torneos
+model TorneoPatrocinador {
+  idTorneoPatrocinador Int           @id @default(autoincrement())
+  idTorneo             Int
+  idPatrocinador       Int
+  nivel                NivelPatrocinador @default(general)
+  orden                Int           @default(0) // @comment("Orden de aparición en el torneo")
+  fecha_asignacion     DateTime      @default(now())
+
+  torneo               Torneo        @relation(fields: [idTorneo], references: [idTorneo], onDelete: Cascade, onUpdate: Cascade)
+  patrocinador         Patrocinador  @relation(fields: [idPatrocinador], references: [idPatrocinador], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([idTorneo, idPatrocinador])
+  @@index([idTorneo])
+  @@index([idPatrocinador])
+  @@map("torneo_patrocinador")
+}
+
+// ============================================================
+// JUGADORES
+// ============================================================
+
+model Jugador {
+  idJugador        Int            @id @default(autoincrement())
+
+  // Nombres siempre en formato Capitalize Each Word (parser en backend)
+  nombre           String         @db.VarChar(100)
+  apellido1        String         @db.VarChar(100)
+  apellido2        String?        @db.VarChar(100)
+
+  telefono         String?        @db.VarChar(15)
+  fecha_nacimiento DateTime?      @db.Date
+
+  // Categoría base del jugador (puede diferir por torneo)
+  idCategoria      Int?
+
+  // NOTA: idTorneo eliminado — la relación jugador↔torneo vive en inscripciones
+  notas            String?        @db.Text
+
+  // Estado del jugador — manejado automáticamente por el backend
+  // pendiente_pago → al inscribirse por primera vez
+  // activo         → cuando un admin confirma el pago
+  // inactivo       → si no se inscribe en el siguiente torneo
+  estado           JugadorEstado  @default(pendiente_pago)
+
+  pago_confirmado  Boolean        @default(false)
+  fecha_registro   DateTime?
+  actualizacion    DateTime?
+  rating           Int            @default(0)
+
+  // Relaciones
+  categoria                 Categoria?      @relation(fields: [idCategoria], references: [idCategoria], onDelete: SetNull, onUpdate: Cascade)
+  inscripciones             Inscripcion[]
+  estadisticas              EstadisticaTorneo[]
+  mesas_blancas             Mesa[]          @relation("JugadorBlanco")
+  mesas_negras              Mesa[]          @relation("JugadorNegro")
+  partidas_ganadas          Partida[]
+  mesas_liga_blancas        MesaLiga[]      @relation("JugadorBlancoLiga")
+  mesas_liga_negras         MesaLiga[]      @relation("JugadorNegroLiga")
+  partidas_liga_ganadas     PartidaLiga[]
+  jugadores_liga            JugadorLiga[]
+  historial_emp_j1          HistorialEmparejamiento[]      @relation("Jugador1Historial")
+  historial_emp_j2          HistorialEmparejamiento[]      @relation("Jugador2Historial")
+  historial_emp_liga_j1     HistorialEmparejamientoLiga[]  @relation("Jugador1HistorialLiga")
+  historial_emp_liga_j2     HistorialEmparejamientoLiga[]  @relation("Jugador2HistorialLiga")
+
+  // CONSTRAINT ÚNICO: evita duplicados por nombre completo + fecha de nacimiento
+  @@unique([nombre, apellido1, apellido2, fecha_nacimiento], name: "unique_jugador_identidad")
+  @@index([apellido1, nombre])
+  @@index([idCategoria])
+  @@index([rating])
+  @@index([estado])
+  @@map("jugadores")
+}
+
+// ============================================================
+// TORNEOS
+// ============================================================
+
+model Torneo {
+  idTorneo             Int            @id @default(autoincrement())
+  nombre               String?        @db.VarChar(255)
+  lugar                String         @db.VarChar(255)
+  direccion            String         @db.VarChar(255)
+
+  // Nuevo: link de Google Maps
+  url_maps             String?        @db.VarChar(500)
+
+  fecha                DateTime       @db.Date
+  hora                 DateTime       @db.Time
+
+  // Estado del torneo con flujo definido:
+  // borrador → publicado → en_curso → finalizado
+  //                ↓
+  //            cancelado
+  estado               EstadoTorneo   @default(borrador)
+
+  // Activo: visible y operable
+  // Se desactiva automáticamente 3 días después de la fecha (configurable en config_gral)
+  // El adminGral puede switchearlo manualmente en cualquier momento
+  activo               Boolean        @default(true)
+
+  // Es actual: el adminGral decide cuál o cuáles son "torneos actuales"
+  // Un torneo actual debe ser activo. Puede haber 1 a N torneos actuales.
+  es_actual            Boolean        @default(true)
+
+  notas                String?        @db.Text
+  rondas               Int            @default(5)
+  cierre_inscripciones DateTime?
+
+  // Zona horaria específica del torneo (hereda de config_gral si es null)
+  idZonaHoraria        Int?           @db.UnsignedTinyInt
+  zona_horaria         ZonaHoraria?   @relation(fields: [idZonaHoraria], references: [idZonaHoraria], onDelete: SetNull, onUpdate: Cascade)
+
+  // Sistema de pago
+  idSistemaPago        Int?
+  sistema_pago         SistemaPago?   @relation(fields: [idSistemaPago], references: [idSistemaPago], onDelete: SetNull, onUpdate: Cascade)
+
+  // Fechas de control
+  fecha_creacion       DateTime?
+  fecha_actualizacion  DateTime?
+
+  // Relaciones
+  torneo_categorias    TorneoCategoria[]
+  rondas_torneo        Ronda[]
+  estadisticas         EstadisticaTorneo[]
+  historial_emp        HistorialEmparejamiento[]
+  inscripciones        Inscripcion[]
+  patrocinadores       TorneoPatrocinador[]
+  admins_asignados     UsuarioTorneo[]
+
+  @@index([fecha])
+  @@index([activo])
+  @@index([es_actual])
+  @@index([estado])
+  @@index([idZonaHoraria])
+  @@map("torneos")
+}
+
+// torneo_categorias: contiene premios correctamente (tabla premios eliminada)
+model TorneoCategoria {
+  idTorneoCat         Int      @id @default(autoincrement())
+  idTorneo            Int
+  idCategoria         Int
+  rondas              Int      @default(5)
+  ritmo_juego         String?  @db.VarChar(50)
+  sistema_competencia String?  @db.VarChar(100)
+  calendario          Json?
+
+  // Premios correctamente estructurados aquí
+  // Formato: {"1": {"descripcion": "Trofeo + $1,500", "monto": 1500}, "2": {...}}
+  premios             Json?
+
+  desempates          Json?
+  activo              Boolean  @default(true)
+
+  torneo              Torneo    @relation(fields: [idTorneo], references: [idTorneo], onDelete: Cascade, onUpdate: Cascade)
+  categoria           Categoria @relation(fields: [idCategoria], references: [idCategoria], onDelete: Cascade, onUpdate: Cascade)
+
+  rondas_torneo       Ronda[]
+  estadisticas        EstadisticaTorneo[]
+  historial_emp       HistorialEmparejamiento[]
+
+  @@unique([idTorneo, idCategoria])
+  @@index([idTorneo])
+  @@index([idCategoria])
+  @@index([activo])
+  @@map("torneo_categorias")
+}
+
+// ============================================================
+// INSCRIPCIONES
+// ============================================================
+
+model Inscripcion {
+  idInscripcion       Int                @id @default(autoincrement())
+  idJugador           Int
+  idTorneo            Int
+  idCategoria         Int?
+
+  // Estado granular de la inscripción
+  // pendiente_pago → confirmado → cancelado
+  estado              InscripcionEstado  @default(pendiente_pago)
+
+  pago_confirmado     Boolean            @default(false)
+  monto_pagado        Decimal            @default(0.00) @db.Decimal(10, 2)
+  notas               String?            @db.Text
+
+  // Quién confirmó el pago y cuándo
+  idAdminConfirmo     Int?               // @comment("idUsuario del admin que confirmó el pago")
+  fecha_confirmacion  DateTime?
+
+  fecha_inscripcion   DateTime?
+  fecha_actualizacion DateTime?
+
+  jugador             Jugador            @relation(fields: [idJugador], references: [idJugador], onDelete: Cascade, onUpdate: Cascade)
+  torneo              Torneo             @relation(fields: [idTorneo], references: [idTorneo], onDelete: Cascade, onUpdate: Cascade)
+  categoria           Categoria?         @relation(fields: [idCategoria], references: [idCategoria], onDelete: SetNull, onUpdate: Cascade)
+
+  @@unique([idJugador, idTorneo], name: "unique_jugador_torneo")
+  @@index([idJugador])
+  @@index([idTorneo])
+  @@index([estado])
+  @@index([pago_confirmado])
+  @@map("inscripciones")
+}
+
+// ============================================================
+// RONDAS Y MESAS (TORNEOS)
+// ============================================================
+
+model Ronda {
+  idRonda           Int         @id @default(autoincrement())
+  idTorneo          Int
+  idTorneoCategoria Int
+  numeroRonda       Int
+  fecha_inicio      DateTime?
+  fecha_fin         DateTime?
+  estado            RondaEstado @default(pendiente)
+  notas             String?     @db.Text
+  fecha_creacion    DateTime?
+
+  torneo            Torneo          @relation(fields: [idTorneo], references: [idTorneo], onDelete: Cascade, onUpdate: Cascade)
+  torneo_categoria  TorneoCategoria @relation(fields: [idTorneoCategoria], references: [idTorneoCat], onDelete: Cascade, onUpdate: Cascade)
+  mesas             Mesa[]
+
+  @@index([idTorneo])
+  @@index([idTorneoCategoria])
+  @@index([estado])
+  @@map("rondas")
+}
+
+model Mesa {
+  idMesa           Int        @id @default(autoincrement())
+  numeroMesa       Int
+  idRonda          Int
+  idJugadorBlanco  Int
+  idJugadorNegro   Int
+  ilegalesBlanco   Int        @default(0)
+  ilegalesNegro    Int        @default(0)
+  estado           MesaEstado @default(pendiente)
+  notas            String?    @db.Text
+  fecha_creacion   DateTime?
+  usuarioEditando  String?    @db.VarChar(20)
+  timestampEdicion DateTime?
+
+  ronda            Ronda   @relation(fields: [idRonda], references: [idRonda], onDelete: Cascade, onUpdate: Cascade)
+  jugador_blanco   Jugador @relation("JugadorBlanco", fields: [idJugadorBlanco], references: [idJugador], onDelete: Cascade, onUpdate: Cascade)
+  jugador_negro    Jugador @relation("JugadorNegro", fields: [idJugadorNegro], references: [idJugador], onDelete: Cascade, onUpdate: Cascade)
+  partida          Partida?
+
+  @@index([idRonda])
+  @@index([estado])
+  @@map("mesas")
+}
+
+model Partida {
+  idPartida                Int               @id @default(autoincrement())
+  idMesa                   Int               @unique
+  idJugadorGanador         Int?
+  resultado                String            @db.VarChar(10)
+  tipo_finalizacion        TipoFinalizacion?
+  descripcion_finalizacion String?           @db.Text
+  duracion_minutos         Int?
+  fecha_finalizacion       DateTime?
+
+  mesa             Mesa     @relation(fields: [idMesa], references: [idMesa], onDelete: Cascade, onUpdate: Cascade)
+  jugador_ganador  Jugador? @relation(fields: [idJugadorGanador], references: [idJugador], onDelete: SetNull, onUpdate: Cascade)
+
+  @@map("partidas")
+}
+
+model EstadisticaTorneo {
+  idEstadistica       Int       @id @default(autoincrement())
+  idJugador           Int
+  idTorneo            Int
+  idTorneoCategoria   Int
+  rating_torneo       Int?
+  puntos              Decimal   @default(0.0) @db.Decimal(3, 1)
+  desempates          Json?
+  partidas_jugadas    Int       @default(0)
+  victorias           Int       @default(0)
+  empates             Int       @default(0)
+  derrotas            Int       @default(0)
+  posicion_actual     Int?
+  fecha_actualizacion DateTime?
+
+  jugador          Jugador         @relation(fields: [idJugador], references: [idJugador], onDelete: Cascade, onUpdate: Cascade)
+  torneo           Torneo          @relation(fields: [idTorneo], references: [idTorneo], onDelete: Cascade, onUpdate: Cascade)
+  torneo_categoria TorneoCategoria @relation(fields: [idTorneoCategoria], references: [idTorneoCat], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([idJugador])
+  @@index([idTorneo])
+  @@index([puntos])
+  @@index([posicion_actual])
+  @@map("estadisticas_torneo")
+}
+
+model HistorialEmparejamiento {
+  idHistorial          Int       @id @default(autoincrement())
+  idJugador1           Int
+  idJugador2           Int
+  idTorneo             Int
+  idTorneoCategoria    Int
+  numeroRonda          Int
+  fecha_emparejamiento DateTime?
+
+  jugador1         Jugador         @relation("Jugador1Historial", fields: [idJugador1], references: [idJugador], onDelete: Cascade, onUpdate: Cascade)
+  jugador2         Jugador         @relation("Jugador2Historial", fields: [idJugador2], references: [idJugador], onDelete: Cascade, onUpdate: Cascade)
+  torneo           Torneo          @relation(fields: [idTorneo], references: [idTorneo], onDelete: Cascade, onUpdate: Cascade)
+  torneo_categoria TorneoCategoria @relation(fields: [idTorneoCategoria], references: [idTorneoCat], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([idJugador1, idJugador2, idTorneo])
+  @@map("historial_emparejamientos")
+}
+
+// ============================================================
+// LIGA
+// ============================================================
+
+model InfoLiga {
+  idLiga               Int             @id @default(autoincrement())
+  nombre               String          @db.VarChar(255)
+  descripcion          String?         @db.Text
+  fecha_inicio         DateTime        @db.Date
+  fecha_fin            DateTime?       @db.Date
+  lugar                String?         @db.VarChar(255)
+  direccion            String?         @db.VarChar(255)
+  url_maps             String?         @db.VarChar(500)
+  tipo_sistema         LigaTipoSistema @default(grupos)
+  num_grupos           Int             @default(1)
+  clasifican_por_grupo Int             @default(2)
+  idRitmoJuego         Int?
+  costo_inscripcion    Decimal         @default(0.00) @db.Decimal(10, 2)
+  cierre_inscripciones DateTime?
+  max_jugadores        Int?
+  activo               Boolean         @default(true)
+  notas                String?         @db.Text
+  fecha_creacion       DateTime        @default(now())
+  fecha_actualizacion  DateTime?       @updatedAt
+
+  ritmo_juego          RitmoJuego?  @relation(fields: [idRitmoJuego], references: [idRitmoJuego], onDelete: SetNull, onUpdate: Cascade)
+
+  grupos               GrupoLiga[]
+  jugadores_liga       JugadorLiga[]
+  rondas_liga          RondaLiga[]
+  historial_emp_liga   HistorialEmparejamientoLiga[]
+
+  @@index([activo])
+  @@index([fecha_inicio])
+  @@map("info_liga")
+}
+
+model GrupoLiga {
+  idGrupoLiga         Int       @id @default(autoincrement())
+  idLiga              Int
+  nombre              String    @db.VarChar(100)
+  descripcion         String?   @db.Text
+  max_jugadores       Int?
+  rondas              Int       @default(5)
+  premios             Json?
+  desempates          Json?
+  activo              Boolean   @default(true)
+  fecha_creacion      DateTime  @default(now())
+  fecha_actualizacion DateTime? @updatedAt
+
+  liga               InfoLiga    @relation(fields: [idLiga], references: [idLiga], onDelete: Cascade, onUpdate: Cascade)
+  jugadores_liga     JugadorLiga[]
+  rondas_liga        RondaLiga[]
+  historial_emp_liga HistorialEmparejamientoLiga[]
+
+  @@unique([idLiga, nombre])
+  @@index([idLiga])
+  @@map("grupos_liga")
+}
+
+model JugadorLiga {
+  idJugadorLiga       Int               @id @default(autoincrement())
+  idLiga              Int
+  idGrupoLiga         Int
+  idJugador           Int
+  rating_inicial      Int               @default(0)
+  numero_jugador      Int?
+  posicion            Int?
+  fecha_inscripcion   DateTime          @default(now())
+  pago_confirmado     Boolean           @default(false)
+  monto_pagado        Decimal           @default(0.00) @db.Decimal(10, 2)
+  estado              JugadorLigaEstado @default(inscrito)
+  puntos              Decimal           @default(0.0) @db.Decimal(3, 1)
+  partidas_jugadas    Int               @default(0)
+  victorias           Int               @default(0)
+  empates             Int               @default(0)
+  derrotas            Int               @default(0)
+  desempates          Json?
+  posicion_grupo      Int?
+  notas               String?           @db.Text
+  fecha_actualizacion DateTime?         @updatedAt
+
+  liga     InfoLiga  @relation(fields: [idLiga], references: [idLiga], onDelete: Cascade, onUpdate: Cascade)
+  grupo    GrupoLiga @relation(fields: [idGrupoLiga], references: [idGrupoLiga], onDelete: Cascade, onUpdate: Cascade)
+  jugador  Jugador   @relation(fields: [idJugador], references: [idJugador], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([idLiga, idJugador])
+  @@index([idLiga])
+  @@index([idGrupoLiga])
+  @@index([idJugador])
+  @@index([puntos])
+  @@map("jugadores_liga")
+}
+
+model RondaLiga {
+  idRondaLiga         Int             @id @default(autoincrement())
+  idLiga              Int
+  idGrupoLiga         Int
+  numeroRonda         Int
+  fecha_programada    DateTime?       @db.Date
+  hora_inicio         DateTime?       @db.Time
+  fecha_inicio        DateTime?
+  fecha_fin           DateTime?
+  estado              RondaLigaEstado @default(planificada)
+  notas               String?         @db.Text
+  fecha_creacion      DateTime        @default(now())
+  fecha_actualizacion DateTime?       @updatedAt
+
+  liga       InfoLiga  @relation(fields: [idLiga], references: [idLiga], onDelete: Cascade, onUpdate: Cascade)
+  grupo      GrupoLiga @relation(fields: [idGrupoLiga], references: [idGrupoLiga], onDelete: Cascade, onUpdate: Cascade)
+  mesas_liga MesaLiga[]
+
+  @@unique([idLiga, idGrupoLiga, numeroRonda])
+  @@index([idLiga])
+  @@index([idGrupoLiga])
+  @@index([estado])
+  @@map("rondas_liga")
+}
+
+model MesaLiga {
+  idMesaLiga       Int        @id @default(autoincrement())
+  numeroMesa       Int
+  idRondaLiga      Int
+  idJugadorBlanco  Int
+  idJugadorNegro   Int
+  ilegalesBlanco   Int        @default(0)
+  ilegalesNegro    Int        @default(0)
+  estado           MesaEstado @default(pendiente)
+  usuarioEditando  String?    @db.VarChar(20)
+  timestampEdicion DateTime?
+  notas            String?    @db.Text
+  fecha_creacion   DateTime   @default(now())
+
+  ronda_liga     RondaLiga @relation(fields: [idRondaLiga], references: [idRondaLiga], onDelete: Cascade, onUpdate: Cascade)
+  jugador_blanco Jugador   @relation("JugadorBlancoLiga", fields: [idJugadorBlanco], references: [idJugador], onDelete: Cascade, onUpdate: Cascade)
+  jugador_negro  Jugador   @relation("JugadorNegroLiga", fields: [idJugadorNegro], references: [idJugador], onDelete: Cascade, onUpdate: Cascade)
+  partida_liga   PartidaLiga?
+
+  @@index([idRondaLiga])
+  @@index([estado])
+  @@map("mesas_liga")
+}
+
+model PartidaLiga {
+  idPartidaLiga            Int               @id @default(autoincrement())
+  idMesaLiga               Int               @unique
+  idJugadorGanador         Int?
+  resultado                String            @db.VarChar(10)
+  tipo_finalizacion        TipoFinalizacion?
+  descripcion_finalizacion String?           @db.Text
+  duracion_minutos         Int?
+  fecha_finalizacion       DateTime?
+
+  mesa_liga       MesaLiga @relation(fields: [idMesaLiga], references: [idMesaLiga], onDelete: Cascade, onUpdate: Cascade)
+  jugador_ganador Jugador? @relation(fields: [idJugadorGanador], references: [idJugador], onDelete: SetNull, onUpdate: Cascade)
+
+  @@map("partidas_liga")
+}
+
+model HistorialEmparejamientoLiga {
+  idHistorialLiga      Int      @id @default(autoincrement())
+  idJugador1           Int
+  idJugador2           Int
+  idLiga               Int
+  idGrupoLiga          Int
+  numeroRonda          Int
+  fecha_emparejamiento DateTime @default(now())
+
+  jugador1 Jugador   @relation("Jugador1HistorialLiga", fields: [idJugador1], references: [idJugador], onDelete: Cascade, onUpdate: Cascade)
+  jugador2 Jugador   @relation("Jugador2HistorialLiga", fields: [idJugador2], references: [idJugador], onDelete: Cascade, onUpdate: Cascade)
+  liga     InfoLiga  @relation(fields: [idLiga], references: [idLiga], onDelete: Cascade, onUpdate: Cascade)
+  grupo    GrupoLiga @relation(fields: [idGrupoLiga], references: [idGrupoLiga], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([idJugador1, idJugador2, idLiga])
+  @@map("historial_emparejamientos_liga")
+}
+
+// ============================================================
+// ENUMS
+// ============================================================
+
+enum RolUsuario {
+  adminGral
+  adminTorneo
+}
+
+enum JugadorEstado {
+  pendiente_pago
+  activo
+  inactivo
+}
+
+enum InscripcionEstado {
+  pendiente_pago
+  confirmado
+  cancelado
+}
+
+enum EstadoTorneo {
+  borrador
+  publicado
+  en_curso
+  finalizado
+  cancelado
+}
+
+enum TipoValidacionEdad {
+  anio_torneo
+  fecha_exacta
+}
+
+enum NivelPatrocinador {
+  principal
+  oro
+  plata
+  bronce
+  general
+}
+
+enum MesaEstado {
+  pendiente
+  en_curso
+  finalizada
+}
+
+enum RondaEstado {
+  pendiente
+  en_curso
+  finalizada
+}
+
+enum RondaLigaEstado {
+  planificada
+  en_curso
+  finalizada
+  cancelada
+}
+
+enum LigaTipoSistema {
+  round_robin
+  suizo
+  grupos
+}
+
+enum JugadorLigaEstado {
+  inscrito
+  confirmado
+  retirado
+  cancelado
+}
+
+enum TipoFinalizacion {
+  jaquemate
+  tiempo
+  rendicion
+  ilegales
+  incomparecencia
+  empate_comun
+  empate_material
+  empate_50_movidas
+  empate_triple_repeticion
+  otro
+}
+
+enum HistorialAccesoTipo {
+  login_exitoso
+  login_fallido
+  logout
+  otro
+}
+
+enum LogNivel {
+  info
+  warning
+  error
+  otro
+}
