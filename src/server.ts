@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import { errorHandler } from './middleware/error.middleware';
+import { errorHandler, CorsError } from './middleware/error.middleware';
 import { prisma } from './config/database';
 import { registerRoutes } from './routes/index.routes';
 import { iniciarJobDesactivacion } from './jobs/desactivar-torneos.job';
@@ -24,7 +24,7 @@ app.use(cors({
         if (isAllowed) callback(null, true);
         else {
             console.warn(`CORS bloqueado: ${origin}`);
-            callback(new Error('No permitido por CORS'));
+            callback(new CorsError(origin));
         }
     },
     credentials: true,

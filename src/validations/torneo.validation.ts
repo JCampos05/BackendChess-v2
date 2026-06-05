@@ -8,6 +8,7 @@ export const crearTorneoSchema = z.object({
     fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato YYYY-MM-DD'),
     hora: z.string().regex(/^\d{2}:\d{2}$/, 'Formato HH:MM'),
     rondas: z.number().int().min(1).max(20).default(5),
+    cupo_maximo: z.number().int().positive().optional().nullable(),
     notas: z.string().optional(),
     cierre_inscripciones: z.string().datetime({ offset: true }).optional(),
     idZonaHoraria: z.number().int().min(1).max(24).optional(),

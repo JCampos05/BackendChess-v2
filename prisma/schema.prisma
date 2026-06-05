@@ -1,7 +1,7 @@
 // ============================================================
 // SCHEMA PRISMA — Sistema de Gestión Comité de Ajedrez Ahome
-// Versión: 2.1.0
-// Última actualización: 2026-03-29
+// Versión: 2.2.0
+// Última actualización: 2026-04-21
 //
 // TABLAS NUEVAS:
 //   zonas_horaria, config_gral, patrocinadores,
@@ -389,6 +389,7 @@ model Torneo {
 
   notas                String?        @db.Text
   rondas               Int            @default(5)
+  cupo_maximo          Int?
   cierre_inscripciones DateTime?
 
   // Zona horaria específica del torneo (hereda de config_gral si es null)
@@ -435,7 +436,9 @@ model TorneoCategoria {
   premios             Json?
 
   desempates          Json?
-  activo              Boolean  @default(true)
+  activo              Boolean   @default(true)
+  cierre_inscripciones DateTime?
+  cupo_maximo         Int?
 
   torneo              Torneo    @relation(fields: [idTorneo], references: [idTorneo], onDelete: Cascade, onUpdate: Cascade)
   categoria           Categoria @relation(fields: [idCategoria], references: [idCategoria], onDelete: Cascade, onUpdate: Cascade)
@@ -468,6 +471,9 @@ model Inscripcion {
   pago_confirmado     Boolean            @default(false)
   monto_pagado        Decimal            @default(0.00) @db.Decimal(10, 2)
   notas               String?            @db.Text
+
+  // Edad del jugador calculada a la fecha del torneo (se guarda al inscribir)
+  edad                Int?
 
   // Quién confirmó el pago y cuándo
   idAdminConfirmo     Int?               // @comment("idUsuario del admin que confirmó el pago")

@@ -21,11 +21,13 @@ const INCLUDE_BASE = {
     torneo_categorias: {
         where:  { activo: true },
         select: {
-            idTorneoCat:         true,
-            rondas:              true,
-            ritmo_juego:         true,
-            sistema_competencia: true,
-            premios:             true,
+            idTorneoCat:          true,
+            rondas:               true,
+            ritmo_juego:          true,
+            sistema_competencia:  true,
+            premios:              true,
+            cupo_maximo:          true,
+            cierre_inscripciones: true,
             categoria: { select: { idCategoria: true, nombre: true, costo: true } },
         },
     },
@@ -111,6 +113,7 @@ export const crearTorneo = async (datos: CrearTorneoDto) => {
             fecha:                new Date(`${datos.fecha}T00:00:00`),
             hora:                 new Date(`1970-01-01T${datos.hora}:00`),
             rondas:               datos.rondas,
+            cupo_maximo:          datos.cupo_maximo ?? null,
             notas:                datos.notas,
             cierre_inscripciones: datos.cierre_inscripciones
                 ? new Date(datos.cierre_inscripciones)
@@ -142,8 +145,9 @@ export const actualizarTorneo = async (
             ...(datos.url_maps  !== undefined && { url_maps:  datos.url_maps }),
             ...(datos.fecha     !== undefined && { fecha: new Date(`${datos.fecha}T00:00:00`) }),
             ...(datos.hora      !== undefined && { hora:  new Date(`1970-01-01T${datos.hora}:00`) }),
-            ...(datos.rondas    !== undefined && { rondas:    datos.rondas }),
-            ...(datos.notas     !== undefined && { notas:     datos.notas }),
+            ...(datos.rondas       !== undefined && { rondas:       datos.rondas }),
+            ...(datos.cupo_maximo  !== undefined && { cupo_maximo:  datos.cupo_maximo }),
+            ...(datos.notas        !== undefined && { notas:        datos.notas }),
             ...(datos.cierre_inscripciones !== undefined && {
                 cierre_inscripciones: new Date(datos.cierre_inscripciones),
             }),
