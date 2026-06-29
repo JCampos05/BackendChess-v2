@@ -1,0 +1,10 @@
+import { Response, NextFunction } from 'express';
+import { AuthRequest } from '../types';
+export declare const listar: (req: AuthRequest, res: Response, next: NextFunction) => Promise<void>;
+export declare const buscar: (req: AuthRequest, res: Response, next: NextFunction) => Promise<void>;
+export declare const obtenerUno: (req: AuthRequest, res: Response, next: NextFunction) => Promise<void>;
+export declare const crear: (req: AuthRequest, res: Response, next: NextFunction) => Promise<void>;
+export declare const actualizar: (req: AuthRequest, res: Response, next: NextFunction) => Promise<void>;
+export declare const cambiarEstado: (req: AuthRequest, res: Response, next: NextFunction) => Promise<void>;
+export declare const confirmarPago: (req: AuthRequest, res: Response, next: NextFunction) => Promise<void>;
+export declare const verificarElegibilidad: (req: AuthRequest, res: Response, next: NextFunction) => Promise<void>;

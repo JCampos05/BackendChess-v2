@@ -1,0 +1,10 @@
+import { Request, Response, NextFunction } from 'express';
+import { AuthRequest } from '../types';
+export declare const login: (req: Request, res: Response, next: NextFunction) => Promise<void>;
+export declare const logout: (req: AuthRequest, res: Response, next: NextFunction) => Promise<void>;
+export declare const cambiarPassword: (req: AuthRequest, res: Response, next: NextFunction) => Promise<void>;
+export declare const crearUsuario: (req: AuthRequest, res: Response, next: NextFunction) => Promise<void>;
+export declare const listarUsuarios: (_req: AuthRequest, res: Response, next: NextFunction) => Promise<void>;
+export declare const toggleUsuario: (req: AuthRequest, res: Response, next: NextFunction) => Promise<void>;
+export declare const misSesiones: (req: AuthRequest, res: Response, next: NextFunction) => Promise<void>;
+export declare const obtenerProfile: (req: AuthRequest, res: Response, next: NextFunction) => Promise<void>;

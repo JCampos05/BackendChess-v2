@@ -1,0 +1,14 @@
+import { Response, NextFunction } from 'express';
+import { AuthRequest } from '../types';
+export declare const getListaInicialPublica: (req: AuthRequest, res: Response, next: NextFunction) => Promise<void>;
+export declare const getRankingFinalPublico: (req: AuthRequest, res: Response, next: NextFunction) => Promise<void>;
+export declare const getAllEstadisticas: (req: AuthRequest, res: Response, next: NextFunction) => Promise<void>;
+export declare const getEstadisticasByTorneo: (req: AuthRequest, res: Response, next: NextFunction) => Promise<void>;
+export declare const getEstadisticasByTorneoCategoria: (req: AuthRequest, res: Response, next: NextFunction) => Promise<void>;
+export declare const getEstadisticasByTorneoCategoriaHastaRonda: (req: AuthRequest, res: Response, next: NextFunction) => Promise<void>;
+export declare const getEstadisticaByJugador: (req: AuthRequest, res: Response, next: NextFunction) => Promise<void>;
+export declare const createEstadistica: (req: AuthRequest, res: Response, next: NextFunction) => Promise<void>;
+export declare const updateEstadistica: (req: AuthRequest, res: Response, next: NextFunction) => Promise<void>;
+export declare const deleteEstadistica: (req: AuthRequest, res: Response, next: NextFunction) => Promise<void>;
+export declare const recalcularPosiciones: (req: AuthRequest, res: Response, next: NextFunction) => Promise<void>;
+export declare const cargarRankingFinal: (req: AuthRequest, res: Response, next: NextFunction) => Promise<void>;

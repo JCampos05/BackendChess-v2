@@ -41,6 +41,23 @@ export const listarTorneosPublicos = async (
     } catch (err) { next(err); }
 };
 
+// GET /api/torneos/activos
+// Devuelve todos los torneos activos (para el frontend autenticado)
+export const listarTorneosActivos = async (
+    _req: Request,
+    res: Response,
+    next: NextFunction
+) => {
+    try {
+        const resultado = await torneoService.listarTorneos({
+            pagina:  1,
+            limite:  100,
+            activo:  true,
+        });
+        res.json({ ok: true, data: resultado.items, total: resultado.total });
+    } catch (err) { next(err); }
+};
+
 // ── Torneos CRUD ──────────────────────────────────────────────
 
 export const listarTorneos = async (

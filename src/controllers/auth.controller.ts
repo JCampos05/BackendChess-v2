@@ -120,7 +120,7 @@ export const toggleUsuario = async (
     }
 };
 
-// GET /api/seguridad/sesiones
+// GET /api/auth/sesiones
 export const misSesiones = async (
     req: AuthRequest,
     res: Response,
@@ -129,6 +129,20 @@ export const misSesiones = async (
     try {
         const sesiones = await authService.obtenerSesiones(req.usuario!.idUsuario);
         res.json({ ok: true, data: sesiones });
+    } catch (err) {
+        next(err);
+    }
+};
+
+// GET /api/auth/profile
+export const obtenerProfile = async (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const usuario = await authService.obtenerUsuarioPorId(req.usuario!.idUsuario);
+        res.json({ ok: true, data: usuario });
     } catch (err) {
         next(err);
     }

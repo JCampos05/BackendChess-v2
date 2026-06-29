@@ -9,6 +9,7 @@ const router = Router();
 router.post('/login', authController.login);
 
 // ── Autenticadas — cualquier admin ───────────────────────────
+router.get   ('/profile',  authMiddleware, authController.obtenerProfile);
 router.post  ('/logout',   authMiddleware, authController.logout);
 router.patch ('/password', authMiddleware, authController.cambiarPassword);
 router.get   ('/sesiones', authMiddleware, authController.misSesiones);

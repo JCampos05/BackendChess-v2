@@ -229,6 +229,24 @@ export const listarUsuarios = async () => {
     });
 };
 
+// ── Obtener usuario por ID ──────────────────────────────────
+
+export const obtenerUsuarioPorId = async (idUsuario: number) => {
+    const usuario = await prisma.usuario.findUnique({
+        where: { idUsuario },
+        select: {
+            idUsuario:         true,
+            telefono:          true,
+            rol:               true,
+            activo:            true,
+            ultimo_acceso:     true,
+            fecha_registro:    true,
+        },
+    });
+    if (!usuario) throw new NotFoundError('Usuario no encontrado');
+    return usuario;
+};
+
 // ── Toggle activo ────────────────────────────────────────────
 
 export const toggleUsuario = async (idUsuario: number, activo: boolean) => {

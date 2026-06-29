@@ -1,0 +1,12 @@
+import { Request, Response, NextFunction } from 'express';
+import { AuthRequest } from '../types';
+export declare const obtenerConfig: (_req: Request, res: Response, next: NextFunction) => Promise<void>;
+export declare const obtenerConfigCompleta: (_req: AuthRequest, res: Response, next: NextFunction) => Promise<void>;
+export declare const actualizarConfig: (req: AuthRequest, res: Response, next: NextFunction) => Promise<void>;
+export declare const listarZonasHorarias: (_req: Request, res: Response, next: NextFunction) => Promise<void>;
+export declare const listarCategorias: (_req: Request, res: Response, next: NextFunction) => Promise<void>;
+export declare const listarRitmosJuego: (_req: Request, res: Response, next: NextFunction) => Promise<void>;
+export declare const listarSistemasCompetencia: (_req: Request, res: Response, next: NextFunction) => Promise<void>;
+export declare const listarSistemasDesempate: (_req: Request, res: Response, next: NextFunction) => Promise<void>;
+export declare const listarSistemasPago: (_req: Request, res: Response, next: NextFunction) => Promise<void>;
+export declare const listarPatrocinadores: (_req: Request, res: Response, next: NextFunction) => Promise<void>;

@@ -9,6 +9,7 @@ const router = Router();
 // ── Públicas — sin autenticación ─────────────────────────────
 // El frontend público usa estas rutas para la landing
 router.get('/publicos', ctrl.listarTorneosPublicos);
+router.get('/activos', ctrl.listarTorneosActivos);
 
 // ── Autenticadas ──────────────────────────────────────────────
 router.use(authMiddleware);
