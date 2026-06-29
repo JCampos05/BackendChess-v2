@@ -103,7 +103,14 @@ export const listarTorneos = async (
         if (!parse.success) { zodFail(res, parse.error); return; }
 
         const resultado = await torneoService.listarTorneos(parse.data);
-        res.json({ ok: true, data: resultado });
+        res.json({
+            ok: true,
+            data: resultado.items,
+            total: resultado.total,
+            pagina: resultado.pagina,
+            limite: resultado.limite,
+            totalPaginas: resultado.totalPaginas,
+        });
     } catch (err) { next(err); }
 };
 
@@ -204,6 +211,19 @@ export const toggleEsActual = async (
 };
 
 // ── Categorías ────────────────────────────────────────────────
+
+// GET /api/torneos/:id/categorias (público)
+export const obtenerCategoriasTorneo = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
+    try {
+        const idTorneo  = Number(req.params.id);
+        const categorias = await torneoService.obtenerCategoriasTorneo(idTorneo);
+        res.json({ success: true, categorias, total: categorias.length });
+    } catch (err) { next(err); }
+};
 
 export const asignarCategoria = async (
     req: AuthRequest,

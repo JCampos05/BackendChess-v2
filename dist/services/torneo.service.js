@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.removerAdmin = exports.asignarAdmin = exports.removerPatrocinador = exports.asignarPatrocinador = exports.listarPatrocinadoresTorneo = exports.desasignarCategoria = exports.actualizarCategoriaTorneo = exports.asignarCategoria = exports.toggleEsActual = exports.toggleActivo = exports.cambiarEstado = exports.eliminarTorneo = exports.actualizarTorneo = exports.crearTorneo = exports.obtenerTorneoPorId = exports.listarTorneos = void 0;
+exports.removerAdmin = exports.asignarAdmin = exports.removerPatrocinador = exports.asignarPatrocinador = exports.listarPatrocinadoresTorneo = exports.desasignarCategoria = exports.actualizarCategoriaTorneo = exports.asignarCategoria = exports.obtenerCategoriasTorneo = exports.toggleEsActual = exports.toggleActivo = exports.cambiarEstado = exports.eliminarTorneo = exports.actualizarTorneo = exports.crearTorneo = exports.obtenerTorneoPorId = exports.listarTorneos = void 0;
 const client_1 = require("@prisma/client");
 const database_1 = __importDefault(require("../config/database"));
 const error_middleware_1 = require("../middleware/error.middleware");
@@ -203,6 +203,42 @@ const toggleEsActual = async (idTorneo, es_actual) => {
 };
 exports.toggleEsActual = toggleEsActual;
 // ── Categorías ───────────────────────────────────────────────
+const obtenerCategoriasTorneo = async (idTorneo) => {
+    const torneo = await database_1.default.torneo.findUnique({
+        where: { idTorneo },
+        select: { idTorneo: true },
+    });
+    if (!torneo)
+        throw new error_middleware_1.NotFoundError('Torneo no encontrado');
+    const asignaciones = await database_1.default.torneoCategoria.findMany({
+        where: { idTorneo, activo: true },
+        include: {
+            categoria: { select: { idCategoria: true, nombre: true, costo: true, edadMinima: true, edadMaxima: true } },
+        },
+        orderBy: { idCategoria: 'asc' },
+    });
+    // Shape esperado por el frontend (TorneoService.getCategoriasByTorneo):
+    // { idCategoria, nombre, costo, torneo_categoria: {...} }
+    return asignaciones.map(a => ({
+        idCategoria: a.categoria.idCategoria,
+        nombre: a.categoria.nombre,
+        costo: a.categoria.costo,
+        edadMinima: a.categoria.edadMinima,
+        edadMaxima: a.categoria.edadMaxima,
+        torneo_categoria: {
+            idTorneoCat: a.idTorneoCat,
+            rondas: a.rondas,
+            ritmo_juego: a.ritmo_juego,
+            sistema_competencia: a.sistema_competencia,
+            premios: a.premios,
+            desempates: a.desempates,
+            calendario: a.calendario,
+            activo: a.activo,
+            cierre_inscripciones: a.cierre_inscripciones,
+        },
+    }));
+};
+exports.obtenerCategoriasTorneo = obtenerCategoriasTorneo;
 const asignarCategoria = async (idTorneo, datos) => {
     const [torneo, categoria] = await Promise.all([
         database_1.default.torneo.findUnique({

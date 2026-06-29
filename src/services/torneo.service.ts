@@ -229,6 +229,43 @@ export const toggleEsActual = async (idTorneo: number, es_actual: boolean) => {
 
 // ── Categorías ───────────────────────────────────────────────
 
+export const obtenerCategoriasTorneo = async (idTorneo: number) => {
+    const torneo = await prisma.torneo.findUnique({
+        where:  { idTorneo },
+        select: { idTorneo: true },
+    });
+    if (!torneo) throw new NotFoundError('Torneo no encontrado');
+
+    const asignaciones = await prisma.torneoCategoria.findMany({
+        where: { idTorneo, activo: true },
+        include: {
+            categoria: { select: { idCategoria: true, nombre: true, costo: true, edadMinima: true, edadMaxima: true } },
+        },
+        orderBy: { idCategoria: 'asc' },
+    });
+
+    // Shape esperado por el frontend (TorneoService.getCategoriasByTorneo):
+    // { idCategoria, nombre, costo, torneo_categoria: {...} }
+    return asignaciones.map(a => ({
+        idCategoria: a.categoria.idCategoria,
+        nombre:      a.categoria.nombre,
+        costo:       a.categoria.costo,
+        edadMinima:  a.categoria.edadMinima,
+        edadMaxima:  a.categoria.edadMaxima,
+        torneo_categoria: {
+            idTorneoCat:          a.idTorneoCat,
+            rondas:               a.rondas,
+            ritmo_juego:          a.ritmo_juego,
+            sistema_competencia:  a.sistema_competencia,
+            premios:              a.premios,
+            desempates:           a.desempates,
+            calendario:           a.calendario,
+            activo:               a.activo,
+            cierre_inscripciones: a.cierre_inscripciones,
+        },
+    }));
+};
+
 export const asignarCategoria = async (
     idTorneo: number,
     datos: AsignarCategoriaDto

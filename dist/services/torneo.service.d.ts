@@ -258,6 +258,24 @@ export declare const toggleEsActual: (idTorneo: number, es_actual: boolean) => P
     idTorneo: number;
     es_actual: boolean;
 }>;
+export declare const obtenerCategoriasTorneo: (idTorneo: number) => Promise<{
+    idCategoria: number;
+    nombre: string;
+    costo: Prisma.Decimal;
+    edadMinima: number | null;
+    edadMaxima: number | null;
+    torneo_categoria: {
+        idTorneoCat: number;
+        rondas: number;
+        ritmo_juego: string | null;
+        sistema_competencia: string | null;
+        premios: Prisma.JsonValue;
+        desempates: Prisma.JsonValue;
+        calendario: Prisma.JsonValue;
+        activo: boolean;
+        cierre_inscripciones: Date | null;
+    };
+}[]>;
 export declare const asignarCategoria: (idTorneo: number, datos: AsignarCategoriaDto) => Promise<{
     categoria: {
         nombre: string;

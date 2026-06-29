@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.removerAdmin = exports.asignarAdmin = exports.removerPatrocinador = exports.asignarPatrocinador = exports.listarPatrocinadores = exports.desasignarCategoria = exports.actualizarCategoria = exports.asignarCategoria = exports.toggleEsActual = exports.toggleActivo = exports.cambiarEstado = exports.eliminarTorneo = exports.actualizarTorneo = exports.crearTorneo = exports.obtenerTorneo = exports.listarTorneos = exports.listarTodosTorneos = exports.listarTorneosProximos = exports.listarTorneosActivos = exports.listarTorneosPublicos = void 0;
+exports.removerAdmin = exports.asignarAdmin = exports.removerPatrocinador = exports.asignarPatrocinador = exports.listarPatrocinadores = exports.desasignarCategoria = exports.actualizarCategoria = exports.asignarCategoria = exports.obtenerCategoriasTorneo = exports.toggleEsActual = exports.toggleActivo = exports.cambiarEstado = exports.eliminarTorneo = exports.actualizarTorneo = exports.crearTorneo = exports.obtenerTorneo = exports.listarTorneos = exports.listarTodosTorneos = exports.listarTorneosProximos = exports.listarTorneosActivos = exports.listarTorneosPublicos = void 0;
 const torneoService = __importStar(require("../services/torneo.service"));
 const torneo_validation_1 = require("../validations/torneo.validation");
 // Helper local — convierte ZodError en respuesta 400
@@ -115,7 +115,14 @@ const listarTorneos = async (req, res, next) => {
             return;
         }
         const resultado = await torneoService.listarTorneos(parse.data);
-        res.json({ ok: true, data: resultado });
+        res.json({
+            ok: true,
+            data: resultado.items,
+            total: resultado.total,
+            pagina: resultado.pagina,
+            limite: resultado.limite,
+            totalPaginas: resultado.totalPaginas,
+        });
     }
     catch (err) {
         next(err);
@@ -217,6 +224,18 @@ const toggleEsActual = async (req, res, next) => {
 };
 exports.toggleEsActual = toggleEsActual;
 // ── Categorías ────────────────────────────────────────────────
+// GET /api/torneos/:id/categorias (público)
+const obtenerCategoriasTorneo = async (req, res, next) => {
+    try {
+        const idTorneo = Number(req.params.id);
+        const categorias = await torneoService.obtenerCategoriasTorneo(idTorneo);
+        res.json({ success: true, categorias, total: categorias.length });
+    }
+    catch (err) {
+        next(err);
+    }
+};
+exports.obtenerCategoriasTorneo = obtenerCategoriasTorneo;
 const asignarCategoria = async (req, res, next) => {
     try {
         const idTorneo = Number(req.params.id);

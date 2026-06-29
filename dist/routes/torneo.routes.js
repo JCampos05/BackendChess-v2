@@ -45,6 +45,7 @@ router.get('/publicos', ctrl.listarTorneosPublicos);
 router.get('/activos', ctrl.listarTorneosActivos);
 router.get('/proximos', ctrl.listarTorneosProximos);
 router.get('/todos', ctrl.listarTodosTorneos);
+router.get('/:id/categorias', ctrl.obtenerCategoriasTorneo);
 // ── Autenticadas ──────────────────────────────────────────────
 router.use(auth_middleware_1.authMiddleware);
 router.get('/', roles_middleware_1.cualquierAdmin, ctrl.listarTorneos);

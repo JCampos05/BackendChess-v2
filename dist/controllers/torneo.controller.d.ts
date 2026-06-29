@@ -12,6 +12,7 @@ export declare const eliminarTorneo: (req: AuthRequest, res: Response, next: Nex
 export declare const cambiarEstado: (req: AuthRequest, res: Response, next: NextFunction) => Promise<void>;
 export declare const toggleActivo: (req: AuthRequest, res: Response, next: NextFunction) => Promise<void>;
 export declare const toggleEsActual: (req: AuthRequest, res: Response, next: NextFunction) => Promise<void>;
+export declare const obtenerCategoriasTorneo: (req: Request, res: Response, next: NextFunction) => Promise<void>;
 export declare const asignarCategoria: (req: AuthRequest, res: Response, next: NextFunction) => Promise<void>;
 export declare const actualizarCategoria: (req: AuthRequest, res: Response, next: NextFunction) => Promise<void>;
 export declare const desasignarCategoria: (req: AuthRequest, res: Response, next: NextFunction) => Promise<void>;
