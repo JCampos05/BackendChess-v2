@@ -58,6 +58,39 @@ export const listarTorneosActivos = async (
     } catch (err) { next(err); }
 };
 
+// GET /api/torneos/proximos
+// Devuelve torneos próximos a ocurrir
+export const listarTorneosProximos = async (
+    _req: Request,
+    res: Response,
+    next: NextFunction
+) => {
+    try {
+        const resultado = await torneoService.listarTorneos({
+            pagina:  1,
+            limite:  50,
+            activo:  true,
+        });
+        res.json({ ok: true, data: resultado.items, total: resultado.total });
+    } catch (err) { next(err); }
+};
+
+// GET /api/torneos/todos
+// Devuelve TODOS los torneos (incluyendo inactivos y pasados)
+export const listarTodosTorneos = async (
+    _req: Request,
+    res: Response,
+    next: NextFunction
+) => {
+    try {
+        const resultado = await torneoService.listarTorneos({
+            pagina:  1,
+            limite:  1000,
+        });
+        res.json({ ok: true, data: resultado.items, total: resultado.total });
+    } catch (err) { next(err); }
+};
+
 // ── Torneos CRUD ──────────────────────────────────────────────
 
 export const listarTorneos = async (

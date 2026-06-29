@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.removerAdmin = exports.asignarAdmin = exports.removerPatrocinador = exports.asignarPatrocinador = exports.listarPatrocinadores = exports.desasignarCategoria = exports.actualizarCategoria = exports.asignarCategoria = exports.toggleEsActual = exports.toggleActivo = exports.cambiarEstado = exports.eliminarTorneo = exports.actualizarTorneo = exports.crearTorneo = exports.obtenerTorneo = exports.listarTorneos = exports.listarTorneosActivos = exports.listarTorneosPublicos = void 0;
+exports.removerAdmin = exports.asignarAdmin = exports.removerPatrocinador = exports.asignarPatrocinador = exports.listarPatrocinadores = exports.desasignarCategoria = exports.actualizarCategoria = exports.asignarCategoria = exports.toggleEsActual = exports.toggleActivo = exports.cambiarEstado = exports.eliminarTorneo = exports.actualizarTorneo = exports.crearTorneo = exports.obtenerTorneo = exports.listarTorneos = exports.listarTodosTorneos = exports.listarTorneosProximos = exports.listarTorneosActivos = exports.listarTorneosPublicos = void 0;
 const torneoService = __importStar(require("../services/torneo.service"));
 const torneo_validation_1 = require("../validations/torneo.validation");
 // Helper local — convierte ZodError en respuesta 400
@@ -75,6 +75,37 @@ const listarTorneosActivos = async (_req, res, next) => {
     }
 };
 exports.listarTorneosActivos = listarTorneosActivos;
+// GET /api/torneos/proximos
+// Devuelve torneos próximos a ocurrir
+const listarTorneosProximos = async (_req, res, next) => {
+    try {
+        const resultado = await torneoService.listarTorneos({
+            pagina: 1,
+            limite: 50,
+            activo: true,
+        });
+        res.json({ ok: true, data: resultado.items, total: resultado.total });
+    }
+    catch (err) {
+        next(err);
+    }
+};
+exports.listarTorneosProximos = listarTorneosProximos;
+// GET /api/torneos/todos
+// Devuelve TODOS los torneos (incluyendo inactivos y pasados)
+const listarTodosTorneos = async (_req, res, next) => {
+    try {
+        const resultado = await torneoService.listarTorneos({
+            pagina: 1,
+            limite: 1000,
+        });
+        res.json({ ok: true, data: resultado.items, total: resultado.total });
+    }
+    catch (err) {
+        next(err);
+    }
+};
+exports.listarTodosTorneos = listarTodosTorneos;
 // ── Torneos CRUD ──────────────────────────────────────────────
 const listarTorneos = async (req, res, next) => {
     try {

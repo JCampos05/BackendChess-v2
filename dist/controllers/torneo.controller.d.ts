@@ -2,6 +2,8 @@ import { Request, Response, NextFunction } from 'express';
 import { AuthRequest } from '../types';
 export declare const listarTorneosPublicos: (_req: Request, res: Response, next: NextFunction) => Promise<void>;
 export declare const listarTorneosActivos: (_req: Request, res: Response, next: NextFunction) => Promise<void>;
+export declare const listarTorneosProximos: (_req: Request, res: Response, next: NextFunction) => Promise<void>;
+export declare const listarTodosTorneos: (_req: Request, res: Response, next: NextFunction) => Promise<void>;
 export declare const listarTorneos: (req: AuthRequest, res: Response, next: NextFunction) => Promise<void>;
 export declare const obtenerTorneo: (req: AuthRequest, res: Response, next: NextFunction) => Promise<void>;
 export declare const crearTorneo: (req: AuthRequest, res: Response, next: NextFunction) => Promise<void>;
