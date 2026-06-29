@@ -41,7 +41,7 @@ export const registerRoutes = (app: Application): void => {
     app.use(`${API}/config`, configRoutes);
 
     // ── Autenticación ──────────────────────────────────────────
-    app.use(`${API}/seguridad`, authRoutes);
+    app.use(`${API}/auth`, authRoutes);
 
     // ── Jugadores e inscripciones ──────────────────────────────
     app.use(`${API}/jugadores`, jugadorRoutes);
