@@ -193,14 +193,14 @@ export declare const crearRondaLigaSchema: z.ZodObject<{
     idGrupoLiga: number;
     numeroRonda: number;
     notas?: string | undefined;
-    fecha_programada?: string | undefined;
     hora_inicio?: string | undefined;
+    fecha_programada?: string | undefined;
 }, {
     idGrupoLiga: number;
     numeroRonda: number;
     notas?: string | undefined;
-    fecha_programada?: string | undefined;
     hora_inicio?: string | undefined;
+    fecha_programada?: string | undefined;
 }>;
 export declare const cambiarEstadoRondaLigaSchema: z.ZodObject<{
     estado: z.ZodEnum<["planificada", "en_curso", "finalizada", "cancelada"]>;

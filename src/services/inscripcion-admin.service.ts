@@ -300,7 +300,8 @@ export const getEventosActivos = async () => {
                 nombre: true,
                 lugar: true,
                 fecha: true,
-                hora: true,
+                hora_inicio: true,
+                hora_fin: true,
                 torneo_categorias: {
                     where: { activo: true },
                     select: {

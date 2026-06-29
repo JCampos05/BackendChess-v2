@@ -57,7 +57,8 @@ export declare const obtenerTorneoPorId: (idTorneo: number) => Promise<{
     direccion: string;
     url_maps: string | null;
     fecha: Date;
-    hora: Date;
+    hora_inicio: string | null;
+    hora_fin: string | null;
     estado: import(".prisma/client").$Enums.EstadoTorneo;
     es_actual: boolean;
     rondas: number;
@@ -122,7 +123,8 @@ export declare const crearTorneo: (datos: CrearTorneoDto) => Promise<{
     direccion: string;
     url_maps: string | null;
     fecha: Date;
-    hora: Date;
+    hora_inicio: string | null;
+    hora_fin: string | null;
     estado: import(".prisma/client").$Enums.EstadoTorneo;
     es_actual: boolean;
     rondas: number;
@@ -187,7 +189,8 @@ export declare const actualizarTorneo: (idTorneo: number, datos: ActualizarTorne
     direccion: string;
     url_maps: string | null;
     fecha: Date;
-    hora: Date;
+    hora_inicio: string | null;
+    hora_fin: string | null;
     estado: import(".prisma/client").$Enums.EstadoTorneo;
     es_actual: boolean;
     rondas: number;
@@ -234,7 +237,8 @@ export declare const cambiarEstado: (idTorneo: number, datos: CambiarEstadoDto) 
     direccion: string;
     url_maps: string | null;
     fecha: Date;
-    hora: Date;
+    hora_inicio: string | null;
+    hora_fin: string | null;
     estado: import(".prisma/client").$Enums.EstadoTorneo;
     es_actual: boolean;
     rondas: number;

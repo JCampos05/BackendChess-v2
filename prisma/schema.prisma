@@ -370,7 +370,8 @@ model Torneo {
   url_maps             String?        @db.VarChar(500)
 
   fecha                DateTime       @db.Date
-  hora                 DateTime       @db.Time
+  hora_inicio          String?        @db.VarChar(8)
+  hora_fin             String?        @db.VarChar(8)
 
   // Estado del torneo con flujo definido:
   // borrador → publicado → en_curso → finalizado

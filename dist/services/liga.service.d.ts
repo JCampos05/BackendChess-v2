@@ -287,6 +287,7 @@ export declare const listarRondasLiga: (idLiga: number, idGrupoLiga?: number) =>
 } & {
     fecha_actualizacion: Date | null;
     notas: string | null;
+    hora_inicio: Date | null;
     estado: import(".prisma/client").$Enums.RondaLigaEstado;
     fecha_creacion: Date;
     fecha_inicio: Date | null;
@@ -294,7 +295,6 @@ export declare const listarRondasLiga: (idLiga: number, idGrupoLiga?: number) =>
     idGrupoLiga: number;
     numeroRonda: number;
     fecha_programada: Date | null;
-    hora_inicio: Date | null;
     idLiga: number;
     idRondaLiga: number;
 })[]>;
@@ -306,6 +306,7 @@ export declare const crearRondaLiga: (idLiga: number, datos: CrearRondaLigaDto) 
 } & {
     fecha_actualizacion: Date | null;
     notas: string | null;
+    hora_inicio: Date | null;
     estado: import(".prisma/client").$Enums.RondaLigaEstado;
     fecha_creacion: Date;
     fecha_inicio: Date | null;
@@ -313,7 +314,6 @@ export declare const crearRondaLiga: (idLiga: number, datos: CrearRondaLigaDto) 
     idGrupoLiga: number;
     numeroRonda: number;
     fecha_programada: Date | null;
-    hora_inicio: Date | null;
     idLiga: number;
     idRondaLiga: number;
 }>;
@@ -325,6 +325,7 @@ export declare const cambiarEstadoRondaLiga: (idRondaLiga: number, datos: Cambia
 } & {
     fecha_actualizacion: Date | null;
     notas: string | null;
+    hora_inicio: Date | null;
     estado: import(".prisma/client").$Enums.RondaLigaEstado;
     fecha_creacion: Date;
     fecha_inicio: Date | null;
@@ -332,7 +333,6 @@ export declare const cambiarEstadoRondaLiga: (idRondaLiga: number, datos: Cambia
     idGrupoLiga: number;
     numeroRonda: number;
     fecha_programada: Date | null;
-    hora_inicio: Date | null;
     idLiga: number;
     idRondaLiga: number;
 }>;

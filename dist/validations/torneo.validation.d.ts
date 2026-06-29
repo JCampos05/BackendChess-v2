@@ -5,7 +5,8 @@ export declare const crearTorneoSchema: z.ZodObject<{
     direccion: z.ZodString;
     url_maps: z.ZodOptional<z.ZodString>;
     fecha: z.ZodString;
-    hora: z.ZodString;
+    hora_inicio: z.ZodString;
+    hora_fin: z.ZodString;
     rondas: z.ZodDefault<z.ZodNumber>;
     cupo_maximo: z.ZodNullable<z.ZodOptional<z.ZodNumber>>;
     notas: z.ZodOptional<z.ZodString>;
@@ -17,7 +18,8 @@ export declare const crearTorneoSchema: z.ZodObject<{
     lugar: string;
     direccion: string;
     fecha: string;
-    hora: string;
+    hora_inicio: string;
+    hora_fin: string;
     es_actual: boolean;
     rondas: number;
     notas?: string | undefined;
@@ -31,7 +33,8 @@ export declare const crearTorneoSchema: z.ZodObject<{
     lugar: string;
     direccion: string;
     fecha: string;
-    hora: string;
+    hora_inicio: string;
+    hora_fin: string;
     notas?: string | undefined;
     nombre?: string | undefined;
     url_maps?: string | undefined;
@@ -48,7 +51,8 @@ export declare const actualizarTorneoSchema: z.ZodObject<{
     direccion: z.ZodOptional<z.ZodString>;
     url_maps: z.ZodOptional<z.ZodOptional<z.ZodString>>;
     fecha: z.ZodOptional<z.ZodString>;
-    hora: z.ZodOptional<z.ZodString>;
+    hora_inicio: z.ZodOptional<z.ZodString>;
+    hora_fin: z.ZodOptional<z.ZodString>;
     rondas: z.ZodOptional<z.ZodDefault<z.ZodNumber>>;
     cupo_maximo: z.ZodOptional<z.ZodNullable<z.ZodOptional<z.ZodNumber>>>;
     notas: z.ZodOptional<z.ZodOptional<z.ZodString>>;
@@ -63,7 +67,8 @@ export declare const actualizarTorneoSchema: z.ZodObject<{
     direccion?: string | undefined;
     url_maps?: string | undefined;
     fecha?: string | undefined;
-    hora?: string | undefined;
+    hora_inicio?: string | undefined;
+    hora_fin?: string | undefined;
     es_actual?: boolean | undefined;
     rondas?: number | undefined;
     cupo_maximo?: number | null | undefined;
@@ -77,7 +82,8 @@ export declare const actualizarTorneoSchema: z.ZodObject<{
     direccion?: string | undefined;
     url_maps?: string | undefined;
     fecha?: string | undefined;
-    hora?: string | undefined;
+    hora_inicio?: string | undefined;
+    hora_fin?: string | undefined;
     es_actual?: boolean | undefined;
     rondas?: number | undefined;
     cupo_maximo?: number | null | undefined;
