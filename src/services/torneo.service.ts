@@ -70,9 +70,9 @@ const INCLUDE_DETALLE = {
 // ── CRUD ─────────────────────────────────────────────────────
 
 export const listarTorneos = async (
-    filtros: FiltrosTorneoDto
+    filtros: FiltrosTorneoDto & { fechaDesde?: Date }
 ): Promise<PaginatedResult<unknown>> => {
-    const { pagina, limite, activo, estado, es_actual, soloConCategorias } = filtros;
+    const { pagina, limite, activo, estado, es_actual, soloConCategorias, fechaDesde } = filtros;
     const skip = (pagina - 1) * limite;
 
     const where: Prisma.TorneoWhereInput = {
@@ -80,6 +80,7 @@ export const listarTorneos = async (
         ...(estado                  && { estado }),
         ...(es_actual !== undefined && { es_actual }),
         ...(soloConCategorias       && { torneo_categorias: { some: { activo: true } } }),
+        ...(fechaDesde              && { fecha: { gte: fechaDesde } }),
     };
 
     const [total, items] = await Promise.all([

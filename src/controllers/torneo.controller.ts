@@ -31,11 +31,14 @@ export const listarTorneosPublicos = async (
     next: NextFunction
 ) => {
     try {
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
         const resultado = await torneoService.listarTorneos({
-            pagina:  1,
-            limite:  10,
-            activo:  true,
-            es_actual: true,
+            pagina:     1,
+            limite:     10,
+            activo:     true,
+            es_actual:  true,
+            fechaDesde: hoy,
         });
         res.json({ ok: true, data: resultado.items, total: resultado.total });
     } catch (err) { next(err); }
@@ -66,10 +69,13 @@ export const listarTorneosProximos = async (
     next: NextFunction
 ) => {
     try {
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
         const resultado = await torneoService.listarTorneos({
-            pagina:  1,
-            limite:  50,
-            activo:  true,
+            pagina:     1,
+            limite:     50,
+            activo:     true,
+            fechaDesde: hoy,
         });
         res.json({ ok: true, data: resultado.items, total: resultado.total });
     } catch (err) { next(err); }
