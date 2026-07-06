@@ -13,9 +13,10 @@ exports.crearTorneoSchema = zod_1.z.object({
     rondas: zod_1.z.number().int().min(1).max(20).default(5),
     cupo_maximo: zod_1.z.number().int().positive().optional().nullable(),
     notas: zod_1.z.string().optional(),
-    cierre_inscripciones: zod_1.z.string().datetime({ offset: true }).optional(),
-    idZonaHoraria: zod_1.z.number().int().min(1).max(24).optional(),
-    idSistemaPago: zod_1.z.number().int().positive().optional(),
+    // Acepta tanto datetime-local del navegador (sin segundos/offset) como ISO completo
+    cierre_inscripciones: zod_1.z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?(\.\d+)?(Z|[+-]\d{2}:\d{2})?$/, 'Formato de fecha/hora inválido').optional(),
+    idZonaHoraria: zod_1.z.number().int().min(1).max(24).optional().nullable(),
+    idSistemaPago: zod_1.z.number().int().positive().optional().nullable(),
     es_actual: zod_1.z.boolean().default(true),
 });
 exports.actualizarTorneoSchema = exports.crearTorneoSchema.partial();

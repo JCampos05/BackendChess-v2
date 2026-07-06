@@ -36,19 +36,19 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getEstadisticas = exports.getAll = void 0;
 const historialService = __importStar(require("../../services/security/historial-acceso.service"));
 const seguridad_validations_1 = require("../../validations/security/seguridad.validations");
-// GET /api/seguridad/historial
+// GET /api/historial-accesos
 const getAll = async (req, res, next) => {
     try {
         const filtros = seguridad_validations_1.filtrosHistorialSchema.parse(req.query);
-        const resultado = await historialService.listarHistorial(filtros);
-        res.json({ ok: true, ...resultado });
+        const { items, total, pagina, totalPaginas } = await historialService.listarHistorial(filtros);
+        res.json({ ok: true, data: items, total, pagina, totalPaginas });
     }
     catch (err) {
         next(err);
     }
 };
 exports.getAll = getAll;
-// GET /api/seguridad/historial/estadisticas
+// GET /api/historial-accesos/estadisticas
 const getEstadisticas = async (req, res, next) => {
     try {
         const { fechaInicio, fechaFin } = req.query;

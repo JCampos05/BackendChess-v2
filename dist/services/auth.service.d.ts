@@ -1,4 +1,4 @@
-import { LoginDto, CambiarPasswordDto, CrearUsuarioDto } from '../validations/auth.validations';
+import { LoginDto, CambiarPasswordDto, CrearUsuarioDto, ActualizarUsuarioDto } from '../validations/auth.validations';
 export declare const login: (datos: LoginDto, ip: string, userAgent: string) => Promise<{
     token: string;
     idSesion: number;
@@ -56,6 +56,14 @@ export declare const obtenerUsuarioPorId: (idUsuario: number) => Promise<{
     activo: boolean;
     fecha_registro: Date | null;
 }>;
+export declare const actualizarUsuario: (idUsuario: number, datos: ActualizarUsuarioDto) => Promise<{
+    idUsuario: number;
+    telefono: string;
+    rol: import(".prisma/client").$Enums.RolUsuario;
+    activo: boolean;
+    fecha_registro: Date | null;
+}>;
+export declare const eliminarUsuario: (idUsuario: number) => Promise<void>;
 export declare const toggleUsuario: (idUsuario: number, activo: boolean) => Promise<{
     idUsuario: number;
     telefono: string;

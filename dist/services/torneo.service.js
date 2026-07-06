@@ -15,9 +15,12 @@ const INCLUDE_BASE = {
         where: { activo: true },
         select: {
             idTorneoCat: true,
+            idCategoria: true,
             rondas: true,
             ritmo_juego: true,
             sistema_competencia: true,
+            calendario: true,
+            desempates: true,
             premios: true,
             cupo_maximo: true,
             cierre_inscripciones: true,
@@ -136,10 +139,14 @@ const actualizarTorneo = async (idTorneo, datos) => {
                 cierre_inscripciones: new Date(datos.cierre_inscripciones),
             }),
             ...(datos.idZonaHoraria !== undefined && {
-                zona_horaria: { connect: { idZonaHoraria: datos.idZonaHoraria } },
+                zona_horaria: datos.idZonaHoraria === null
+                    ? { disconnect: true }
+                    : { connect: { idZonaHoraria: datos.idZonaHoraria } },
             }),
             ...(datos.idSistemaPago !== undefined && {
-                sistema_pago: { connect: { idSistemaPago: datos.idSistemaPago } },
+                sistema_pago: datos.idSistemaPago === null
+                    ? { disconnect: true }
+                    : { connect: { idSistemaPago: datos.idSistemaPago } },
             }),
             ...(datos.es_actual !== undefined && { es_actual: datos.es_actual }),
             fecha_actualizacion: new Date(),

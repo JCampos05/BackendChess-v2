@@ -3,7 +3,7 @@ import { AuthRequest } from '../../types';
 import * as historialService from '../../services/security/historial-acceso.service';
 import { filtrosHistorialSchema } from '../../validations/security/seguridad.validations';
 
-// GET /api/seguridad/historial
+// GET /api/historial-accesos
 export const getAll = async (
     req: AuthRequest,
     res: Response,
@@ -11,14 +11,14 @@ export const getAll = async (
 ): Promise<void> => {
     try {
         const filtros = filtrosHistorialSchema.parse(req.query);
-        const resultado = await historialService.listarHistorial(filtros);
-        res.json({ ok: true, ...resultado });
+        const { items, total, pagina, totalPaginas } = await historialService.listarHistorial(filtros);
+        res.json({ ok: true, data: items, total, pagina, totalPaginas });
     } catch (err) {
         next(err);
     }
 };
 
-// GET /api/seguridad/historial/estadisticas
+// GET /api/historial-accesos/estadisticas
 export const getEstadisticas = async (
     req: AuthRequest,
     res: Response,

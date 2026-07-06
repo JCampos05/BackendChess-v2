@@ -35,7 +35,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.limpiarExpiradas = exports.cerrarTodasUsuario = exports.cerrarSesion = exports.getByUsuario = exports.getActivas = void 0;
 const sesionesService = __importStar(require("../../services/security/sesiones-activas.service"));
-// GET /api/seguridad/sesiones/activas
+// GET /api/sesiones/activas
 const getActivas = async (req, res, next) => {
     try {
         const sesiones = await sesionesService.obtenerActivas();
@@ -46,7 +46,7 @@ const getActivas = async (req, res, next) => {
     }
 };
 exports.getActivas = getActivas;
-// GET /api/seguridad/sesiones/usuario/:idUsuario
+// GET /api/sesiones/usuario/:idUsuario
 const getByUsuario = async (req, res, next) => {
     try {
         const idUsuario = Number(req.params.idUsuario);
@@ -62,7 +62,7 @@ const getByUsuario = async (req, res, next) => {
     }
 };
 exports.getByUsuario = getByUsuario;
-// DELETE /api/seguridad/sesiones/:idSesion
+// DELETE /api/sesiones/:idSesion
 const cerrarSesion = async (req, res, next) => {
     try {
         const idSesion = Number(req.params.idSesion);
@@ -78,7 +78,7 @@ const cerrarSesion = async (req, res, next) => {
     }
 };
 exports.cerrarSesion = cerrarSesion;
-// POST /api/seguridad/sesiones/usuario/:idUsuario/cerrar-todas
+// POST /api/sesiones/usuario/:idUsuario/cerrar-todas
 const cerrarTodasUsuario = async (req, res, next) => {
     try {
         const idUsuario = Number(req.params.idUsuario);
@@ -99,7 +99,7 @@ const cerrarTodasUsuario = async (req, res, next) => {
     }
 };
 exports.cerrarTodasUsuario = cerrarTodasUsuario;
-// POST /api/seguridad/sesiones/limpiar-expiradas
+// POST /api/sesiones/limpiar-expiradas
 const limpiarExpiradas = async (req, res, next) => {
     try {
         const count = await sesionesService.limpiarExpiradas(req.token, req.usuario, req);

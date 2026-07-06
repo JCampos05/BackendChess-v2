@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.crearUsuarioSchema = exports.cambiarPasswordSchema = exports.loginSchema = void 0;
+exports.cambiarPasswordAdminSchema = exports.actualizarUsuarioSchema = exports.crearUsuarioSchema = exports.cambiarPasswordSchema = exports.loginSchema = void 0;
 const zod_1 = require("zod");
 exports.loginSchema = zod_1.z.object({
     telefono: zod_1.z
@@ -34,5 +34,23 @@ exports.crearUsuarioSchema = zod_1.z.object({
         .min(6)
         .max(100),
     rol: zod_1.z.enum(['adminGral', 'adminTorneo']).default('adminTorneo'),
+});
+exports.actualizarUsuarioSchema = zod_1.z.object({
+    telefono: zod_1.z
+        .string()
+        .min(10)
+        .max(15)
+        .regex(/^\d+$/, 'Solo dígitos')
+        .optional(),
+    password: zod_1.z
+        .string()
+        .min(6)
+        .max(100)
+        .optional(),
+    rol: zod_1.z.enum(['adminGral', 'adminTorneo']).optional(),
+});
+exports.cambiarPasswordAdminSchema = zod_1.z.object({
+    passwordActual: zod_1.z.string().min(6),
+    passwordNuevo: zod_1.z.string().min(6).max(100),
 });
 //# sourceMappingURL=auth.validations.js.map

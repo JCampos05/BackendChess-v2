@@ -38,12 +38,12 @@ const auth_middleware_1 = require("../../middleware/auth.middleware");
 const roles_middleware_1 = require("../../middleware/roles.middleware");
 const logsController = __importStar(require("../../controllers/security/logs-sistema.controller"));
 const router = (0, express_1.Router)();
-// GET /api/seguridad/logs
+// GET /api/logs
 router.get('/', auth_middleware_1.authMiddleware, roles_middleware_1.soloAdminGral, logsController.getAll);
-// GET /api/seguridad/logs/estadisticas
+// GET /api/logs/estadisticas
 // IMPORTANTE: antes de /:entidad/:idEntidad para evitar conflicto de params
 router.get('/estadisticas', auth_middleware_1.authMiddleware, roles_middleware_1.soloAdminGral, logsController.getEstadisticas);
-// GET /api/seguridad/logs/:entidad/:idEntidad
+// GET /api/logs/:entidad/:idEntidad
 router.get('/:entidad/:idEntidad', auth_middleware_1.authMiddleware, roles_middleware_1.soloAdminGral, logsController.getByEntidad);
 exports.default = router;
 //# sourceMappingURL=logs-sistema.routes.js.map

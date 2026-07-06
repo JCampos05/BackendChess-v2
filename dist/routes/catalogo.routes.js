@@ -75,7 +75,7 @@ exports.sistemaDesempateRouter.post('/', auth_middleware_1.authMiddleware, roles
 exports.sistemaDesempateRouter.put('/:id', auth_middleware_1.authMiddleware, roles_middleware_1.soloAdminGral, Cat.updateSistemaDesempate);
 exports.sistemaDesempateRouter.delete('/:id', auth_middleware_1.authMiddleware, roles_middleware_1.soloAdminGral, Cat.deleteSistemaDesempate);
 // ════════════════════════════════════════════════════════════
-// /api/sistema-pago
+// /api/sistemas-pago
 // ════════════════════════════════════════════════════════════
 exports.sistemaPagoRouter = (0, express_1.Router)();
 // Públicas — orden: rutas estáticas antes que dinámicas

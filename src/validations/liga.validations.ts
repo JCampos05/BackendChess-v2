@@ -92,6 +92,55 @@ export const registrarPartidaLigaSchema = z.object({
     duracion_minutos:         z.number().int().positive().optional(),
 });
 
+// ── Recursos planos (módulo de Ligas, rutas /api/liga/...) ─────
+
+export const crearGrupoFlatSchema = crearGrupoSchema.extend({
+    idLiga: z.number().int().positive(),
+});
+
+export const crearRondaLigaFlatSchema = crearRondaLigaSchema.extend({
+    idLiga: z.number().int().positive(),
+});
+
+export const actualizarRondaLigaSchema = z.object({
+    fecha_programada: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    hora_inicio:      z.string().regex(/^\d{2}:\d{2}$/).optional(),
+    notas:            z.string().optional(),
+});
+
+export const crearMesaLigaSchema = z.object({
+    idRondaLiga:     z.number().int().positive(),
+    numeroMesa:      z.number().int().positive(),
+    idJugadorBlanco: z.number().int().positive(),
+    idJugadorNegro:  z.number().int().positive(),
+    notas:           z.string().optional(),
+});
+
+export const actualizarMesaLigaSchema = z.object({
+    numeroMesa:      z.number().int().positive().optional(),
+    idJugadorBlanco: z.number().int().positive().optional(),
+    idJugadorNegro:  z.number().int().positive().optional(),
+    estado:          z.enum(['pendiente', 'finalizada']).optional(),
+    notas:           z.string().optional(),
+});
+
+export const inscribirJugadorLigaFlatSchema = inscribirJugadorLigaSchema.extend({
+    idLiga: z.number().int().positive(),
+});
+
+export const actualizarJugadorLigaSchema = z.object({
+    idGrupoLiga: z.number().int().positive().optional(),
+    posicion:    z.number().int().positive().optional(),
+    estado:      z.enum(['inscrito', 'confirmado', 'cancelado']).optional(),
+    notas:       z.string().optional(),
+});
+
+export const crearPartidaLigaSchema = registrarPartidaLigaSchema.extend({
+    idMesaLiga: z.number().int().positive(),
+});
+
+export const actualizarPartidaLigaSchema = registrarPartidaLigaSchema.partial();
+
 // ── Types ─────────────────────────────────────────────────────
 
 export type CrearLigaDto               = z.infer<typeof crearLigaSchema>;
@@ -105,3 +154,13 @@ export type CrearRondaLigaDto          = z.infer<typeof crearRondaLigaSchema>;
 export type CambiarEstadoRondaLigaDto  = z.infer<typeof cambiarEstadoRondaLigaSchema>;
 export type GenerarMesasLigaDto        = z.infer<typeof generarMesasLigaSchema>;
 export type RegistrarPartidaLigaDto    = z.infer<typeof registrarPartidaLigaSchema>;
+
+export type CrearGrupoFlatDto           = z.infer<typeof crearGrupoFlatSchema>;
+export type CrearRondaLigaFlatDto       = z.infer<typeof crearRondaLigaFlatSchema>;
+export type ActualizarRondaLigaDto      = z.infer<typeof actualizarRondaLigaSchema>;
+export type CrearMesaLigaDto            = z.infer<typeof crearMesaLigaSchema>;
+export type ActualizarMesaLigaDto       = z.infer<typeof actualizarMesaLigaSchema>;
+export type InscribirJugadorLigaFlatDto = z.infer<typeof inscribirJugadorLigaFlatSchema>;
+export type ActualizarJugadorLigaDto    = z.infer<typeof actualizarJugadorLigaSchema>;
+export type CrearPartidaLigaDto         = z.infer<typeof crearPartidaLigaSchema>;
+export type ActualizarPartidaLigaDto    = z.infer<typeof actualizarPartidaLigaSchema>;

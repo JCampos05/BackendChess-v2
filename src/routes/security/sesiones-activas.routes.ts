@@ -5,19 +5,19 @@ import * as sesionesController from '../../controllers/security/sesiones-activas
 
 const router = Router();
 
-// GET  /api/seguridad/sesiones/activas
+// GET  /api/sesiones/activas
 router.get('/activas', authMiddleware, soloAdminGral, sesionesController.getActivas);
 
-// GET  /api/seguridad/sesiones/usuario/:idUsuario
+// GET  /api/sesiones/usuario/:idUsuario
 router.get('/usuario/:idUsuario', authMiddleware, cualquierAdmin, sesionesController.getByUsuario);
 
-// DELETE /api/seguridad/sesiones/:idSesion
+// DELETE /api/sesiones/:idSesion
 router.delete('/:idSesion', authMiddleware, soloAdminGral, sesionesController.cerrarSesion);
 
-// POST /api/seguridad/sesiones/usuario/:idUsuario/cerrar-todas
+// POST /api/sesiones/usuario/:idUsuario/cerrar-todas
 router.post('/usuario/:idUsuario/cerrar-todas', authMiddleware, cualquierAdmin, sesionesController.cerrarTodasUsuario);
 
-// POST /api/seguridad/sesiones/limpiar-expiradas
+// POST /api/sesiones/limpiar-expiradas
 router.post('/limpiar-expiradas', authMiddleware, soloAdminGral, sesionesController.limpiarExpiradas);
 
 export default router;

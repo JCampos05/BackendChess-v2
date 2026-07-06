@@ -11,9 +11,13 @@ export const crearTorneoSchema = z.object({
     rondas: z.number().int().min(1).max(20).default(5),
     cupo_maximo: z.number().int().positive().optional().nullable(),
     notas: z.string().optional(),
-    cierre_inscripciones: z.string().datetime({ offset: true }).optional(),
-    idZonaHoraria: z.number().int().min(1).max(24).optional(),
-    idSistemaPago: z.number().int().positive().optional(),
+    // Acepta tanto datetime-local del navegador (sin segundos/offset) como ISO completo
+    cierre_inscripciones: z.string().regex(
+        /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?(\.\d+)?(Z|[+-]\d{2}:\d{2})?$/,
+        'Formato de fecha/hora inválido',
+    ).optional(),
+    idZonaHoraria: z.number().int().min(1).max(24).optional().nullable(),
+    idSistemaPago: z.number().int().positive().optional().nullable(),
     es_actual: z.boolean().default(true),
 });
 

@@ -13,6 +13,7 @@ import {
     LoginDto,
     CambiarPasswordDto,
     CrearUsuarioDto,
+    ActualizarUsuarioDto,
 } from '../validations/auth.validations';
 
 const JWT_SECRET  = process.env.JWT_SECRET  ?? 'changeme';
@@ -245,6 +246,49 @@ export const obtenerUsuarioPorId = async (idUsuario: number) => {
     });
     if (!usuario) throw new NotFoundError('Usuario no encontrado');
     return usuario;
+};
+
+// ── Actualizar usuario ───────────────────────────────────────
+
+export const actualizarUsuario = async (idUsuario: number, datos: ActualizarUsuarioDto) => {
+    const usuario = await prisma.usuario.findUnique({ where: { idUsuario } });
+    if (!usuario) throw new NotFoundError('Usuario no encontrado');
+
+    if (datos.telefono && datos.telefono !== usuario.telefono) {
+        const existe = await prisma.usuario.findUnique({ where: { telefono: datos.telefono } });
+        if (existe) throw new ConflictError('Ya existe un usuario con ese teléfono');
+    }
+
+    return prisma.usuario.update({
+        where: { idUsuario },
+        data: {
+            ...(datos.telefono !== undefined && { telefono: datos.telefono }),
+            ...(datos.password !== undefined && { password: await bcrypt.hash(datos.password, SALT_ROUNDS) }),
+            ...(datos.rol !== undefined && { rol: datos.rol }),
+            fecha_actualizacion: new Date(),
+        },
+        select: {
+            idUsuario:      true,
+            telefono:       true,
+            rol:            true,
+            activo:         true,
+            fecha_registro: true,
+        },
+    });
+};
+
+// ── Eliminar usuario ─────────────────────────────────────────
+
+export const eliminarUsuario = async (idUsuario: number) => {
+    const usuario = await prisma.usuario.findUnique({ where: { idUsuario } });
+    if (!usuario) throw new NotFoundError('Usuario no encontrado');
+
+    await prisma.sesionActiva.updateMany({
+        where: { idUsuario, activa: 1 },
+        data:  { activa: 0 },
+    });
+
+    await prisma.usuario.delete({ where: { idUsuario } });
 };
 
 // ── Toggle activo ────────────────────────────────────────────

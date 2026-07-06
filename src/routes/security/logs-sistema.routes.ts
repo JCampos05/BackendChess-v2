@@ -5,14 +5,14 @@ import * as logsController from '../../controllers/security/logs-sistema.control
 
 const router = Router();
 
-// GET /api/seguridad/logs
+// GET /api/logs
 router.get('/', authMiddleware, soloAdminGral, logsController.getAll);
 
-// GET /api/seguridad/logs/estadisticas
+// GET /api/logs/estadisticas
 // IMPORTANTE: antes de /:entidad/:idEntidad para evitar conflicto de params
 router.get('/estadisticas', authMiddleware, soloAdminGral, logsController.getEstadisticas);
 
-// GET /api/seguridad/logs/:entidad/:idEntidad
+// GET /api/logs/:entidad/:idEntidad
 router.get('/:entidad/:idEntidad', authMiddleware, soloAdminGral, logsController.getByEntidad);
 
 export default router;

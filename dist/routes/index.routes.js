@@ -7,6 +7,7 @@ exports.registerRoutes = void 0;
 const express_1 = require("express");
 // ── Autenticación y seguridad ─────────────────────────────────
 const auth_routes_1 = __importDefault(require("./auth.routes"));
+const usuario_routes_1 = __importDefault(require("./usuario.routes"));
 // ── Jugadores e inscripciones ─────────────────────────────────
 const jugador_routes_1 = __importDefault(require("./jugador.routes"));
 const inscripcion_routes_1 = __importDefault(require("./inscripcion.routes"));
@@ -16,11 +17,13 @@ const torneo_routes_1 = __importDefault(require("./torneo.routes"));
 const config_routes_1 = __importDefault(require("./config.routes"));
 // ── Liga ──────────────────────────────────────────────────────
 const liga_routes_1 = __importDefault(require("./liga.routes"));
+const liga_flat_routes_1 = require("./liga-flat.routes");
 // ── Catálogos (Bloque 3) ──────────────────────────────────────
 const catalogo_routes_1 = require("./catalogo.routes");
 const estadistica_torneo_routes_1 = __importDefault(require("./estadistica-torneo.routes"));
 const estadisticas_pago_routes_1 = __importDefault(require("./estadisticas-pago.routes"));
 const inscripcion_admin_routes_1 = __importDefault(require("./inscripcion-admin.routes"));
+const inscripciones_generales_routes_1 = __importDefault(require("./inscripciones-generales.routes"));
 // ── Operaciones de torneo (Bloque 3) ──────────────────────────
 const torneo_categoria_routes_1 = __importDefault(require("./torneo-categoria.routes"));
 const ronda_routes_1 = __importDefault(require("./ronda.routes"));
@@ -37,6 +40,7 @@ const registerRoutes = (app) => {
     app.use(`${API}/config`, config_routes_1.default);
     // ── Autenticación ──────────────────────────────────────────
     app.use(`${API}/auth`, auth_routes_1.default);
+    app.use(`${API}/usuarios`, usuario_routes_1.default);
     // ── Jugadores e inscripciones ──────────────────────────────
     app.use(`${API}/jugadores`, jugador_routes_1.default);
     app.use(`${API}/inscripciones`, inscripcion_routes_1.default);
@@ -44,12 +48,18 @@ const registerRoutes = (app) => {
     app.use(`${API}/torneos`, torneo_routes_1.default);
     // ── Liga ───────────────────────────────────────────────────
     app.use(`${API}/ligas`, liga_routes_1.default);
+    app.use(`${API}/liga/info`, liga_flat_routes_1.infoLigaRouter);
+    app.use(`${API}/liga/grupos`, liga_flat_routes_1.grupoLigaRouter);
+    app.use(`${API}/liga/rondas`, liga_flat_routes_1.rondaLigaRouter);
+    app.use(`${API}/liga/mesas`, liga_flat_routes_1.mesaLigaRouter);
+    app.use(`${API}/liga/jugadores`, liga_flat_routes_1.jugadorLigaRouter);
+    app.use(`${API}/liga/partidas`, liga_flat_routes_1.partidaLigaRouter);
     // ── Catálogos (Bloque 3) ───────────────────────────────────
     app.use(`${API}/categorias`, catalogo_routes_1.categoriaRouter);
     app.use(`${API}/ritmos-juego`, catalogo_routes_1.ritmoJuegoRouter);
     app.use(`${API}/sistemas-competencia`, catalogo_routes_1.sistemaCompetenciaRouter);
     app.use(`${API}/sistemas-desempate`, catalogo_routes_1.sistemaDesempateRouter);
-    app.use(`${API}/sistema-pago`, catalogo_routes_1.sistemaPagoRouter);
+    app.use(`${API}/sistemas-pago`, catalogo_routes_1.sistemaPagoRouter);
     // ── Operaciones de torneo (Bloque 3) ───────────────────────
     app.use(`${API}/torneo-categorias`, torneo_categoria_routes_1.default);
     app.use(`${API}/rondas`, ronda_routes_1.default);
@@ -59,10 +69,11 @@ const registerRoutes = (app) => {
     app.use(`${API}/estadisticas`, estadistica_torneo_routes_1.default);
     app.use(`${API}/estadisticas-pago`, estadisticas_pago_routes_1.default);
     app.use(`${API}/inscripciones-admin`, inscripcion_admin_routes_1.default);
+    app.use(`${API}/inscripciones-generales`, inscripciones_generales_routes_1.default);
     // ── Seguridad ─────────────────────────────────────────────────
-    app.use(`${API}/seguridad/sesiones`, sesiones_activas_routes_1.default);
-    app.use(`${API}/seguridad/historial`, historial_accesos_routes_1.default);
-    app.use(`${API}/seguridad/logs`, logs_sistema_routes_1.default);
+    app.use(`${API}/sesiones`, sesiones_activas_routes_1.default);
+    app.use(`${API}/historial-accesos`, historial_accesos_routes_1.default);
+    app.use(`${API}/logs`, logs_sistema_routes_1.default);
     // ── 404 ────────────────────────────────────────────────────
     const notFound = (0, express_1.Router)();
     notFound.all('*', (_req, res) => {

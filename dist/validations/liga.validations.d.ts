@@ -241,6 +241,187 @@ export declare const registrarPartidaLigaSchema: z.ZodObject<{
     descripcion_finalizacion?: string | undefined;
     duracion_minutos?: number | undefined;
 }>;
+export declare const crearGrupoFlatSchema: z.ZodObject<{
+    nombre: z.ZodString;
+    descripcion: z.ZodOptional<z.ZodString>;
+    max_jugadores: z.ZodOptional<z.ZodNumber>;
+    rondas: z.ZodDefault<z.ZodNumber>;
+    premios: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodUnknown>>;
+    desempates: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+} & {
+    idLiga: z.ZodNumber;
+}, "strip", z.ZodTypeAny, {
+    nombre: string;
+    rondas: number;
+    idLiga: number;
+    descripcion?: string | undefined;
+    premios?: Record<string, unknown> | undefined;
+    desempates?: string[] | undefined;
+    max_jugadores?: number | undefined;
+}, {
+    nombre: string;
+    idLiga: number;
+    rondas?: number | undefined;
+    descripcion?: string | undefined;
+    premios?: Record<string, unknown> | undefined;
+    desempates?: string[] | undefined;
+    max_jugadores?: number | undefined;
+}>;
+export declare const crearRondaLigaFlatSchema: z.ZodObject<{
+    idGrupoLiga: z.ZodNumber;
+    numeroRonda: z.ZodNumber;
+    fecha_programada: z.ZodOptional<z.ZodString>;
+    hora_inicio: z.ZodOptional<z.ZodString>;
+    notas: z.ZodOptional<z.ZodString>;
+} & {
+    idLiga: z.ZodNumber;
+}, "strip", z.ZodTypeAny, {
+    idGrupoLiga: number;
+    numeroRonda: number;
+    idLiga: number;
+    notas?: string | undefined;
+    hora_inicio?: string | undefined;
+    fecha_programada?: string | undefined;
+}, {
+    idGrupoLiga: number;
+    numeroRonda: number;
+    idLiga: number;
+    notas?: string | undefined;
+    hora_inicio?: string | undefined;
+    fecha_programada?: string | undefined;
+}>;
+export declare const actualizarRondaLigaSchema: z.ZodObject<{
+    fecha_programada: z.ZodOptional<z.ZodString>;
+    hora_inicio: z.ZodOptional<z.ZodString>;
+    notas: z.ZodOptional<z.ZodString>;
+}, "strip", z.ZodTypeAny, {
+    notas?: string | undefined;
+    hora_inicio?: string | undefined;
+    fecha_programada?: string | undefined;
+}, {
+    notas?: string | undefined;
+    hora_inicio?: string | undefined;
+    fecha_programada?: string | undefined;
+}>;
+export declare const crearMesaLigaSchema: z.ZodObject<{
+    idRondaLiga: z.ZodNumber;
+    numeroMesa: z.ZodNumber;
+    idJugadorBlanco: z.ZodNumber;
+    idJugadorNegro: z.ZodNumber;
+    notas: z.ZodOptional<z.ZodString>;
+}, "strip", z.ZodTypeAny, {
+    idRondaLiga: number;
+    numeroMesa: number;
+    idJugadorBlanco: number;
+    idJugadorNegro: number;
+    notas?: string | undefined;
+}, {
+    idRondaLiga: number;
+    numeroMesa: number;
+    idJugadorBlanco: number;
+    idJugadorNegro: number;
+    notas?: string | undefined;
+}>;
+export declare const actualizarMesaLigaSchema: z.ZodObject<{
+    numeroMesa: z.ZodOptional<z.ZodNumber>;
+    idJugadorBlanco: z.ZodOptional<z.ZodNumber>;
+    idJugadorNegro: z.ZodOptional<z.ZodNumber>;
+    estado: z.ZodOptional<z.ZodEnum<["pendiente", "finalizada"]>>;
+    notas: z.ZodOptional<z.ZodString>;
+}, "strip", z.ZodTypeAny, {
+    notas?: string | undefined;
+    estado?: "pendiente" | "finalizada" | undefined;
+    numeroMesa?: number | undefined;
+    idJugadorBlanco?: number | undefined;
+    idJugadorNegro?: number | undefined;
+}, {
+    notas?: string | undefined;
+    estado?: "pendiente" | "finalizada" | undefined;
+    numeroMesa?: number | undefined;
+    idJugadorBlanco?: number | undefined;
+    idJugadorNegro?: number | undefined;
+}>;
+export declare const inscribirJugadorLigaFlatSchema: z.ZodObject<{
+    idJugador: z.ZodNumber;
+    idGrupoLiga: z.ZodNumber;
+    monto_pagado: z.ZodDefault<z.ZodNumber>;
+    pago_confirmado: z.ZodDefault<z.ZodBoolean>;
+    notas: z.ZodOptional<z.ZodString>;
+} & {
+    idLiga: z.ZodNumber;
+}, "strip", z.ZodTypeAny, {
+    idJugador: number;
+    pago_confirmado: boolean;
+    monto_pagado: number;
+    idGrupoLiga: number;
+    idLiga: number;
+    notas?: string | undefined;
+}, {
+    idJugador: number;
+    idGrupoLiga: number;
+    idLiga: number;
+    notas?: string | undefined;
+    pago_confirmado?: boolean | undefined;
+    monto_pagado?: number | undefined;
+}>;
+export declare const actualizarJugadorLigaSchema: z.ZodObject<{
+    idGrupoLiga: z.ZodOptional<z.ZodNumber>;
+    posicion: z.ZodOptional<z.ZodNumber>;
+    estado: z.ZodOptional<z.ZodEnum<["inscrito", "confirmado", "cancelado"]>>;
+    notas: z.ZodOptional<z.ZodString>;
+}, "strip", z.ZodTypeAny, {
+    notas?: string | undefined;
+    estado?: "cancelado" | "confirmado" | "inscrito" | undefined;
+    idGrupoLiga?: number | undefined;
+    posicion?: number | undefined;
+}, {
+    notas?: string | undefined;
+    estado?: "cancelado" | "confirmado" | "inscrito" | undefined;
+    idGrupoLiga?: number | undefined;
+    posicion?: number | undefined;
+}>;
+export declare const crearPartidaLigaSchema: z.ZodObject<{
+    idJugadorGanador: z.ZodOptional<z.ZodNumber>;
+    resultado: z.ZodEnum<["1-0", "0-1", "0.5-0.5", "0-0"]>;
+    tipo_finalizacion: z.ZodOptional<z.ZodEnum<["jaquemate", "tiempo", "rendicion", "ilegales", "incomparecencia", "empate_comun", "empate_material", "empate_50_movidas", "empate_triple_repeticion", "otro"]>>;
+    descripcion_finalizacion: z.ZodOptional<z.ZodString>;
+    duracion_minutos: z.ZodOptional<z.ZodNumber>;
+} & {
+    idMesaLiga: z.ZodNumber;
+}, "strip", z.ZodTypeAny, {
+    resultado: "1-0" | "0-1" | "0.5-0.5" | "0-0";
+    idMesaLiga: number;
+    idJugadorGanador?: number | undefined;
+    tipo_finalizacion?: "otro" | "jaquemate" | "tiempo" | "rendicion" | "ilegales" | "incomparecencia" | "empate_comun" | "empate_material" | "empate_50_movidas" | "empate_triple_repeticion" | undefined;
+    descripcion_finalizacion?: string | undefined;
+    duracion_minutos?: number | undefined;
+}, {
+    resultado: "1-0" | "0-1" | "0.5-0.5" | "0-0";
+    idMesaLiga: number;
+    idJugadorGanador?: number | undefined;
+    tipo_finalizacion?: "otro" | "jaquemate" | "tiempo" | "rendicion" | "ilegales" | "incomparecencia" | "empate_comun" | "empate_material" | "empate_50_movidas" | "empate_triple_repeticion" | undefined;
+    descripcion_finalizacion?: string | undefined;
+    duracion_minutos?: number | undefined;
+}>;
+export declare const actualizarPartidaLigaSchema: z.ZodObject<{
+    idJugadorGanador: z.ZodOptional<z.ZodOptional<z.ZodNumber>>;
+    resultado: z.ZodOptional<z.ZodEnum<["1-0", "0-1", "0.5-0.5", "0-0"]>>;
+    tipo_finalizacion: z.ZodOptional<z.ZodOptional<z.ZodEnum<["jaquemate", "tiempo", "rendicion", "ilegales", "incomparecencia", "empate_comun", "empate_material", "empate_50_movidas", "empate_triple_repeticion", "otro"]>>>;
+    descripcion_finalizacion: z.ZodOptional<z.ZodOptional<z.ZodString>>;
+    duracion_minutos: z.ZodOptional<z.ZodOptional<z.ZodNumber>>;
+}, "strip", z.ZodTypeAny, {
+    idJugadorGanador?: number | undefined;
+    resultado?: "1-0" | "0-1" | "0.5-0.5" | "0-0" | undefined;
+    tipo_finalizacion?: "otro" | "jaquemate" | "tiempo" | "rendicion" | "ilegales" | "incomparecencia" | "empate_comun" | "empate_material" | "empate_50_movidas" | "empate_triple_repeticion" | undefined;
+    descripcion_finalizacion?: string | undefined;
+    duracion_minutos?: number | undefined;
+}, {
+    idJugadorGanador?: number | undefined;
+    resultado?: "1-0" | "0-1" | "0.5-0.5" | "0-0" | undefined;
+    tipo_finalizacion?: "otro" | "jaquemate" | "tiempo" | "rendicion" | "ilegales" | "incomparecencia" | "empate_comun" | "empate_material" | "empate_50_movidas" | "empate_triple_repeticion" | undefined;
+    descripcion_finalizacion?: string | undefined;
+    duracion_minutos?: number | undefined;
+}>;
 export type CrearLigaDto = z.infer<typeof crearLigaSchema>;
 export type ActualizarLigaDto = z.infer<typeof actualizarLigaSchema>;
 export type FiltrosLigaDto = z.infer<typeof filtrosLigaSchema>;
@@ -252,3 +433,12 @@ export type CrearRondaLigaDto = z.infer<typeof crearRondaLigaSchema>;
 export type CambiarEstadoRondaLigaDto = z.infer<typeof cambiarEstadoRondaLigaSchema>;
 export type GenerarMesasLigaDto = z.infer<typeof generarMesasLigaSchema>;
 export type RegistrarPartidaLigaDto = z.infer<typeof registrarPartidaLigaSchema>;
+export type CrearGrupoFlatDto = z.infer<typeof crearGrupoFlatSchema>;
+export type CrearRondaLigaFlatDto = z.infer<typeof crearRondaLigaFlatSchema>;
+export type ActualizarRondaLigaDto = z.infer<typeof actualizarRondaLigaSchema>;
+export type CrearMesaLigaDto = z.infer<typeof crearMesaLigaSchema>;
+export type ActualizarMesaLigaDto = z.infer<typeof actualizarMesaLigaSchema>;
+export type InscribirJugadorLigaFlatDto = z.infer<typeof inscribirJugadorLigaFlatSchema>;
+export type ActualizarJugadorLigaDto = z.infer<typeof actualizarJugadorLigaSchema>;
+export type CrearPartidaLigaDto = z.infer<typeof crearPartidaLigaSchema>;
+export type ActualizarPartidaLigaDto = z.infer<typeof actualizarPartidaLigaSchema>;

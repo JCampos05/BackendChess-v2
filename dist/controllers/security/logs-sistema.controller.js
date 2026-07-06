@@ -36,19 +36,19 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getByEntidad = exports.getEstadisticas = exports.getAll = void 0;
 const logsService = __importStar(require("../../services/security/logs-sistema.service"));
 const seguridad_validations_1 = require("../../validations/security/seguridad.validations");
-// GET /api/seguridad/logs
+// GET /api/logs
 const getAll = async (req, res, next) => {
     try {
         const filtros = seguridad_validations_1.filtrosLogsSchema.parse(req.query);
-        const resultado = await logsService.listarLogs(filtros);
-        res.json({ ok: true, ...resultado });
+        const { items, total, pagina, totalPaginas } = await logsService.listarLogs(filtros);
+        res.json({ ok: true, data: items, total, pagina, totalPaginas });
     }
     catch (err) {
         next(err);
     }
 };
 exports.getAll = getAll;
-// GET /api/seguridad/logs/estadisticas
+// GET /api/logs/estadisticas
 const getEstadisticas = async (req, res, next) => {
     try {
         const { fechaInicio, fechaFin } = req.query;
@@ -60,7 +60,7 @@ const getEstadisticas = async (req, res, next) => {
     }
 };
 exports.getEstadisticas = getEstadisticas;
-// GET /api/seguridad/logs/:entidad/:idEntidad
+// GET /api/logs/:entidad/:idEntidad
 const getByEntidad = async (req, res, next) => {
     try {
         const { entidad } = req.params;

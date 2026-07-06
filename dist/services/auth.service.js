@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.toggleUsuario = exports.obtenerUsuarioPorId = exports.listarUsuarios = exports.crearUsuario = exports.cambiarPassword = exports.obtenerSesiones = exports.logoutTodas = exports.logout = exports.login = void 0;
+exports.toggleUsuario = exports.eliminarUsuario = exports.actualizarUsuario = exports.obtenerUsuarioPorId = exports.listarUsuarios = exports.crearUsuario = exports.cambiarPassword = exports.obtenerSesiones = exports.logoutTodas = exports.logout = exports.login = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const ua_parser_js_1 = require("ua-parser-js");
@@ -201,6 +201,46 @@ const obtenerUsuarioPorId = async (idUsuario) => {
     return usuario;
 };
 exports.obtenerUsuarioPorId = obtenerUsuarioPorId;
+// ── Actualizar usuario ───────────────────────────────────────
+const actualizarUsuario = async (idUsuario, datos) => {
+    const usuario = await database_1.default.usuario.findUnique({ where: { idUsuario } });
+    if (!usuario)
+        throw new error_middleware_1.NotFoundError('Usuario no encontrado');
+    if (datos.telefono && datos.telefono !== usuario.telefono) {
+        const existe = await database_1.default.usuario.findUnique({ where: { telefono: datos.telefono } });
+        if (existe)
+            throw new error_middleware_1.ConflictError('Ya existe un usuario con ese teléfono');
+    }
+    return database_1.default.usuario.update({
+        where: { idUsuario },
+        data: {
+            ...(datos.telefono !== undefined && { telefono: datos.telefono }),
+            ...(datos.password !== undefined && { password: await bcrypt_1.default.hash(datos.password, SALT_ROUNDS) }),
+            ...(datos.rol !== undefined && { rol: datos.rol }),
+            fecha_actualizacion: new Date(),
+        },
+        select: {
+            idUsuario: true,
+            telefono: true,
+            rol: true,
+            activo: true,
+            fecha_registro: true,
+        },
+    });
+};
+exports.actualizarUsuario = actualizarUsuario;
+// ── Eliminar usuario ─────────────────────────────────────────
+const eliminarUsuario = async (idUsuario) => {
+    const usuario = await database_1.default.usuario.findUnique({ where: { idUsuario } });
+    if (!usuario)
+        throw new error_middleware_1.NotFoundError('Usuario no encontrado');
+    await database_1.default.sesionActiva.updateMany({
+        where: { idUsuario, activa: 1 },
+        data: { activa: 0 },
+    });
+    await database_1.default.usuario.delete({ where: { idUsuario } });
+};
+exports.eliminarUsuario = eliminarUsuario;
 // ── Toggle activo ────────────────────────────────────────────
 const toggleUsuario = async (idUsuario, activo) => {
     const usuario = await database_1.default.usuario.findUnique({ where: { idUsuario } });

@@ -5,10 +5,10 @@ import * as historialController from '../../controllers/security/historial-acces
 
 const router = Router();
 
-// GET /api/seguridad/historial
+// GET /api/historial-accesos
 router.get('/', authMiddleware, soloAdminGral, historialController.getAll);
 
-// GET /api/seguridad/historial/estadisticas
+// GET /api/historial-accesos/estadisticas
 // IMPORTANTE: antes de /:entidad/:idEntidad para evitar conflicto de params
 router.get('/estadisticas', authMiddleware, soloAdminGral, historialController.getEstadisticas);
 

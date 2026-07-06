@@ -86,10 +86,10 @@ export declare const inscribirEnLiga: (datos: InscribirEnLigaDto) => Promise<{
     desempates: Prisma.JsonValue | null;
     idGrupoLiga: number;
     idLiga: number;
+    posicion: number | null;
     idJugadorLiga: number;
     rating_inicial: number;
     numero_jugador: number | null;
-    posicion: number | null;
     puntos: Prisma.Decimal;
     partidas_jugadas: number;
     victorias: number;

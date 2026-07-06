@@ -21,9 +21,12 @@ export declare const obtenerTorneoPorId: (idTorneo: number) => Promise<{
         rondas: number;
         cupo_maximo: number | null;
         cierre_inscripciones: Date | null;
+        idCategoria: number;
         ritmo_juego: string | null;
         sistema_competencia: string | null;
         premios: Prisma.JsonValue;
+        desempates: Prisma.JsonValue;
+        calendario: Prisma.JsonValue;
         idTorneoCat: number;
     }[];
     patrocinadores: {
@@ -87,9 +90,12 @@ export declare const crearTorneo: (datos: CrearTorneoDto) => Promise<{
         rondas: number;
         cupo_maximo: number | null;
         cierre_inscripciones: Date | null;
+        idCategoria: number;
         ritmo_juego: string | null;
         sistema_competencia: string | null;
         premios: Prisma.JsonValue;
+        desempates: Prisma.JsonValue;
+        calendario: Prisma.JsonValue;
         idTorneoCat: number;
     }[];
     patrocinadores: {
@@ -153,9 +159,12 @@ export declare const actualizarTorneo: (idTorneo: number, datos: ActualizarTorne
         rondas: number;
         cupo_maximo: number | null;
         cierre_inscripciones: Date | null;
+        idCategoria: number;
         ritmo_juego: string | null;
         sistema_competencia: string | null;
         premios: Prisma.JsonValue;
+        desempates: Prisma.JsonValue;
+        calendario: Prisma.JsonValue;
         idTorneoCat: number;
     }[];
     patrocinadores: {
@@ -222,9 +231,12 @@ export declare const cambiarEstado: (idTorneo: number, datos: CambiarEstadoDto) 
         rondas: number;
         cupo_maximo: number | null;
         cierre_inscripciones: Date | null;
+        idCategoria: number;
         ritmo_juego: string | null;
         sistema_competencia: string | null;
         premios: Prisma.JsonValue;
+        desempates: Prisma.JsonValue;
+        calendario: Prisma.JsonValue;
         idTorneoCat: number;
     }[];
 } & {

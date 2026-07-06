@@ -36,6 +36,28 @@ export const crearUsuarioSchema = z.object({
     rol: z.enum(['adminGral', 'adminTorneo']).default('adminTorneo'),
 });
 
+export const actualizarUsuarioSchema = z.object({
+    telefono: z
+        .string()
+        .min(10)
+        .max(15)
+        .regex(/^\d+$/, 'Solo dígitos')
+        .optional(),
+    password: z
+        .string()
+        .min(6)
+        .max(100)
+        .optional(),
+    rol: z.enum(['adminGral', 'adminTorneo']).optional(),
+});
+
+export const cambiarPasswordAdminSchema = z.object({
+    passwordActual: z.string().min(6),
+    passwordNuevo: z.string().min(6).max(100),
+});
+
 export type LoginDto = z.infer<typeof loginSchema>;
 export type CambiarPasswordDto = z.infer<typeof cambiarPasswordSchema>;
 export type CrearUsuarioDto = z.infer<typeof crearUsuarioSchema>;
+export type ActualizarUsuarioDto = z.infer<typeof actualizarUsuarioSchema>;
+export type CambiarPasswordAdminDto = z.infer<typeof cambiarPasswordAdminSchema>;

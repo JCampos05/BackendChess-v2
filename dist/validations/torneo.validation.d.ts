@@ -11,8 +11,8 @@ export declare const crearTorneoSchema: z.ZodObject<{
     cupo_maximo: z.ZodNullable<z.ZodOptional<z.ZodNumber>>;
     notas: z.ZodOptional<z.ZodString>;
     cierre_inscripciones: z.ZodOptional<z.ZodString>;
-    idZonaHoraria: z.ZodOptional<z.ZodNumber>;
-    idSistemaPago: z.ZodOptional<z.ZodNumber>;
+    idZonaHoraria: z.ZodNullable<z.ZodOptional<z.ZodNumber>>;
+    idSistemaPago: z.ZodNullable<z.ZodOptional<z.ZodNumber>>;
     es_actual: z.ZodDefault<z.ZodBoolean>;
 }, "strip", z.ZodTypeAny, {
     lugar: string;
@@ -27,8 +27,8 @@ export declare const crearTorneoSchema: z.ZodObject<{
     url_maps?: string | undefined;
     cupo_maximo?: number | null | undefined;
     cierre_inscripciones?: string | undefined;
-    idZonaHoraria?: number | undefined;
-    idSistemaPago?: number | undefined;
+    idZonaHoraria?: number | null | undefined;
+    idSistemaPago?: number | null | undefined;
 }, {
     lugar: string;
     direccion: string;
@@ -42,8 +42,8 @@ export declare const crearTorneoSchema: z.ZodObject<{
     rondas?: number | undefined;
     cupo_maximo?: number | null | undefined;
     cierre_inscripciones?: string | undefined;
-    idZonaHoraria?: number | undefined;
-    idSistemaPago?: number | undefined;
+    idZonaHoraria?: number | null | undefined;
+    idSistemaPago?: number | null | undefined;
 }>;
 export declare const actualizarTorneoSchema: z.ZodObject<{
     nombre: z.ZodOptional<z.ZodOptional<z.ZodString>>;
@@ -57,8 +57,8 @@ export declare const actualizarTorneoSchema: z.ZodObject<{
     cupo_maximo: z.ZodOptional<z.ZodNullable<z.ZodOptional<z.ZodNumber>>>;
     notas: z.ZodOptional<z.ZodOptional<z.ZodString>>;
     cierre_inscripciones: z.ZodOptional<z.ZodOptional<z.ZodString>>;
-    idZonaHoraria: z.ZodOptional<z.ZodOptional<z.ZodNumber>>;
-    idSistemaPago: z.ZodOptional<z.ZodOptional<z.ZodNumber>>;
+    idZonaHoraria: z.ZodOptional<z.ZodNullable<z.ZodOptional<z.ZodNumber>>>;
+    idSistemaPago: z.ZodOptional<z.ZodNullable<z.ZodOptional<z.ZodNumber>>>;
     es_actual: z.ZodOptional<z.ZodDefault<z.ZodBoolean>>;
 }, "strip", z.ZodTypeAny, {
     notas?: string | undefined;
@@ -73,8 +73,8 @@ export declare const actualizarTorneoSchema: z.ZodObject<{
     rondas?: number | undefined;
     cupo_maximo?: number | null | undefined;
     cierre_inscripciones?: string | undefined;
-    idZonaHoraria?: number | undefined;
-    idSistemaPago?: number | undefined;
+    idZonaHoraria?: number | null | undefined;
+    idSistemaPago?: number | null | undefined;
 }, {
     notas?: string | undefined;
     nombre?: string | undefined;
@@ -88,8 +88,8 @@ export declare const actualizarTorneoSchema: z.ZodObject<{
     rondas?: number | undefined;
     cupo_maximo?: number | null | undefined;
     cierre_inscripciones?: string | undefined;
-    idZonaHoraria?: number | undefined;
-    idSistemaPago?: number | undefined;
+    idZonaHoraria?: number | null | undefined;
+    idSistemaPago?: number | null | undefined;
 }>;
 export declare const cambiarEstadoSchema: z.ZodObject<{
     estado: z.ZodEnum<["borrador", "publicado", "en_curso", "finalizado", "cancelado"]>;

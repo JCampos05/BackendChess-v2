@@ -38,9 +38,9 @@ const auth_middleware_1 = require("../../middleware/auth.middleware");
 const roles_middleware_1 = require("../../middleware/roles.middleware");
 const historialController = __importStar(require("../../controllers/security/historial-accesos.controller"));
 const router = (0, express_1.Router)();
-// GET /api/seguridad/historial
+// GET /api/historial-accesos
 router.get('/', auth_middleware_1.authMiddleware, roles_middleware_1.soloAdminGral, historialController.getAll);
-// GET /api/seguridad/historial/estadisticas
+// GET /api/historial-accesos/estadisticas
 // IMPORTANTE: antes de /:entidad/:idEntidad para evitar conflicto de params
 router.get('/estadisticas', auth_middleware_1.authMiddleware, roles_middleware_1.soloAdminGral, historialController.getEstadisticas);
 exports.default = router;

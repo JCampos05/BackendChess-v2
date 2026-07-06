@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.registrarPartidaLigaSchema = exports.generarMesasLigaSchema = exports.cambiarEstadoRondaLigaSchema = exports.crearRondaLigaSchema = exports.confirmarPagoLigaSchema = exports.inscribirJugadorLigaSchema = exports.actualizarGrupoSchema = exports.crearGrupoSchema = exports.filtrosLigaSchema = exports.actualizarLigaSchema = exports.crearLigaSchema = void 0;
+exports.actualizarPartidaLigaSchema = exports.crearPartidaLigaSchema = exports.actualizarJugadorLigaSchema = exports.inscribirJugadorLigaFlatSchema = exports.actualizarMesaLigaSchema = exports.crearMesaLigaSchema = exports.actualizarRondaLigaSchema = exports.crearRondaLigaFlatSchema = exports.crearGrupoFlatSchema = exports.registrarPartidaLigaSchema = exports.generarMesasLigaSchema = exports.cambiarEstadoRondaLigaSchema = exports.crearRondaLigaSchema = exports.confirmarPagoLigaSchema = exports.inscribirJugadorLigaSchema = exports.actualizarGrupoSchema = exports.crearGrupoSchema = exports.filtrosLigaSchema = exports.actualizarLigaSchema = exports.crearLigaSchema = void 0;
 const zod_1 = require("zod");
 // ── Liga ─────────────────────────────────────────────────────
 exports.crearLigaSchema = zod_1.z.object({
@@ -77,4 +77,43 @@ exports.registrarPartidaLigaSchema = zod_1.z.object({
     descripcion_finalizacion: zod_1.z.string().optional(),
     duracion_minutos: zod_1.z.number().int().positive().optional(),
 });
+// ── Recursos planos (módulo de Ligas, rutas /api/liga/...) ─────
+exports.crearGrupoFlatSchema = exports.crearGrupoSchema.extend({
+    idLiga: zod_1.z.number().int().positive(),
+});
+exports.crearRondaLigaFlatSchema = exports.crearRondaLigaSchema.extend({
+    idLiga: zod_1.z.number().int().positive(),
+});
+exports.actualizarRondaLigaSchema = zod_1.z.object({
+    fecha_programada: zod_1.z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    hora_inicio: zod_1.z.string().regex(/^\d{2}:\d{2}$/).optional(),
+    notas: zod_1.z.string().optional(),
+});
+exports.crearMesaLigaSchema = zod_1.z.object({
+    idRondaLiga: zod_1.z.number().int().positive(),
+    numeroMesa: zod_1.z.number().int().positive(),
+    idJugadorBlanco: zod_1.z.number().int().positive(),
+    idJugadorNegro: zod_1.z.number().int().positive(),
+    notas: zod_1.z.string().optional(),
+});
+exports.actualizarMesaLigaSchema = zod_1.z.object({
+    numeroMesa: zod_1.z.number().int().positive().optional(),
+    idJugadorBlanco: zod_1.z.number().int().positive().optional(),
+    idJugadorNegro: zod_1.z.number().int().positive().optional(),
+    estado: zod_1.z.enum(['pendiente', 'finalizada']).optional(),
+    notas: zod_1.z.string().optional(),
+});
+exports.inscribirJugadorLigaFlatSchema = exports.inscribirJugadorLigaSchema.extend({
+    idLiga: zod_1.z.number().int().positive(),
+});
+exports.actualizarJugadorLigaSchema = zod_1.z.object({
+    idGrupoLiga: zod_1.z.number().int().positive().optional(),
+    posicion: zod_1.z.number().int().positive().optional(),
+    estado: zod_1.z.enum(['inscrito', 'confirmado', 'cancelado']).optional(),
+    notas: zod_1.z.string().optional(),
+});
+exports.crearPartidaLigaSchema = exports.registrarPartidaLigaSchema.extend({
+    idMesaLiga: zod_1.z.number().int().positive(),
+});
+exports.actualizarPartidaLigaSchema = exports.registrarPartidaLigaSchema.partial();
 //# sourceMappingURL=liga.validations.js.map

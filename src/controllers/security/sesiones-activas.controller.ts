@@ -2,7 +2,7 @@ import { Response, NextFunction } from 'express';
 import { AuthRequest } from '../../types';
 import * as sesionesService from '../../services/security/sesiones-activas.service';
 
-// GET /api/seguridad/sesiones/activas
+// GET /api/sesiones/activas
 export const getActivas = async (
     req: AuthRequest,
     res: Response,
@@ -16,7 +16,7 @@ export const getActivas = async (
     }
 };
 
-// GET /api/seguridad/sesiones/usuario/:idUsuario
+// GET /api/sesiones/usuario/:idUsuario
 export const getByUsuario = async (
     req: AuthRequest,
     res: Response,
@@ -35,7 +35,7 @@ export const getByUsuario = async (
     }
 };
 
-// DELETE /api/seguridad/sesiones/:idSesion
+// DELETE /api/sesiones/:idSesion
 export const cerrarSesion = async (
     req: AuthRequest,
     res: Response,
@@ -54,7 +54,7 @@ export const cerrarSesion = async (
     }
 };
 
-// POST /api/seguridad/sesiones/usuario/:idUsuario/cerrar-todas
+// POST /api/sesiones/usuario/:idUsuario/cerrar-todas
 export const cerrarTodasUsuario = async (
     req: AuthRequest,
     res: Response,
@@ -84,7 +84,7 @@ export const cerrarTodasUsuario = async (
     }
 };
 
-// POST /api/seguridad/sesiones/limpiar-expiradas
+// POST /api/sesiones/limpiar-expiradas
 export const limpiarExpiradas = async (
     req: AuthRequest,
     res: Response,

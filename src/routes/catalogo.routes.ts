@@ -48,7 +48,7 @@ sistemaDesempateRouter.put('/:id', authMiddleware, soloAdminGral, Cat.updateSist
 sistemaDesempateRouter.delete('/:id', authMiddleware, soloAdminGral, Cat.deleteSistemaDesempate);
 
 // ════════════════════════════════════════════════════════════
-// /api/sistema-pago
+// /api/sistemas-pago
 // ════════════════════════════════════════════════════════════
 export const sistemaPagoRouter = Router();
 

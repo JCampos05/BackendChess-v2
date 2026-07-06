@@ -3,7 +3,7 @@ import { AuthRequest } from '../../types';
 import * as logsService from '../../services/security/logs-sistema.service';
 import { filtrosLogsSchema } from '../../validations/security/seguridad.validations';
 
-// GET /api/seguridad/logs
+// GET /api/logs
 export const getAll = async (
     req: AuthRequest,
     res: Response,
@@ -11,14 +11,14 @@ export const getAll = async (
 ): Promise<void> => {
     try {
         const filtros = filtrosLogsSchema.parse(req.query);
-        const resultado = await logsService.listarLogs(filtros);
-        res.json({ ok: true, ...resultado });
+        const { items, total, pagina, totalPaginas } = await logsService.listarLogs(filtros);
+        res.json({ ok: true, data: items, total, pagina, totalPaginas });
     } catch (err) {
         next(err);
     }
 };
 
-// GET /api/seguridad/logs/estadisticas
+// GET /api/logs/estadisticas
 export const getEstadisticas = async (
     req: AuthRequest,
     res: Response,
@@ -33,7 +33,7 @@ export const getEstadisticas = async (
     }
 };
 
-// GET /api/seguridad/logs/:entidad/:idEntidad
+// GET /api/logs/:entidad/:idEntidad
 export const getByEntidad = async (
     req: AuthRequest,
     res: Response,

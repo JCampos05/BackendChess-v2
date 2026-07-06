@@ -38,15 +38,15 @@ const auth_middleware_1 = require("../../middleware/auth.middleware");
 const roles_middleware_1 = require("../../middleware/roles.middleware");
 const sesionesController = __importStar(require("../../controllers/security/sesiones-activas.controller"));
 const router = (0, express_1.Router)();
-// GET  /api/seguridad/sesiones/activas
+// GET  /api/sesiones/activas
 router.get('/activas', auth_middleware_1.authMiddleware, roles_middleware_1.soloAdminGral, sesionesController.getActivas);
-// GET  /api/seguridad/sesiones/usuario/:idUsuario
+// GET  /api/sesiones/usuario/:idUsuario
 router.get('/usuario/:idUsuario', auth_middleware_1.authMiddleware, roles_middleware_1.cualquierAdmin, sesionesController.getByUsuario);
-// DELETE /api/seguridad/sesiones/:idSesion
+// DELETE /api/sesiones/:idSesion
 router.delete('/:idSesion', auth_middleware_1.authMiddleware, roles_middleware_1.soloAdminGral, sesionesController.cerrarSesion);
-// POST /api/seguridad/sesiones/usuario/:idUsuario/cerrar-todas
+// POST /api/sesiones/usuario/:idUsuario/cerrar-todas
 router.post('/usuario/:idUsuario/cerrar-todas', auth_middleware_1.authMiddleware, roles_middleware_1.cualquierAdmin, sesionesController.cerrarTodasUsuario);
-// POST /api/seguridad/sesiones/limpiar-expiradas
+// POST /api/sesiones/limpiar-expiradas
 router.post('/limpiar-expiradas', auth_middleware_1.authMiddleware, roles_middleware_1.soloAdminGral, sesionesController.limpiarExpiradas);
 exports.default = router;
 //# sourceMappingURL=sesiones-activas.routes.js.map

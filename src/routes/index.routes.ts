@@ -2,6 +2,7 @@ import { Application, Router } from 'express';
 
 // ── Autenticación y seguridad ─────────────────────────────────
 import authRoutes from './auth.routes';
+import usuarioRoutes from './usuario.routes';
 
 // ── Jugadores e inscripciones ─────────────────────────────────
 import jugadorRoutes from './jugador.routes';
@@ -15,12 +16,21 @@ import configRoutes from './config.routes';
 
 // ── Liga ──────────────────────────────────────────────────────
 import ligaRoutes from './liga.routes';
+import {
+    infoLigaRouter,
+    grupoLigaRouter,
+    rondaLigaRouter,
+    mesaLigaRouter,
+    jugadorLigaRouter,
+    partidaLigaRouter,
+} from './liga-flat.routes';
 
 // ── Catálogos (Bloque 3) ──────────────────────────────────────
 import { categoriaRouter, ritmoJuegoRouter, sistemaCompetenciaRouter, sistemaDesempateRouter, sistemaPagoRouter } from './catalogo.routes';
 import estadisticaRoutes from './estadistica-torneo.routes';
 import estadisticasPagoRoutes from './estadisticas-pago.routes';
 import inscripcionAdminRoutes from './inscripcion-admin.routes';
+import inscripcionesGeneralesRoutes from './inscripciones-generales.routes';
 
 // ── Operaciones de torneo (Bloque 3) ──────────────────────────
 import torneoCategoriaRouter from './torneo-categoria.routes';
@@ -42,6 +52,7 @@ export const registerRoutes = (app: Application): void => {
 
     // ── Autenticación ──────────────────────────────────────────
     app.use(`${API}/auth`, authRoutes);
+    app.use(`${API}/usuarios`, usuarioRoutes);
 
     // ── Jugadores e inscripciones ──────────────────────────────
     app.use(`${API}/jugadores`, jugadorRoutes);
@@ -52,13 +63,19 @@ export const registerRoutes = (app: Application): void => {
 
     // ── Liga ───────────────────────────────────────────────────
     app.use(`${API}/ligas`, ligaRoutes);
+    app.use(`${API}/liga/info`, infoLigaRouter);
+    app.use(`${API}/liga/grupos`, grupoLigaRouter);
+    app.use(`${API}/liga/rondas`, rondaLigaRouter);
+    app.use(`${API}/liga/mesas`, mesaLigaRouter);
+    app.use(`${API}/liga/jugadores`, jugadorLigaRouter);
+    app.use(`${API}/liga/partidas`, partidaLigaRouter);
 
     // ── Catálogos (Bloque 3) ───────────────────────────────────
     app.use(`${API}/categorias`, categoriaRouter);
     app.use(`${API}/ritmos-juego`, ritmoJuegoRouter);
     app.use(`${API}/sistemas-competencia`, sistemaCompetenciaRouter);
     app.use(`${API}/sistemas-desempate`, sistemaDesempateRouter);
-    app.use(`${API}/sistema-pago`, sistemaPagoRouter);
+    app.use(`${API}/sistemas-pago`, sistemaPagoRouter);
 
     // ── Operaciones de torneo (Bloque 3) ───────────────────────
     app.use(`${API}/torneo-categorias`, torneoCategoriaRouter);
@@ -70,11 +87,12 @@ export const registerRoutes = (app: Application): void => {
     app.use(`${API}/estadisticas`, estadisticaRoutes);
     app.use(`${API}/estadisticas-pago`, estadisticasPagoRoutes);
     app.use(`${API}/inscripciones-admin`, inscripcionAdminRoutes);
+    app.use(`${API}/inscripciones-generales`, inscripcionesGeneralesRoutes);
 
     // ── Seguridad ─────────────────────────────────────────────────
-    app.use(`${API}/seguridad/sesiones`, sesionesRoutes);
-    app.use(`${API}/seguridad/historial`, historialRoutes);
-    app.use(`${API}/seguridad/logs`, logsSistemaRoutes);
+    app.use(`${API}/sesiones`, sesionesRoutes);
+    app.use(`${API}/historial-accesos`, historialRoutes);
+    app.use(`${API}/logs`, logsSistemaRoutes);
 
     // ── 404 ────────────────────────────────────────────────────
     const notFound = Router();
