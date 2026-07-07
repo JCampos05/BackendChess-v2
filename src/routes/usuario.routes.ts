@@ -11,6 +11,7 @@ const router = Router();
 router.use(authMiddleware, soloAdminGral);
 
 router.get   ('/',                       usuarioController.listarUsuarios);
+router.get   ('/:id/torneos',            usuarioController.getTorneosAsignados);
 router.get   ('/:id',                    usuarioController.obtenerUsuario);
 router.post  ('/',                       usuarioController.crearUsuario);
 router.put   ('/:id',                    usuarioController.actualizarUsuario);

@@ -39,6 +39,9 @@ import mesaRouter from './mesa.routes';
 import partidaRouter from './partida.routes';
 import historialRouter from './historial-emparejamiento.routes';
 
+// ── Patrocinadores ────────────────────────────────────────────
+import patrocinadorRoutes from './patrocinador.routes';
+
 // ── Seguridad ─────────────────────────────────────────────────
 import sesionesRoutes from './security/sesiones-activas.routes';
 import historialRoutes from './security/historial-accesos.routes';
@@ -88,6 +91,9 @@ export const registerRoutes = (app: Application): void => {
     app.use(`${API}/estadisticas-pago`, estadisticasPagoRoutes);
     app.use(`${API}/inscripciones-admin`, inscripcionAdminRoutes);
     app.use(`${API}/inscripciones-generales`, inscripcionesGeneralesRoutes);
+
+    // ── Patrocinadores ─────────────────────────────────────────────
+    app.use(`${API}/patrocinadores`, patrocinadorRoutes);
 
     // ── Seguridad ─────────────────────────────────────────────────
     app.use(`${API}/sesiones`, sesionesRoutes);

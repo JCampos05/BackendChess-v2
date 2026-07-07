@@ -6,6 +6,7 @@ import {
     cambiarPasswordAdminSchema,
 } from '../validations/auth.validations';
 import * as authService from '../services/auth.service';
+import prisma from '../config/database';
 
 // GET /api/usuarios?orden=&direccion=
 export const listarUsuarios = async (
@@ -81,6 +82,42 @@ export const eliminarUsuario = async (
         }
         await authService.eliminarUsuario(idUsuario);
         res.json({ success: true, message: 'Usuario eliminado exitosamente', data: null });
+    } catch (err) {
+        next(err);
+    }
+};
+
+// GET /api/usuarios/:id/torneos — torneos donde el usuario es adminTorneo activo
+export const getTorneosAsignados = async (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const idUsuario = Number(req.params.id);
+        if (isNaN(idUsuario)) {
+            res.status(400).json({ success: false, message: 'ID de usuario inválido', data: null });
+            return;
+        }
+        const asignaciones = await prisma.usuarioTorneo.findMany({
+            where: { idUsuario, activo: true },
+            include: {
+                torneo: {
+                    select: {
+                        idTorneo: true,
+                        nombre: true,
+                        fecha: true,
+                        lugar: true,
+                        estado: true,
+                        activo: true,
+                        es_actual: true,
+                    },
+                },
+            },
+            orderBy: { fechaAsignacion: 'desc' },
+        });
+        const torneos = asignaciones.map(a => ({ ...a.torneo, idUsuarioTorneo: a.idUsuarioTorneo, fechaAsignacion: a.fechaAsignacion }));
+        res.json({ success: true, message: 'Torneos asignados obtenidos', data: torneos, total: torneos.length });
     } catch (err) {
         next(err);
     }
