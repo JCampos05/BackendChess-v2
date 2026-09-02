@@ -6,7 +6,7 @@ import {
     ActualizarInscripcionDto,
     ConfirmarPagoDto,
 } from '../validations/inscripcion.validations';
-import { inscripcionesCerradas, jugadorPuedeInscribirse } from '../utils/fecha.utils';
+import { inscripcionesCerradas, jugadorPuedeInscribirse, calcularEdadParaTorneo } from '../utils/fecha.utils';
 
 // ── Obtener por ID ───────────────────────────────────────────
 
@@ -38,7 +38,7 @@ export const listarInscripcionesTorneo = async (
     idTorneo: number,
     soloConfirmados = false
 ) => {
-    return prisma.inscripcion.findMany({
+    const inscripciones = await prisma.inscripcion.findMany({
         where: {
             idTorneo,
             ...(soloConfirmados && { estado: 'confirmado' }),
@@ -47,15 +47,28 @@ export const listarInscripcionesTorneo = async (
         include: {
             jugador: {
                 select: {
-                    idJugador: true,
-                    nombre:    true,
-                    apellido1: true,
-                    apellido2: true,
-                    rating:    true,
+                    idJugador:        true,
+                    nombre:           true,
+                    apellido1:        true,
+                    apellido2:        true,
+                    telefono:         true,
+                    rating:           true,
+                    fecha_nacimiento: true,
                 },
             },
             categoria: { select: { idCategoria: true, nombre: true } },
+            torneo:    { select: { fecha: true } },
         },
+    });
+
+    // Compatibilidad con inscripciones creadas antes de que `crearInscripcion`
+    // guardara `edad`: si quedó null, se calcula al vuelo (no se persiste).
+    return inscripciones.map((insc) => {
+        if (insc.edad !== null || !insc.jugador.fecha_nacimiento) return insc;
+        return {
+            ...insc,
+            edad: calcularEdadParaTorneo(insc.jugador.fecha_nacimiento, insc.torneo.fecha, 'anio_torneo'),
+        };
     });
 };
 
@@ -102,7 +115,9 @@ export const crearInscripcion = async (datos: CrearInscripcionDto) => {
         if (await inscripcionesCerradas(torneo.cierre_inscripciones))
             throw new ForbiddenError('El plazo de inscripciones ha cerrado');
 
-        // 4. Validar edad si aplica
+        // 4. Validar edad si aplica y calcularla para guardarla en la inscripción
+        //    (se guarda al inscribir — ver comentario del campo `edad` en schema.prisma)
+        let edadCalculada: number | null = null;
         if (datos.idCategoria && jugador.fecha_nacimiento) {
             const categoria = await tx.categoria.findUnique({
                 where:  { idCategoria: datos.idCategoria },
@@ -118,7 +133,10 @@ export const crearInscripcion = async (datos: CrearInscripcionDto) => {
                 );
                 if (!check.puede)
                     throw new ForbiddenError(check.motivo ?? 'El jugador no cumple los requisitos de edad');
+                edadCalculada = check.edad;
             }
+        } else if (jugador.fecha_nacimiento) {
+            edadCalculada = calcularEdadParaTorneo(jugador.fecha_nacimiento, torneo.fecha, 'anio_torneo');
         }
 
         // 5. Verificar duplicado
@@ -141,6 +159,7 @@ export const crearInscripcion = async (datos: CrearInscripcionDto) => {
                 monto_pagado:        datos.monto_pagado  ?? 0,
                 pago_confirmado:     datos.pago_confirmado ?? false,
                 estado:              'pendiente_pago',
+                edad:                edadCalculada,
                 notas:               datos.notas,
                 fecha_inscripcion:   new Date(),
                 fecha_actualizacion: new Date(),

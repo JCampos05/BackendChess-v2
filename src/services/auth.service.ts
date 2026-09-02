@@ -226,7 +226,7 @@ export const listarUsuarios = async () => {
                 },
             },
         },
-        orderBy: { fecha_registro: 'desc' },
+        orderBy: { idUsuario: 'asc' },
     });
 };
 
