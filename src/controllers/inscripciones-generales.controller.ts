@@ -18,9 +18,10 @@ export const getResumenGeneral = async (req: Request, res: Response, next: NextF
     } catch (err) { next(err); }
 };
 
-export const getEvolucionTemporal = async (_req: Request, res: Response, next: NextFunction) => {
+export const getEvolucionTemporal = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const evolucion = await service.obtenerEvolucionTemporal();
+        const periodo = parsePeriodo(req.query.periodo);
+        const evolucion = await service.obtenerEvolucionTemporal(periodo);
         res.json({ ok: true, data: evolucion });
     } catch (err) { next(err); }
 };

@@ -77,12 +77,30 @@ export const obtenerResumenGeneral = async (periodo?: Periodo) => {
 // EVOLUCIÓN TEMPORAL
 // ============================================================
 //
-// Esta gráfica es intencionalmente independiente del selector de período de
-// la vista (día/semana/mes/año): siempre agrupa TODO el histórico por año,
+// Por defecto (sin periodo, checkbox de filtro apagado en la vista) esta
+// gráfica ignora el selector de período y agrupa TODO el histórico por año,
 // desde la primera inscripción registrada hasta el año en curso, para que
-// nunca "desaparezca" el año actual ni dependa de una ventana móvil.
+// nunca "desaparezca" el año actual ni dependa de una ventana móvil. Cuando
+// el usuario aplica el filtro (checkbox + botón Aplicar) sí se agrupa según
+// el período elegido, dentro de una ventana que siempre incluye el bucket
+// actual (hoy/esta semana/este mes/este año).
 
-export const obtenerEvolucionTemporal = async () => {
+const BUCKETS_POR_PERIODO: Record<Periodo, { cantidad: number; unidad: 'dia' | 'semana' | 'mes' | 'anio' }> = {
+    dia: { cantidad: 14, unidad: 'dia' },
+    semana: { cantidad: 8, unidad: 'semana' },
+    mes: { cantidad: 12, unidad: 'mes' },
+    anio: { cantidad: 5, unidad: 'anio' },
+};
+
+const etiquetaBucket = (fecha: Date, unidad: 'dia' | 'semana' | 'mes' | 'anio'): string => {
+    if (unidad === 'anio') return `${fecha.getFullYear()}`;
+    if (unidad === 'mes') {
+        return fecha.toLocaleDateString('es-MX', { month: 'short', year: '2-digit' });
+    }
+    return fecha.toLocaleDateString('es-MX', { day: '2-digit', month: 'short' });
+};
+
+const obtenerEvolucionCompleta = async () => {
     const inscripciones = await prisma.inscripcion.findMany({
         select: { fecha_inscripcion: true },
     });
@@ -108,6 +126,76 @@ export const obtenerEvolucionTemporal = async () => {
     return Array.from(buckets.entries())
         .sort(([a], [b]) => a - b)
         .map(([anio, total]) => ({ periodo: `${anio}`, total }));
+};
+
+const obtenerEvolucionPorPeriodo = async (periodo: Periodo) => {
+    const { cantidad, unidad } = BUCKETS_POR_PERIODO[periodo];
+
+    const fin = new Date();
+    const inicio = new Date(fin);
+    // cantidad - 1: el bucket más reciente debe ser el período ACTUAL
+    // (hoy/esta semana/este mes/este año), no el período anterior a él.
+    if (unidad === 'dia')    inicio.setDate(inicio.getDate() - (cantidad - 1));
+    if (unidad === 'semana') inicio.setDate(inicio.getDate() - (cantidad - 1) * 7);
+    if (unidad === 'mes')    inicio.setMonth(inicio.getMonth() - (cantidad - 1));
+    if (unidad === 'anio')   inicio.setFullYear(inicio.getFullYear() - (cantidad - 1));
+    inicio.setHours(0, 0, 0, 0);
+
+    const inscripciones = await prisma.inscripcion.findMany({
+        where: { fecha_inscripcion: { gte: inicio, lte: fin } },
+        select: { fecha_inscripcion: true },
+    });
+
+    const buckets: { clave: string; etiqueta: string; total: number }[] = [];
+    const cursor = new Date(inicio);
+
+    for (let i = 0; i < cantidad; i++) {
+        let clave: string;
+        if (unidad === 'anio') {
+            clave = `${cursor.getFullYear()}`;
+        } else if (unidad === 'mes') {
+            clave = `${cursor.getFullYear()}-${cursor.getMonth()}`;
+        } else {
+            clave = cursor.toISOString().split('T')[0];
+        }
+        buckets.push({ clave, etiqueta: etiquetaBucket(cursor, unidad), total: 0 });
+
+        if (unidad === 'dia')    cursor.setDate(cursor.getDate() + 1);
+        if (unidad === 'semana') cursor.setDate(cursor.getDate() + 7);
+        if (unidad === 'mes')    cursor.setMonth(cursor.getMonth() + 1);
+        if (unidad === 'anio')   cursor.setFullYear(cursor.getFullYear() + 1);
+    }
+
+    const indicePorClave = new Map(buckets.map((b, i) => [b.clave, i]));
+
+    for (const ins of inscripciones) {
+        if (!ins.fecha_inscripcion) continue;
+        const fecha = new Date(ins.fecha_inscripcion);
+
+        let clave: string;
+        if (unidad === 'anio') {
+            clave = `${fecha.getFullYear()}`;
+        } else if (unidad === 'mes') {
+            clave = `${fecha.getFullYear()}-${fecha.getMonth()}`;
+        } else if (unidad === 'semana') {
+            const diffMs = fecha.getTime() - inicio.getTime();
+            const semanaIdx = Math.floor(diffMs / (7 * 24 * 60 * 60 * 1000));
+            const bucket = buckets[semanaIdx];
+            if (bucket) bucket.total += 1;
+            continue;
+        } else {
+            clave = fecha.toISOString().split('T')[0];
+        }
+
+        const idx = indicePorClave.get(clave);
+        if (idx !== undefined) buckets[idx].total += 1;
+    }
+
+    return buckets.map(b => ({ periodo: b.etiqueta, total: b.total }));
+};
+
+export const obtenerEvolucionTemporal = async (periodo?: Periodo) => {
+    return periodo ? obtenerEvolucionPorPeriodo(periodo) : obtenerEvolucionCompleta();
 };
 
 // ============================================================
