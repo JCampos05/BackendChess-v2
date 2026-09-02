@@ -28,13 +28,14 @@ const inicioDePeriodo = (periodo: Periodo): Date => {
 // RESUMEN GENERAL
 // ============================================================
 
-export const obtenerResumenGeneral = async (periodo: Periodo) => {
-    const desde = inicioDePeriodo(periodo);
+export const obtenerResumenGeneral = async (periodo?: Periodo) => {
+    // Sin periodo (default): no se filtra por fecha, se muestra el histórico real completo.
+    const desde = periodo ? inicioDePeriodo(periodo) : undefined;
 
     const [inscripciones, torneosActivos] = await Promise.all([
         prisma.inscripcion.findMany({
-            where: { fecha_inscripcion: { gte: desde } },
-            select: { estado: true },
+            where: desde ? { fecha_inscripcion: { gte: desde } } : {},
+            select: { estado: true, fecha_inscripcion: true },
         }),
         prisma.torneo.count({ where: { activo: true } }),
     ]);
@@ -46,7 +47,23 @@ export const obtenerResumenGeneral = async (periodo: Periodo) => {
     }
 
     const totalInscripciones = inscripciones.length;
-    const dias = DIAS_POR_PERIODO[periodo];
+
+    let dias: number;
+    if (periodo) {
+        dias = DIAS_POR_PERIODO[periodo];
+    } else {
+        // Sin filtro: promediar sobre el rango real de datos (primera inscripción -> hoy).
+        const fechas = inscripciones
+            .map(i => i.fecha_inscripcion)
+            .filter((f): f is Date => f !== null);
+        if (fechas.length > 0) {
+            const masAntigua = new Date(Math.min(...fechas.map(f => f.getTime())));
+            const diffMs = Date.now() - masAntigua.getTime();
+            dias = Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+        } else {
+            dias = 1;
+        }
+    }
 
     return {
         totalInscripciones,
@@ -59,95 +76,38 @@ export const obtenerResumenGeneral = async (periodo: Periodo) => {
 // ============================================================
 // EVOLUCIÓN TEMPORAL
 // ============================================================
+//
+// Esta gráfica es intencionalmente independiente del selector de período de
+// la vista (día/semana/mes/año): siempre agrupa TODO el histórico por año,
+// desde la primera inscripción registrada hasta el año en curso, para que
+// nunca "desaparezca" el año actual ni dependa de una ventana móvil.
 
-const BUCKETS_POR_PERIODO: Record<Periodo, { cantidad: number; unidad: 'dia' | 'semana' | 'mes' | 'anio' }> = {
-    dia: { cantidad: 14, unidad: 'dia' },
-    semana: { cantidad: 8, unidad: 'semana' },
-    mes: { cantidad: 12, unidad: 'mes' },
-    anio: { cantidad: 5, unidad: 'anio' },
-};
-
-const etiquetaBucket = (fecha: Date, unidad: 'dia' | 'semana' | 'mes' | 'anio'): string => {
-    if (unidad === 'anio') return `${fecha.getFullYear()}`;
-    if (unidad === 'mes') {
-        return fecha.toLocaleDateString('es-MX', { month: 'short', year: '2-digit' });
-    }
-    // 'dia' y 'semana' se etiquetan por día de inicio de bucket
-    return fecha.toLocaleDateString('es-MX', { day: '2-digit', month: 'short' });
-};
-
-export const obtenerEvolucionTemporal = async (
-    periodo: Periodo,
-    fechaInicio?: string,
-    fechaFin?: string
-) => {
-    const { cantidad, unidad } = BUCKETS_POR_PERIODO[periodo];
-
-    const fin = fechaFin ? new Date(`${fechaFin}T23:59:59`) : new Date();
-    let inicio: Date;
-    if (fechaInicio) {
-        inicio = new Date(`${fechaInicio}T00:00:00`);
-    } else {
-        inicio = new Date(fin);
-        if (unidad === 'dia')   inicio.setDate(inicio.getDate() - cantidad);
-        if (unidad === 'semana') inicio.setDate(inicio.getDate() - cantidad * 7);
-        if (unidad === 'mes')   inicio.setMonth(inicio.getMonth() - cantidad);
-        if (unidad === 'anio')  inicio.setFullYear(inicio.getFullYear() - cantidad);
-    }
-
+export const obtenerEvolucionTemporal = async () => {
     const inscripciones = await prisma.inscripcion.findMany({
-        where: { fecha_inscripcion: { gte: inicio, lte: fin } },
         select: { fecha_inscripcion: true },
     });
 
-    // Construir buckets vacíos en orden cronológico
-    const buckets: { clave: string; etiqueta: string; total: number }[] = [];
-    const cursor = new Date(inicio);
+    const anioActual = new Date().getFullYear();
+    const aniosConDatos = inscripciones
+        .map(i => i.fecha_inscripcion?.getFullYear())
+        .filter((a): a is number => a !== undefined);
 
-    for (let i = 0; i < cantidad; i++) {
-        let clave: string;
-        if (unidad === 'anio') {
-            clave = `${cursor.getFullYear()}`;
-        } else if (unidad === 'mes') {
-            clave = `${cursor.getFullYear()}-${cursor.getMonth()}`;
-        } else {
-            clave = cursor.toISOString().split('T')[0];
-        }
-        buckets.push({ clave, etiqueta: etiquetaBucket(cursor, unidad), total: 0 });
+    const anioInicio = aniosConDatos.length > 0 ? Math.min(...aniosConDatos, anioActual) : anioActual;
 
-        if (unidad === 'dia')    cursor.setDate(cursor.getDate() + 1);
-        if (unidad === 'semana') cursor.setDate(cursor.getDate() + 7);
-        if (unidad === 'mes')    cursor.setMonth(cursor.getMonth() + 1);
-        if (unidad === 'anio')   cursor.setFullYear(cursor.getFullYear() + 1);
+    const buckets = new Map<number, number>();
+    for (let anio = anioInicio; anio <= anioActual; anio++) {
+        buckets.set(anio, 0);
     }
-
-    const indicePorClave = new Map(buckets.map((b, i) => [b.clave, i]));
 
     for (const ins of inscripciones) {
         if (!ins.fecha_inscripcion) continue;
-        const fecha = new Date(ins.fecha_inscripcion);
-
-        let clave: string;
-        if (unidad === 'anio') {
-            clave = `${fecha.getFullYear()}`;
-        } else if (unidad === 'mes') {
-            clave = `${fecha.getFullYear()}-${fecha.getMonth()}`;
-        } else if (unidad === 'semana') {
-            // Asignar al bucket semanal cuyo rango contiene la fecha
-            const diffMs = fecha.getTime() - inicio.getTime();
-            const semanaIdx = Math.floor(diffMs / (7 * 24 * 60 * 60 * 1000));
-            const bucket = buckets[semanaIdx];
-            if (bucket) bucket.total += 1;
-            continue;
-        } else {
-            clave = fecha.toISOString().split('T')[0];
-        }
-
-        const idx = indicePorClave.get(clave);
-        if (idx !== undefined) buckets[idx].total += 1;
+        const anio = ins.fecha_inscripcion.getFullYear();
+        buckets.set(anio, (buckets.get(anio) ?? 0) + 1);
     }
 
-    return buckets.map(b => ({ periodo: b.etiqueta, total: b.total }));
+    return Array.from(buckets.entries())
+        .sort(([a], [b]) => a - b)
+        .map(([anio, total]) => ({ periodo: `${anio}`, total }));
 };
 
 // ============================================================

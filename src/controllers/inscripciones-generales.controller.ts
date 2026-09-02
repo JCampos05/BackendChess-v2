@@ -4,8 +4,10 @@ import * as service from '../services/inscripciones-generales.service';
 const PERIODOS = ['dia', 'semana', 'mes', 'anio'] as const;
 type Periodo = typeof PERIODOS[number];
 
-const parsePeriodo = (valor: unknown): Periodo => {
-    return PERIODOS.includes(valor as Periodo) ? (valor as Periodo) : 'mes';
+// Si no viene periodo (o viene vacío) no se filtra por fecha: se muestra el histórico real.
+const parsePeriodo = (valor: unknown): Periodo | undefined => {
+    if (valor === undefined || valor === '') return undefined;
+    return PERIODOS.includes(valor as Periodo) ? (valor as Periodo) : undefined;
 };
 
 export const getResumenGeneral = async (req: Request, res: Response, next: NextFunction) => {
@@ -16,12 +18,9 @@ export const getResumenGeneral = async (req: Request, res: Response, next: NextF
     } catch (err) { next(err); }
 };
 
-export const getEvolucionTemporal = async (req: Request, res: Response, next: NextFunction) => {
+export const getEvolucionTemporal = async (_req: Request, res: Response, next: NextFunction) => {
     try {
-        const periodo = parsePeriodo(req.query.periodo);
-        const fechaInicio = typeof req.query.fechaInicio === 'string' ? req.query.fechaInicio : undefined;
-        const fechaFin    = typeof req.query.fechaFin    === 'string' ? req.query.fechaFin    : undefined;
-        const evolucion = await service.obtenerEvolucionTemporal(periodo, fechaInicio, fechaFin);
+        const evolucion = await service.obtenerEvolucionTemporal();
         res.json({ ok: true, data: evolucion });
     } catch (err) { next(err); }
 };
