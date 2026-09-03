@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { AuthRequest } from '../types';
 import * as service from '../services/inscripciones-generales.service';
 
 const PERIODOS = ['dia', 'semana', 'mes', 'anio'] as const;
@@ -49,9 +50,9 @@ export const getDistribucionCategoria = async (req: Request, res: Response, next
     } catch (err) { next(err); }
 };
 
-export const getTorneosSelector = async (_req: Request, res: Response, next: NextFunction) => {
+export const getTorneosSelector = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
-        const torneos = await service.obtenerTorneosParaSelector();
+        const torneos = await service.obtenerTorneosParaSelector(req.usuario);
         res.json({ ok: true, data: torneos });
     } catch (err) { next(err); }
 };

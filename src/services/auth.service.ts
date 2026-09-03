@@ -259,6 +259,13 @@ export const actualizarUsuario = async (idUsuario: number, datos: ActualizarUsua
         if (existe) throw new ConflictError('Ya existe un usuario con ese teléfono');
     }
 
+    if (datos.rol !== undefined && datos.rol !== usuario.rol) {
+        await prisma.sesionActiva.updateMany({
+            where: { idUsuario, activa: 1 },
+            data:  { activa: 0 },
+        });
+    }
+
     return prisma.usuario.update({
         where: { idUsuario },
         data: {

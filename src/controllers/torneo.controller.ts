@@ -108,7 +108,7 @@ export const listarTorneos = async (
         const parse = filtrosTorneoSchema.safeParse(req.query);
         if (!parse.success) { zodFail(res, parse.error); return; }
 
-        const resultado = await torneoService.listarTorneos(parse.data);
+        const resultado = await torneoService.listarTorneos(parse.data, req.usuario);
         res.json({
             ok: true,
             data: resultado.items,

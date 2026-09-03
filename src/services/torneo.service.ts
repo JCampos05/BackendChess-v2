@@ -70,7 +70,8 @@ const INCLUDE_DETALLE = {
 // ── CRUD ─────────────────────────────────────────────────────
 
 export const listarTorneos = async (
-    filtros: FiltrosTorneoDto & { fechaDesde?: Date }
+    filtros: FiltrosTorneoDto & { fechaDesde?: Date },
+    usuario?: { idUsuario: number; rol: string }
 ): Promise<PaginatedResult<unknown>> => {
     const { pagina, limite, activo, estado, es_actual, soloConCategorias, fechaDesde } = filtros;
     const skip = (pagina - 1) * limite;
@@ -81,6 +82,10 @@ export const listarTorneos = async (
         ...(es_actual !== undefined && { es_actual }),
         ...(soloConCategorias       && { torneo_categorias: { some: { activo: true } } }),
         ...(fechaDesde              && { fecha: { gte: fechaDesde } }),
+        // adminTorneo solo ve los torneos que un adminGral le asignó
+        ...(usuario?.rol === 'adminTorneo' && {
+            admins_asignados: { some: { idUsuario: usuario.idUsuario, activo: true } },
+        }),
     };
 
     const [total, items] = await Promise.all([

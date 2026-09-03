@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { authMiddleware } from '../middleware/auth.middleware';
 import { soloAdminGral, cualquierAdmin } from '../middleware/roles.middleware';
+import { verificarAccesoTorneo, verificarAccesoTorneoResuelto, resolverIdTorneoDesdePartida } from '../middleware/torneo-admin.middleware';
 import * as Ops from '../controllers/torneo-ops.controller';
 
 // ════════════════════════════════════════════════════════════
@@ -12,12 +13,12 @@ const partidaRouter = Router();
 partidaRouter.get('/', authMiddleware, cualquierAdmin, Ops.getAllPartidas);
 partidaRouter.get(
     '/jugador/:idJugador/torneo/:idTorneo',
-    authMiddleware, cualquierAdmin,
+    authMiddleware, cualquierAdmin, verificarAccesoTorneo('idTorneo'),
     Ops.getPartidasByJugadorTorneo,
 );
-partidaRouter.get('/:id', authMiddleware, cualquierAdmin, Ops.getPartidaById);
+partidaRouter.get('/:id', authMiddleware, cualquierAdmin, verificarAccesoTorneoResuelto(resolverIdTorneoDesdePartida), Ops.getPartidaById);
 partidaRouter.post('/', authMiddleware, cualquierAdmin, Ops.createPartida);
-partidaRouter.put('/:id', authMiddleware, cualquierAdmin, Ops.updatePartida);
+partidaRouter.put('/:id', authMiddleware, cualquierAdmin, verificarAccesoTorneoResuelto(resolverIdTorneoDesdePartida), Ops.updatePartida);
 // Borrar partida → solo adminGral
 partidaRouter.delete('/:id', authMiddleware, soloAdminGral, Ops.deletePartida);
 

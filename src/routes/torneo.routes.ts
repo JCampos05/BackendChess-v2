@@ -18,7 +18,7 @@ router.get('/:id/categorias', ctrl.obtenerCategoriasTorneo);
 router.use(authMiddleware);
 
 router.get('/',    cualquierAdmin, ctrl.listarTorneos);
-router.get('/:id', cualquierAdmin, ctrl.obtenerTorneo);
+router.get('/:id', cualquierAdmin, verificarAccesoTorneo(), ctrl.obtenerTorneo);
 
 // ── CRUD exclusivo adminGral ──────────────────────────────────
 router.post  ('/',    soloAdminGral, ctrl.crearTorneo);

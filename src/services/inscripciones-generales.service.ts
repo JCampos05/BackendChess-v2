@@ -295,8 +295,11 @@ export const obtenerDistribucionCategoria = async (idTorneo: number) => {
 // SELECTOR DE TORNEOS
 // ============================================================
 
-export const obtenerTorneosParaSelector = async () => {
+export const obtenerTorneosParaSelector = async (usuario?: { idUsuario: number; rol: string }) => {
     const torneos = await prisma.torneo.findMany({
+        where: usuario?.rol === 'adminTorneo'
+            ? { admins_asignados: { some: { idUsuario: usuario.idUsuario, activo: true } } }
+            : undefined,
         select: { idTorneo: true, nombre: true, lugar: true, fecha: true },
         orderBy: { fecha: 'desc' },
     });
