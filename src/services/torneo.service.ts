@@ -461,6 +461,11 @@ export const asignarAdmin = async (idTorneo: number, datos: AsignarAdminDto) => 
         throw new ForbiddenError('Solo se pueden asignar usuarios con rol adminTorneo');
 
     // Modelo: usuarioTorneo
+    // Nota: a diferencia de removerAdmin (que sí invalida la sesión de
+    // inmediato, porque reduce acceso), asignar un torneo NUEVO no se
+    // invalida en caliente — el frontend lo detecta vía polling
+    // (SessionMonitorService) y le avisa con un modal amigable, sin
+    // expulsarlo abruptamente a mitad de lo que esté haciendo.
     return prisma.usuarioTorneo.upsert({
         where: { idUsuario_idTorneo: { idUsuario: datos.idUsuario, idTorneo } },
         create: { idUsuario: datos.idUsuario, idTorneo, notas: datos.notas, activo: true },
@@ -477,11 +482,18 @@ export const removerAdmin = async (idTorneo: number, idUsuario: number) => {
     });
     if (!ut) throw new NotFoundError('El usuario no está asignado a este torneo');
 
-    return prisma.usuarioTorneo.update({
+    const resultado = await prisma.usuarioTorneo.update({
         where:  { idUsuario_idTorneo: { idUsuario, idTorneo } },
         data:   { activo: false },
         select: { idUsuarioTorneo: true, activo: true },
     });
+
+    await prisma.sesionActiva.updateMany({
+        where: { idUsuario, activa: 1 },
+        data:  { activa: 0 },
+    });
+
+    return resultado;
 };
 
 // ── Helper privado ───────────────────────────────────────────
