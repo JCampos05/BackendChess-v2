@@ -56,7 +56,7 @@ export const listarInscripcionesTorneo = async (
                     fecha_nacimiento: true,
                 },
             },
-            categoria: { select: { idCategoria: true, nombre: true } },
+            categoria: { select: { idCategoria: true, nombre: true, costo: true } },
             torneo:    { select: { fecha: true } },
         },
     });
