@@ -259,12 +259,14 @@ export const actualizarUsuario = async (idUsuario: number, datos: ActualizarUsua
         if (existe) throw new ConflictError('Ya existe un usuario con ese teléfono');
     }
 
-    if (datos.rol !== undefined && datos.rol !== usuario.rol) {
-        await prisma.sesionActiva.updateMany({
-            where: { idUsuario, activa: 1 },
-            data:  { activa: 0 },
-        });
-    }
+    // Nota: a diferencia de cambiarPassword/toggleUsuario (que sí invalidan
+    // sesiones activas de inmediato porque son acciones de seguridad reales),
+    // un cambio de ROL no cierra sesión — el frontend lo detecta vía polling
+    // (SessionMonitorService) y avisa con un modal informativo, sin
+    // expulsar al usuario a mitad de lo que esté haciendo. La autorización
+    // real de cada request ya se revalida contra BD en authMiddleware/
+    // roles.middleware en cada petición, así que esto no es un hueco de
+    // seguridad — es puramente una decisión de UX.
 
     return prisma.usuario.update({
         where: { idUsuario },
