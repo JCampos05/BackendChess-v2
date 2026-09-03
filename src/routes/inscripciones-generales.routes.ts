@@ -1,22 +1,21 @@
 import { Router } from 'express';
 import { authMiddleware } from '../middleware/auth.middleware';
-import { cualquierAdmin } from '../middleware/roles.middleware';
-import { verificarAccesoTorneo } from '../middleware/torneo-admin.middleware';
+import { soloAdminGral } from '../middleware/roles.middleware';
 import * as ctrl from '../controllers/inscripciones-generales.controller';
 
 const router = Router();
 
 router.use(authMiddleware);
 
-// NOTA: /resumen, /evolucion-temporal, /resumen-torneos y /por-torneo son
-// dashboards agregados multi-torneo (sin un idTorneo único al que aplicar
-// verificarAccesoTorneo) — quedan pendientes de una revisión aparte si se
-// necesita que un adminTorneo no vea agregados de torneos ajenos ahí.
-router.get('/resumen',              cualquierAdmin, ctrl.getResumenGeneral);
-router.get('/evolucion-temporal',   cualquierAdmin, ctrl.getEvolucionTemporal);
-router.get('/resumen-torneos',      cualquierAdmin, ctrl.getResumenTorneos);
-router.get('/por-torneo',           cualquierAdmin, ctrl.getInscripcionesPorTorneo);
-router.get('/torneos-selector',     cualquierAdmin, ctrl.getTorneosSelector);
-router.get('/distribucion/:idTorneo', cualquierAdmin, verificarAccesoTorneo('idTorneo'), ctrl.getDistribucionCategoria);
+// Dashboard agregado multi-torneo (resumen, evolución, por-torneo, etc.) —
+// exclusivo de adminGral. Un adminTorneo no debe ver datos agregados de
+// torneos que no le pertenecen; ya tiene su propia vista scoped en
+// Jugadores por Torneo y Estadísticas de Pago.
+router.get('/resumen',              soloAdminGral, ctrl.getResumenGeneral);
+router.get('/evolucion-temporal',   soloAdminGral, ctrl.getEvolucionTemporal);
+router.get('/resumen-torneos',      soloAdminGral, ctrl.getResumenTorneos);
+router.get('/por-torneo',           soloAdminGral, ctrl.getInscripcionesPorTorneo);
+router.get('/torneos-selector',     soloAdminGral, ctrl.getTorneosSelector);
+router.get('/distribucion/:idTorneo', soloAdminGral, ctrl.getDistribucionCategoria);
 
 export default router;
