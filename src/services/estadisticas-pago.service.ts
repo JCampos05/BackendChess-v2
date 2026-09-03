@@ -3,13 +3,28 @@ import prisma from '../config/database';
 
 // ── Helpers ──────────────────────────────────────────────────
 
+/**
+ * Torneos asignados a un adminTorneo (para acotar las estadísticas a lo
+ * que le corresponde ver — sin esto, cualquier adminTorneo autenticado
+ * podía pedir estadísticas de CUALQUIER torneo, o de todos agregados,
+ * pasando o no `idTorneo`).
+ */
+export const obtenerTorneosAsignados = async (idUsuario: number): Promise<number[]> => {
+    const asignaciones = await prisma.usuarioTorneo.findMany({
+        where: { idUsuario, activo: true },
+        select: { idTorneo: true },
+    });
+    return asignaciones.map((a) => a.idTorneo);
+};
+
 /** Construye el filtro where para inscripciones según los parámetros */
 const buildWhere = (params: {
     idTorneo?: number;
+    idTorneoIn?: number[];
     fechaInicio?: string;
     fechaFin?: string;
 }): Prisma.InscripcionWhereInput => {
-    const { idTorneo, fechaInicio, fechaFin } = params;
+    const { idTorneo, idTorneoIn, fechaInicio, fechaFin } = params;
 
     const fechaFilter: Prisma.InscripcionWhereInput =
         fechaInicio && fechaFin
@@ -24,6 +39,9 @@ const buildWhere = (params: {
     if (idTorneo) {
         return { idTorneo, ...fechaFilter };
     }
+    if (idTorneoIn) {
+        return { idTorneo: { in: idTorneoIn }, ...fechaFilter };
+    }
     return fechaFilter;
 };
 
@@ -31,6 +49,7 @@ const buildWhere = (params: {
 
 export const getEstadisticasGenerales = async (params: {
     idTorneo?: number;
+    idTorneoIn?: number[];
     fechaInicio?: string;
     fechaFin?: string;
 }) => {
@@ -88,6 +107,7 @@ export const getEstadisticasGenerales = async (params: {
 
 export const getEstadisticasPorCategoria = async (params: {
     idTorneo?: number;
+    idTorneoIn?: number[];
     fechaInicio?: string;
     fechaFin?: string;
 }) => {
@@ -148,19 +168,22 @@ export const getEstadisticasPorCategoria = async (params: {
 
 export const getEstadisticasPorTorneo = async (params: {
     idTorneo?: number;
+    idTorneoIn?: number[];
     fechaInicio?: string;
     fechaFin?: string;
 }) => {
     const torneoWhere: Prisma.TorneoWhereInput = params.idTorneo
         ? { idTorneo: params.idTorneo }
-        : params.fechaInicio && params.fechaFin
-            ? {
-                fecha: {
-                    gte: new Date(params.fechaInicio),
-                    lte: new Date(params.fechaFin),
-                },
-            }
-            : {};
+        : params.idTorneoIn
+            ? { idTorneo: { in: params.idTorneoIn } }
+            : params.fechaInicio && params.fechaFin
+                ? {
+                    fecha: {
+                        gte: new Date(params.fechaInicio),
+                        lte: new Date(params.fechaFin),
+                    },
+                }
+                : {};
 
     const torneos = await prisma.torneo.findMany({
         where: { ...torneoWhere, inscripciones: { some: {} } },
@@ -216,14 +239,15 @@ export const getEstadisticasPorTorneo = async (params: {
 
 export const getEvolucionTemporal = async (params: {
     idTorneo?: number;
+    idTorneoIn?: number[];
     fechaInicio?: string;
     fechaFin?: string;
     agrupacion?: 'dia' | 'semana' | 'mes' | 'anio';
 }) => {
-    const { idTorneo, agrupacion = 'mes' } = params;
+    const { idTorneo, idTorneoIn, agrupacion = 'mes' } = params;
     let { fechaInicio, fechaFin } = params;
 
-    // Si hay torneo, usar sus fechas como rango
+    // Si hay un único torneo, usar sus fechas como rango
     if (idTorneo && (!fechaInicio || !fechaFin)) {
         const torneo = await prisma.torneo.findUnique({
             where: { idTorneo },
@@ -235,7 +259,7 @@ export const getEvolucionTemporal = async (params: {
         }
     }
 
-    const where = buildWhere({ idTorneo, fechaInicio, fechaFin });
+    const where = buildWhere({ idTorneo, idTorneoIn, fechaInicio, fechaFin });
 
     const inscripciones = await prisma.inscripcion.findMany({
         where,
@@ -302,10 +326,12 @@ export const getEvolucionTemporal = async (params: {
 
 // ── Comparativa anual ────────────────────────────────────────
 
-export const getComparativaAnual = async (params: { idTorneo?: number }) => {
+export const getComparativaAnual = async (params: { idTorneo?: number; idTorneoIn?: number[] }) => {
     const where: Prisma.InscripcionWhereInput = params.idTorneo
         ? { idTorneo: params.idTorneo }
-        : {};
+        : params.idTorneoIn
+            ? { idTorneo: { in: params.idTorneoIn } }
+            : {};
 
     const inscripciones = await prisma.inscripcion.findMany({
         where,
