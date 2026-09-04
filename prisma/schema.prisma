@@ -363,6 +363,7 @@ model Jugador {
 model Torneo {
   idTorneo             Int            @id @default(autoincrement())
   nombre               String?        @db.VarChar(255)
+  slug                 String?        @unique @db.VarChar(220)
   lugar                String         @db.VarChar(255)
   direccion            String         @db.VarChar(255)
 
@@ -611,6 +612,7 @@ model HistorialEmparejamiento {
 model InfoLiga {
   idLiga               Int             @id @default(autoincrement())
   nombre               String          @db.VarChar(255)
+  slug                 String?         @unique @db.VarChar(220)
   descripcion          String?         @db.Text
   fecha_inicio         DateTime        @db.Date
   fecha_fin            DateTime?       @db.Date

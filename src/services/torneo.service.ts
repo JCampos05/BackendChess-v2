@@ -1,6 +1,7 @@
 import { Prisma } from '@prisma/client';
 import prisma from '../config/database';
 import { NotFoundError, ConflictError, ForbiddenError } from '../middleware/error.middleware';
+import { generarSlugUnico } from '../utils/slug';
 import {
     CrearTorneoDto,
     ActualizarTorneoDto,
@@ -111,11 +112,26 @@ export const obtenerTorneoPorId = async (idTorneo: number) => {
     return torneo;
 };
 
+export const obtenerTorneoPorSlug = async (slug: string) => {
+    const torneo = await prisma.torneo.findUnique({
+        where:   { slug },
+        include: INCLUDE_DETALLE,
+    });
+    if (!torneo) throw new NotFoundError('Torneo no encontrado');
+    return torneo;
+};
+
 // crearTorneo recibe solo datos — el controller ya no pasa idUsuario
 export const crearTorneo = async (datos: CrearTorneoDto) => {
+    const slug = await generarSlugUnico(
+        datos.nombre || datos.lugar,
+        async (s) => (await prisma.torneo.count({ where: { slug: s } })) > 0
+    );
+
     return prisma.torneo.create({
         data: {
             nombre:               datos.nombre,
+            slug,
             lugar:                datos.lugar,
             direccion:            datos.direccion,
             url_maps:             datos.url_maps,
@@ -144,12 +160,24 @@ export const actualizarTorneo = async (
     idTorneo: number,
     datos: ActualizarTorneoDto
 ) => {
-    await _verificarExiste(idTorneo);
+    const actual = await _verificarExiste(idTorneo);
+
+    // El slug solo se regenera si el nombre realmente cambió — evita romper
+    // enlaces ya compartidos por una edición que no toca el nombre.
+    const nombreCambio = datos.nombre !== undefined && datos.nombre !== actual.nombre;
+    const slug = nombreCambio
+        ? await generarSlugUnico(
+            datos.nombre || actual.slug || 'torneo',
+            async (s) => (await prisma.torneo.count({ where: { slug: s } })) > 0,
+            actual.slug ?? undefined
+        )
+        : undefined;
 
     return prisma.torneo.update({
         where: { idTorneo },
         data:  {
             ...(datos.nombre    !== undefined && { nombre:    datos.nombre }),
+            ...(slug !== undefined && { slug }),
             ...(datos.lugar     !== undefined && { lugar:     datos.lugar }),
             ...(datos.direccion !== undefined && { direccion: datos.direccion }),
             ...(datos.url_maps  !== undefined && { url_maps:  datos.url_maps }),
@@ -501,7 +529,7 @@ export const removerAdmin = async (idTorneo: number, idUsuario: number) => {
 const _verificarExiste = async (idTorneo: number) => {
     const t = await prisma.torneo.findUnique({
         where:  { idTorneo },
-        select: { idTorneo: true, estado: true, activo: true, es_actual: true },
+        select: { idTorneo: true, estado: true, activo: true, es_actual: true, nombre: true, slug: true },
     });
     if (!t) throw new NotFoundError('Torneo no encontrado');
     return t;

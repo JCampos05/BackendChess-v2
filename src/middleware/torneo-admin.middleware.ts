@@ -69,6 +69,14 @@ export const verificarAccesoTorneoResuelto = (resolverIdTorneo: (req: AuthReques
 
 // ── Resolvers de idTorneo para recursos hijos ─────────────────
 
+export const resolverIdTorneoDesdeSlug = async (req: AuthRequest): Promise<number | null> => {
+    const torneo = await prisma.torneo.findUnique({
+        where: { slug: req.params.slug },
+        select: { idTorneo: true },
+    });
+    return torneo?.idTorneo ?? null;
+};
+
 export const resolverIdTorneoDesdeRonda = async (req: AuthRequest): Promise<number | null> => {
     const idRonda = Number(req.params.idRonda ?? req.params.id);
     if (isNaN(idRonda)) return null;

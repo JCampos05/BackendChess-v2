@@ -132,6 +132,17 @@ export const obtenerTorneo = async (
     } catch (err) { next(err); }
 };
 
+export const obtenerTorneoPorSlug = async (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+) => {
+    try {
+        const torneo = await torneoService.obtenerTorneoPorSlug(req.params.slug);
+        res.json({ ok: true, data: torneo });
+    } catch (err) { next(err); }
+};
+
 export const crearTorneo = async (
     req: AuthRequest,
     res: Response,

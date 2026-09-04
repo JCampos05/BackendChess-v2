@@ -2,6 +2,7 @@ import { Prisma } from '@prisma/client';
 import prisma from '../config/database';
 import { NotFoundError, ConflictError, ForbiddenError } from '../middleware/error.middleware';
 import { PaginatedResult } from '../types';
+import { generarSlugUnico } from '../utils/slug';
 import {
     CrearLigaDto,
     ActualizarLigaDto,
@@ -86,10 +87,45 @@ export const obtenerLigaPorId = async (idLiga: number) => {
     return liga;
 };
 
+export const obtenerLigaPorSlug = async (slug: string) => {
+    const liga = await prisma.infoLiga.findUnique({
+        where:   { slug },
+        include: {
+            ...INCLUDE_LIGA_BASE,
+            grupos: {
+                where:   { activo: true },
+                include: {
+                    jugadores_liga: {
+                        where:  { estado: { not: 'cancelado' } },
+                        select: {
+                            idJugadorLiga: true,
+                            puntos:        true,
+                            posicion_grupo: true,
+                            estado:        true,
+                            jugador: {
+                                select: { idJugador: true, nombre: true, apellido1: true, rating: true },
+                            },
+                        },
+                        orderBy: [{ puntos: 'desc' }, { posicion_grupo: 'asc' }],
+                    },
+                },
+            },
+        },
+    });
+    if (!liga) throw new NotFoundError('Liga no encontrada');
+    return liga;
+};
+
 export const crearLiga = async (datos: CrearLigaDto) => {
+    const slug = await generarSlugUnico(
+        datos.nombre,
+        async (s) => (await prisma.infoLiga.count({ where: { slug: s } })) > 0
+    );
+
     return prisma.infoLiga.create({
         data: {
             nombre:               datos.nombre,
+            slug,
             descripcion:          datos.descripcion,
             fecha_inicio:         new Date(`${datos.fecha_inicio}T00:00:00`),
             fecha_fin:            datos.fecha_fin ? new Date(`${datos.fecha_fin}T00:00:00`) : undefined,
@@ -112,12 +148,22 @@ export const crearLiga = async (datos: CrearLigaDto) => {
 };
 
 export const actualizarLiga = async (idLiga: number, datos: ActualizarLigaDto) => {
-    await _verificarLiga(idLiga);
+    const actual = await _verificarLiga(idLiga);
+
+    const nombreCambio = datos.nombre !== undefined && datos.nombre !== actual.nombre;
+    const slug = nombreCambio
+        ? await generarSlugUnico(
+            datos.nombre!,
+            async (s) => (await prisma.infoLiga.count({ where: { slug: s } })) > 0,
+            actual.slug ?? undefined
+        )
+        : undefined;
 
     return prisma.infoLiga.update({
         where: { idLiga },
         data:  {
             ...(datos.nombre               !== undefined && { nombre:               datos.nombre }),
+            ...(slug !== undefined && { slug }),
             ...(datos.descripcion          !== undefined && { descripcion:          datos.descripcion }),
             ...(datos.fecha_inicio         !== undefined && { fecha_inicio: new Date(`${datos.fecha_inicio}T00:00:00`) }),
             ...(datos.fecha_fin            !== undefined && { fecha_fin:    new Date(`${datos.fecha_fin}T00:00:00`) }),
@@ -596,7 +642,7 @@ export const obtenerTablaPosiciones = async (idLiga: number, idGrupoLiga?: numbe
 const _verificarLiga = async (idLiga: number) => {
     const liga = await prisma.infoLiga.findUnique({
         where:  { idLiga },
-        select: { idLiga: true, activo: true },
+        select: { idLiga: true, activo: true, nombre: true, slug: true },
     });
     if (!liga) throw new NotFoundError('Liga no encontrada');
     return liga;

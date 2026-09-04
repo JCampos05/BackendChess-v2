@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { authMiddleware } from '../middleware/auth.middleware';
 import { soloAdminGral, cualquierAdmin } from '../middleware/roles.middleware';
-import { verificarAccesoTorneo } from '../middleware/torneo-admin.middleware';
+import { verificarAccesoTorneo, verificarAccesoTorneoResuelto, resolverIdTorneoDesdeSlug } from '../middleware/torneo-admin.middleware';
 import * as ctrl from '../controllers/torneo.controller';
 
 const router = Router();
@@ -18,6 +18,8 @@ router.get('/:id/categorias', ctrl.obtenerCategoriasTorneo);
 router.use(authMiddleware);
 
 router.get('/',    cualquierAdmin, ctrl.listarTorneos);
+// Debe ir antes de '/:id' — si no, Express interpretaría "slug" como el valor de :id
+router.get('/slug/:slug', cualquierAdmin, verificarAccesoTorneoResuelto(resolverIdTorneoDesdeSlug), ctrl.obtenerTorneoPorSlug);
 router.get('/:id', cualquierAdmin, verificarAccesoTorneo(), ctrl.obtenerTorneo);
 
 // ── CRUD exclusivo adminGral ──────────────────────────────────

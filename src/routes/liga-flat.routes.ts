@@ -14,6 +14,8 @@ infoLigaRouter.get('/:id/publico', ctrl.obtenerInfoLiga);
 infoLigaRouter.use(authMiddleware);
 infoLigaRouter.use(soloAdminGral);
 infoLigaRouter.get   ('/',          ctrl.listarInfoLiga);
+// Debe ir antes de '/:id' — si no, Express interpretaría "slug" como el valor de :id
+infoLigaRouter.get   ('/slug/:slug', ctrl.obtenerInfoLigaPorSlug);
 infoLigaRouter.get   ('/:id',       ctrl.obtenerInfoLiga);
 infoLigaRouter.get   ('/:id/stats', ctrl.obtenerStatsLiga);
 infoLigaRouter.post  ('/',          ctrl.crearInfoLiga);

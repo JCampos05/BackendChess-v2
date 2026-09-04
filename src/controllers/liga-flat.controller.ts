@@ -62,6 +62,13 @@ export const obtenerInfoLiga = async (req: Request, res: Response, next: NextFun
     } catch (err) { next(err); }
 };
 
+export const obtenerInfoLigaPorSlug = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const liga = await ligaService.obtenerLigaPorSlug(req.params.slug);
+        res.json({ ok: true, data: liga });
+    } catch (err) { next(err); }
+};
+
 export const obtenerStatsLiga = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const idLiga = Number(req.params.id);
