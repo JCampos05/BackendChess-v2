@@ -71,15 +71,16 @@ const INCLUDE_DETALLE = {
 // ── CRUD ─────────────────────────────────────────────────────
 
 export const listarTorneos = async (
-    filtros: FiltrosTorneoDto & { fechaDesde?: Date },
+    filtros: FiltrosTorneoDto & { fechaDesde?: Date; estadoIn?: string[] },
     usuario?: { idUsuario: number; rol: string }
 ): Promise<PaginatedResult<unknown>> => {
-    const { pagina, limite, activo, estado, es_actual, soloConCategorias, fechaDesde } = filtros;
+    const { pagina, limite, activo, estado, estadoIn, es_actual, soloConCategorias, fechaDesde } = filtros;
     const skip = (pagina - 1) * limite;
 
     const where: Prisma.TorneoWhereInput = {
         ...(activo    !== undefined && { activo }),
         ...(estado                  && { estado }),
+        ...(estadoIn                && { estado: { in: estadoIn as any } }),
         ...(es_actual !== undefined && { es_actual }),
         ...(soloConCategorias       && { torneo_categorias: { some: { activo: true } } }),
         ...(fechaDesde              && { fecha: { gte: fechaDesde } }),
@@ -136,8 +137,8 @@ export const crearTorneo = async (datos: CrearTorneoDto) => {
             direccion:            datos.direccion,
             url_maps:             datos.url_maps,
             fecha:                new Date(`${datos.fecha}T00:00:00`),
-            hora_inicio:          datos.hora_inicio.length === 5 ? `${datos.hora_inicio}:00` : datos.hora_inicio,
-            hora_fin:             datos.hora_fin.length === 5 ? `${datos.hora_fin}:00` : datos.hora_fin,
+            hora_inicio:          datos.hora_inicio ? (datos.hora_inicio.length === 5 ? `${datos.hora_inicio}:00` : datos.hora_inicio) : null,
+            hora_fin:             datos.hora_fin ? (datos.hora_fin.length === 5 ? `${datos.hora_fin}:00` : datos.hora_fin) : null,
             rondas:               datos.rondas,
             cupo_maximo:          datos.cupo_maximo ?? null,
             notas:                datos.notas,
@@ -146,7 +147,9 @@ export const crearTorneo = async (datos: CrearTorneoDto) => {
                 : undefined,
             idZonaHoraria:        datos.idZonaHoraria,
             idSistemaPago:        datos.idSistemaPago,
-            es_actual:            datos.es_actual ?? true,
+            // Un torneo nace en borrador — nunca puede ser "torneo actual"
+            // hasta que se publique (toggleEsActual ya exige ese estado).
+            es_actual:            false,
             estado:               'borrador',
             activo:               true,
             fecha_creacion:       new Date(),
@@ -256,10 +259,14 @@ export const toggleActivo = async (idTorneo: number, activo: boolean) => {
     });
 };
 
+const ESTADOS_PUBLICABLES = ['publicado', 'en_curso', 'finalizado'];
+
 export const toggleEsActual = async (idTorneo: number, es_actual: boolean) => {
     const torneo = await _verificarExiste(idTorneo);
     if (es_actual && !torneo.activo)
         throw new ForbiddenError('Un torneo debe estar activo para ser marcado como actual');
+    if (es_actual && !ESTADOS_PUBLICABLES.includes(torneo.estado))
+        throw new ForbiddenError('El torneo debe estar publicado para marcarse como actual');
 
     return prisma.torneo.update({
         where:  { idTorneo },

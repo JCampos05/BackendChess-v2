@@ -177,6 +177,24 @@ export const cambiarPassword = async (
     return { ok: true, mensaje: 'Contraseña actualizada. Inicia sesión nuevamente.' };
 };
 
+// ── Verificar contraseña (reautenticación, no crea/invalida sesión) ──
+
+export const verificarPassword = async (
+    idUsuario: number,
+    password: string
+) => {
+    const usuario = await prisma.usuario.findUnique({
+        where:  { idUsuario },
+        select: { password: true },
+    });
+    if (!usuario) throw new NotFoundError('Usuario no encontrado');
+
+    const ok = await bcrypt.compare(password, usuario.password);
+    if (!ok) throw new UnauthorizedError('Contraseña incorrecta');
+
+    return { ok: true };
+};
+
 // ── Crear usuario ────────────────────────────────────────────
 
 export const crearUsuario = async (datos: CrearUsuarioDto) => {

@@ -77,7 +77,14 @@ export const crear = async (
     next: NextFunction
 ): Promise<void> => {
     try {
-        const datos = crearInscripcionSchema.parse(req.body);
+        // Ruta 100% pública (sin authMiddleware) — nunca confiar en
+        // pago_confirmado/monto_pagado del cliente, o cualquiera podría
+        // marcarse como pagado sin pasar por el flujo real de pago.
+        const datos = crearInscripcionSchema.parse({
+            ...req.body,
+            pago_confirmado: false,
+            monto_pagado: 0,
+        });
         const inscripcion = await inscripcionService.crearInscripcion(datos);
         res.status(201).json({ ok: true, mensaje: 'Jugador inscrito', data: inscripcion });
     } catch (err) {

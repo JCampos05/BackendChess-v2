@@ -13,6 +13,10 @@ import {
     asignarAdminSchema,
 } from '../validations/torneo.validation';
 
+// Torneos en estos estados son visibles en superficies públicas/landing —
+// nunca 'borrador' (aún no revisado) ni 'cancelado'.
+const ESTADOS_PUBLICOS = ['publicado', 'en_curso', 'finalizado'];
+
 // Helper local — convierte ZodError en respuesta 400
 const zodFail = (res: Response, error: ZodError): void => {
     const errores = error.errors.map(e =>
@@ -39,6 +43,7 @@ export const listarTorneosPublicos = async (
             activo:     true,
             es_actual:  true,
             fechaDesde: hoy,
+            estadoIn:   ESTADOS_PUBLICOS,
         });
         res.json({ ok: true, data: resultado.items, total: resultado.total });
     } catch (err) { next(err); }
@@ -56,6 +61,7 @@ export const listarTorneosActivos = async (
             pagina:  1,
             limite:  100,
             activo:  true,
+            estadoIn: ESTADOS_PUBLICOS,
         });
         res.json({ ok: true, data: resultado.items, total: resultado.total });
     } catch (err) { next(err); }
@@ -76,6 +82,7 @@ export const listarTorneosProximos = async (
             limite:     50,
             activo:     true,
             fechaDesde: hoy,
+            estadoIn:   ESTADOS_PUBLICOS,
         });
         res.json({ ok: true, data: resultado.items, total: resultado.total });
     } catch (err) { next(err); }

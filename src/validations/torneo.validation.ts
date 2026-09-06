@@ -6,11 +6,12 @@ export const crearTorneoSchema = z.object({
     direccion: z.string().min(1).max(255),
     url_maps: z.string().url().max(500).optional(),
     fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato YYYY-MM-DD'),
-    hora_inicio: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/, 'Formato HH:MM o HH:MM:SS'),
-    hora_fin: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/, 'Formato HH:MM o HH:MM:SS'),
+    // Nullable en BD — un torneo en borrador puede no tener horarios definidos aún.
+    hora_inicio: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/, 'Formato HH:MM o HH:MM:SS').optional(),
+    hora_fin: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/, 'Formato HH:MM o HH:MM:SS').optional(),
     rondas: z.number().int().min(1).max(20).default(5),
     cupo_maximo: z.number().int().positive().optional().nullable(),
-    notas: z.string().optional(),
+    notas: z.string().optional().nullable(),
     // Acepta tanto datetime-local del navegador (sin segundos/offset) como ISO completo
     cierre_inscripciones: z.string().regex(
         /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?(\.\d+)?(Z|[+-]\d{2}:\d{2})?$/,

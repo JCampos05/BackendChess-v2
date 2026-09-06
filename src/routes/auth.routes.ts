@@ -12,6 +12,7 @@ router.post('/login', authController.login);
 router.get   ('/profile',  authMiddleware, authController.obtenerProfile);
 router.post  ('/logout',   authMiddleware, authController.logout);
 router.patch ('/password', authMiddleware, authController.cambiarPassword);
+router.post  ('/verificar-password', authMiddleware, authController.verificarPassword);
 router.get   ('/sesiones', authMiddleware, authController.misSesiones);
 
 // ── Solo adminGral ────────────────────────────────────────────

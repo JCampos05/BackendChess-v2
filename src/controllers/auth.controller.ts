@@ -4,6 +4,7 @@ import {
     loginSchema,
     cambiarPasswordSchema,
     crearUsuarioSchema,
+    verificarPasswordSchema,
 } from '../validations/auth.validations';
 import * as authService from '../services/auth.service';
 
@@ -131,6 +132,21 @@ export const misSesiones = async (
     try {
         const sesiones = await authService.obtenerSesiones(req.usuario!.idUsuario);
         res.json({ ok: true, data: sesiones });
+    } catch (err) {
+        next(err);
+    }
+};
+
+// POST /api/auth/verificar-password
+export const verificarPassword = async (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const { password } = verificarPasswordSchema.parse(req.body);
+        const resultado     = await authService.verificarPassword(req.usuario!.idUsuario, password);
+        res.json({ ok: true, data: resultado });
     } catch (err) {
         next(err);
     }

@@ -56,8 +56,13 @@ export const cambiarPasswordAdminSchema = z.object({
     passwordNuevo: z.string().min(6).max(100),
 });
 
+export const verificarPasswordSchema = z.object({
+    password: z.string().min(1),
+});
+
 export type LoginDto = z.infer<typeof loginSchema>;
 export type CambiarPasswordDto = z.infer<typeof cambiarPasswordSchema>;
 export type CrearUsuarioDto = z.infer<typeof crearUsuarioSchema>;
 export type ActualizarUsuarioDto = z.infer<typeof actualizarUsuarioSchema>;
 export type CambiarPasswordAdminDto = z.infer<typeof cambiarPasswordAdminSchema>;
+export type VerificarPasswordDto = z.infer<typeof verificarPasswordSchema>;
