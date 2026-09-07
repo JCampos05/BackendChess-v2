@@ -52,7 +52,7 @@ export const upsertTorneoCategoria = async (req: AuthRequest, res: Response, nex
 
 export const getCategoriasByTorneo = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
-        const data = await TCSvc.getCategoriasByTorneo(parseInt(req.params.torneo_id));
+        const data = await TCSvc.getCategoriasByTorneo(parseInt(req.params.idTorneo));
         res.json({ ok: true, data, total: data.length });
     } catch (e) { next(e); }
 };
@@ -60,8 +60,8 @@ export const getCategoriasByTorneo = async (req: AuthRequest, res: Response, nex
 export const getTorneoCategoria = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
         const data = await TCSvc.getTorneoCategoria(
-            parseInt(req.params.torneo_id),
-            parseInt(req.params.categoria_id),
+            parseInt(req.params.idTorneo),
+            parseInt(req.params.idCategoria),
         );
         res.json({ ok: true, data });
     } catch (e) { next(e); }
@@ -70,8 +70,8 @@ export const getTorneoCategoria = async (req: AuthRequest, res: Response, next: 
 export const deleteTorneoCategoria = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
         await TCSvc.deleteTorneoCategoria(
-            parseInt(req.params.torneo_id),
-            parseInt(req.params.categoria_id),
+            parseInt(req.params.idTorneo),
+            parseInt(req.params.idCategoria),
         );
         res.json({ ok: true, mensaje: 'Categoría eliminada del torneo' });
     } catch (e) { next(e); }
@@ -81,8 +81,8 @@ export const toggleActiveTorneoCategoria = async (req: AuthRequest, res: Respons
     try {
         const { activo } = req.body;
         const data = await TCSvc.toggleActiveTorneoCategoria(
-            parseInt(req.params.torneo_id),
-            parseInt(req.params.categoria_id),
+            parseInt(req.params.idTorneo),
+            parseInt(req.params.idCategoria),
             activo !== undefined ? Boolean(activo) : undefined,
         );
         res.json({
