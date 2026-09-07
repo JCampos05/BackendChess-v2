@@ -71,6 +71,39 @@ export const buscarJugadoresPorNombre = async (termino: string) => {
     });
 };
 
+// ── Búsqueda pública por campos separados (nombre/apellido1/apellido2) ──
+// Usada por la vista pública de estadísticas de jugador — a diferencia de
+// buscarJugadoresPorNombre (un solo término contra los 3 campos con OR),
+// aquí cada campo se filtra por separado con AND, como corresponde a un
+// formulario con 3 campos de búsqueda independientes.
+
+export const buscarJugadoresPorCampos = async (filtros: {
+    nombre?: string;
+    apellido1?: string;
+    apellido2?: string;
+}) => {
+    const { nombre, apellido1, apellido2 } = filtros;
+
+    return prisma.jugador.findMany({
+        where: {
+            ...(nombre    && { nombre:    { contains: nombre } }),
+            ...(apellido1 && { apellido1: { contains: apellido1 } }),
+            ...(apellido2 && { apellido2: { contains: apellido2 } }),
+        },
+        select: {
+            idJugador: true,
+            nombre: true,
+            apellido1: true,
+            apellido2: true,
+            rating: true,
+            estado: true,
+            categoria: { select: { nombre: true } },
+        },
+        take: 20,
+        orderBy: [{ apellido1: 'asc' }, { nombre: 'asc' }],
+    });
+};
+
 // ── Detalle ──────────────────────────────────────────────────
 
 export const obtenerJugadorPorId = async (idJugador: number) => {

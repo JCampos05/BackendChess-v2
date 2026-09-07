@@ -11,6 +11,11 @@ const router = Router();
 // IMPORTANTE: antes de /:id para que /buscar no se interprete como ID
 router.get('/buscar', jugadorController.buscar);
 
+// GET /api/jugadores/search?nombre=&apellido1=&apellido2= — usada por la vista
+// pública de estadísticas de jugador (formulario con 3 campos separados).
+// IMPORTANTE: antes de /:id por la misma razón que /buscar.
+router.get('/search', jugadorController.buscarPorCampos);
+
 // ── Autenticadas ──────────────────────────────────────────────
 
 // GET /api/jugadores

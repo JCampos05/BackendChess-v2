@@ -41,6 +41,25 @@ export const buscar = async (
     }
 };
 
+// GET /api/jugadores/search?nombre=&apellido1=&apellido2=
+export const buscarPorCampos = async (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const { nombre, apellido1, apellido2 } = req.query as Record<string, string | undefined>;
+        if (!nombre?.trim() && !apellido1?.trim()) {
+            res.status(400).json({ ok: false, mensaje: 'Se requiere al menos nombre o apellido1' });
+            return;
+        }
+        const jugadores = await jugadorService.buscarJugadoresPorCampos({ nombre, apellido1, apellido2 });
+        res.json({ ok: true, data: jugadores });
+    } catch (err) {
+        next(err);
+    }
+};
+
 // GET /api/jugadores/:id
 export const obtenerUno = async (
     req: AuthRequest,
