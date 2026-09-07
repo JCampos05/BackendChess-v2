@@ -70,10 +70,28 @@ const INCLUDE_DETALLE = {
 
 // ── CRUD ─────────────────────────────────────────────────────
 
+// Un torneo publicado/en_curso cuya fecha ya pasó debe reflejarse como
+// finalizado — no existe un cron aparte, así que se corrige de forma
+// perezosa antes de cada consulta que pueda mostrar el estado al usuario.
+const autoFinalizarVencidos = async (): Promise<void> => {
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+
+    await prisma.torneo.updateMany({
+        where: {
+            estado: { in: ['publicado', 'en_curso'] },
+            fecha:  { lt: hoy },
+        },
+        data: { estado: 'finalizado', fecha_actualizacion: new Date() },
+    });
+};
+
 export const listarTorneos = async (
     filtros: FiltrosTorneoDto & { fechaDesde?: Date; estadoIn?: string[] },
     usuario?: { idUsuario: number; rol: string }
 ): Promise<PaginatedResult<unknown>> => {
+    await autoFinalizarVencidos();
+
     const { pagina, limite, activo, estado, estadoIn, es_actual, soloConCategorias, fechaDesde } = filtros;
     const skip = (pagina - 1) * limite;
 
@@ -105,6 +123,7 @@ export const listarTorneos = async (
 };
 
 export const obtenerTorneoPorId = async (idTorneo: number) => {
+    await autoFinalizarVencidos();
     const torneo = await prisma.torneo.findUnique({
         where:   { idTorneo },
         include: INCLUDE_DETALLE,
@@ -114,6 +133,7 @@ export const obtenerTorneoPorId = async (idTorneo: number) => {
 };
 
 export const obtenerTorneoPorSlug = async (slug: string) => {
+    await autoFinalizarVencidos();
     const torneo = await prisma.torneo.findUnique({
         where:   { slug },
         include: INCLUDE_DETALLE,
