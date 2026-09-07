@@ -129,8 +129,14 @@ export const obtenerEstadisticasPublicas = async (idJugador: number) => {
     const [historial, ligas] = await Promise.all([
         prisma.inscripcion.findMany({
             where: { idJugador },
-            orderBy: { torneo: { fecha: 'desc' } },
+            // Por fecha de inscripción (no fecha del torneo): así una
+            // inscripción recién hecha a un torneo futuro aparece de
+            // inmediato como "Último Torneo" con su pago pendiente
+            // reflejado, en vez de quedar oculta detrás de un torneo
+            // pasado con fecha más próxima a hoy.
+            orderBy: { fecha_inscripcion: 'desc' },
             select: {
+                idTorneo: true,
                 pago_confirmado: true,
                 fecha_inscripcion: true,
                 fecha_actualizacion: true,
@@ -143,6 +149,7 @@ export const obtenerEstadisticasPublicas = async (idJugador: number) => {
             orderBy: { liga: { fecha_inicio: 'desc' } },
             select: {
                 estado: true,
+                pago_confirmado: true,
                 puntos: true,
                 partidas_jugadas: true,
                 victorias: true,
@@ -159,10 +166,36 @@ export const obtenerEstadisticasPublicas = async (idJugador: number) => {
         }),
     ]);
 
+    // Desempeño final por torneo (posición, puntos, W/D/L) — una fila por
+    // jugador+torneo en EstadisticaTorneo, ya actualizada por el motor de
+    // emparejamiento tras cada ronda; con posicion_actual no nula representa
+    // la clasificación final una vez que el torneo terminó.
+    const idsTorneo = [...new Set(historial.map(h => h.idTorneo))];
+    const resultados = idsTorneo.length
+        ? await prisma.estadisticaTorneo.findMany({
+            where: { idJugador, idTorneo: { in: idsTorneo } },
+            select: {
+                idTorneo: true,
+                posicion_actual: true,
+                puntos: true,
+                partidas_jugadas: true,
+                victorias: true,
+                empates: true,
+                derrotas: true,
+            },
+        })
+        : [];
+    const resultadoPorTorneo = new Map(resultados.map(r => [r.idTorneo, r]));
+
+    const historialConResultado = historial.map(({ idTorneo, ...resto }) => ({
+        ...resto,
+        resultado: resultadoPorTorneo.get(idTorneo) ?? null,
+    }));
+
     return {
         jugador,
-        ultimoTorneo: historial[0] ?? null,
-        historial,
+        ultimoTorneo: historialConResultado[0] ?? null,
+        historial: historialConResultado,
         ligas,
         estadisticas: { totalTorneos: historial.length },
     };
