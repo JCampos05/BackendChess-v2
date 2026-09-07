@@ -104,6 +104,70 @@ export const buscarJugadoresPorCampos = async (filtros: {
     });
 };
 
+// ── Estadísticas públicas (torneos + ligas) ───────────────────
+// Usada por la vista pública /players-stats — el frontend (jugador.ts::
+// getPublicStats) ya esperaba este endpoint con esta forma exacta desde
+// antes; nunca se había implementado en el backend.
+
+export const obtenerEstadisticasPublicas = async (idJugador: number) => {
+    const jugador = await prisma.jugador.findUnique({
+        where: { idJugador },
+        select: {
+            idJugador: true,
+            nombre: true,
+            apellido1: true,
+            apellido2: true,
+            rating: true,
+            estado: true,
+            fecha_nacimiento: true,
+            fecha_registro: true,
+            categoria: { select: { nombre: true } },
+        },
+    });
+    if (!jugador) throw new NotFoundError('Jugador no encontrado');
+
+    const [historial, ligas] = await Promise.all([
+        prisma.inscripcion.findMany({
+            where: { idJugador },
+            orderBy: { torneo: { fecha: 'desc' } },
+            select: {
+                pago_confirmado: true,
+                fecha_inscripcion: true,
+                fecha_actualizacion: true,
+                categoria: { select: { nombre: true } },
+                torneo: { select: { nombre: true, lugar: true, fecha: true, rondas: true } },
+            },
+        }),
+        prisma.jugadorLiga.findMany({
+            where: { idJugador },
+            orderBy: { liga: { fecha_inicio: 'desc' } },
+            select: {
+                estado: true,
+                puntos: true,
+                partidas_jugadas: true,
+                victorias: true,
+                empates: true,
+                derrotas: true,
+                posicion_grupo: true,
+                fecha_inscripcion: true,
+                fecha_actualizacion: true,
+                liga: {
+                    select: { nombre: true, descripcion: true, lugar: true, fecha_inicio: true, fecha_fin: true },
+                },
+                grupo: { select: { nombre: true } },
+            },
+        }),
+    ]);
+
+    return {
+        jugador,
+        ultimoTorneo: historial[0] ?? null,
+        historial,
+        ligas,
+        estadisticas: { totalTorneos: historial.length },
+    };
+};
+
 // ── Detalle ──────────────────────────────────────────────────
 
 export const obtenerJugadorPorId = async (idJugador: number) => {

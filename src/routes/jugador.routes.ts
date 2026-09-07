@@ -16,6 +16,9 @@ router.get('/buscar', jugadorController.buscar);
 // IMPORTANTE: antes de /:id por la misma razón que /buscar.
 router.get('/search', jugadorController.buscarPorCampos);
 
+// GET /api/jugadores/:id/stats — estadísticas públicas (torneos + ligas) para /players-stats
+router.get('/:id/stats', jugadorController.obtenerEstadisticasPublicas);
+
 // ── Autenticadas ──────────────────────────────────────────────
 
 // GET /api/jugadores

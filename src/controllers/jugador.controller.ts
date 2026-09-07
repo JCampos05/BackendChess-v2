@@ -60,6 +60,25 @@ export const buscarPorCampos = async (
     }
 };
 
+// GET /api/jugadores/:id/stats — público, usado por /players-stats
+export const obtenerEstadisticasPublicas = async (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const idJugador = Number(req.params.id);
+        if (isNaN(idJugador)) {
+            res.status(400).json({ ok: false, mensaje: 'ID inválido' });
+            return;
+        }
+        const data = await jugadorService.obtenerEstadisticasPublicas(idJugador);
+        res.json({ ok: true, data });
+    } catch (err) {
+        next(err);
+    }
+};
+
 // GET /api/jugadores/:id
 export const obtenerUno = async (
     req: AuthRequest,
