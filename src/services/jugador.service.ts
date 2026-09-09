@@ -292,9 +292,15 @@ export const actualizarJugador = async (
         where: { idJugador },
         data: {
             ...nombresNormalizados,
+            // normalizarNombreJugador omite apellido2 cuando es null/vacío
+            // (para no pisar un valor existente en altas parciales) — pero eso
+            // significa que nunca se puede LIMPIAR el campo ya guardado. Si
+            // el frontend manda null explícito, sí es intención de borrarlo.
+            ...(datos.apellido2 === null && { apellido2: null }),
             ...(datos.telefono !== undefined && { telefono: datos.telefono }),
             ...(datos.fecha_nacimiento !== undefined && {
-                fecha_nacimiento: new Date(datos.fecha_nacimiento!),
+                // new Date(null) da 1970-01-01 en vez de limpiar el campo.
+                fecha_nacimiento: datos.fecha_nacimiento === null ? null : new Date(datos.fecha_nacimiento),
             }),
             ...(datos.idCategoria !== undefined && { idCategoria: datos.idCategoria }),
             ...(datos.notas !== undefined && { notas: datos.notas }),

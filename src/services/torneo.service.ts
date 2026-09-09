@@ -18,7 +18,16 @@ import { PaginatedResult } from '../types';
 
 const INCLUDE_BASE = {
     zona_horaria:      { select: { nombreZona: true, nombreMostrar: true } },
-    sistema_pago:      { select: { idSistemaPago: true, nombreCuenta: true, banco: true } },
+    sistema_pago:      {
+        select: {
+            idSistemaPago: true,
+            nombreCuenta:  true,
+            banco:         true,
+            numeroCuenta:  true,
+            clabe:         true,
+            telefono:      true,
+        },
+    },
     torneo_categorias: {
         where:  { activo: true },
         select: {

@@ -14,11 +14,15 @@ export const crearJugadorSchema = z.object({
 export const actualizarJugadorSchema = z.object({
     nombre: z.string().min(1).max(100).optional(),
     apellido1: z.string().min(1).max(100).optional(),
-    apellido2: z.string().max(100).optional(),
-    telefono: z.string().max(15).regex(/^\d+$/, 'Solo dígitos').optional(),
-    fecha_nacimiento: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato YYYY-MM-DD').optional(),
+    // apellido2/telefono/fecha_nacimiento son nullable en la BD (Jugador.apellido2,
+    // .telefono, .fecha_nacimiento son String?/DateTime?) y el frontend manda
+    // explícitamente `null` cuando el campo queda vacío (ver edicion-inscripcion.ts)
+    // — sin .nullable(), Zod rechaza null con 400 aunque la BD sí lo acepte.
+    apellido2: z.string().max(100).optional().nullable(),
+    telefono: z.string().max(15).regex(/^\d+$/, 'Solo dígitos').optional().nullable(),
+    fecha_nacimiento: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato YYYY-MM-DD').optional().nullable(),
     idCategoria: z.number().int().positive().optional(),
-    notas: z.string().optional(),
+    notas: z.string().optional().nullable(),
     rating: z.number().int().min(0).max(9999).optional(),
     // Schema v2.1.0: pendiente_pago | activo | inactivo
     estado: z.enum(['pendiente_pago', 'activo', 'inactivo']).optional(),

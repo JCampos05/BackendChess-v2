@@ -194,9 +194,7 @@ export const actualizarInscripcion = async (
         where:  { idInscripcion },
         select: { idInscripcion: true, estado: true },
     });
-    if (!inscripcion)          throw new NotFoundError('Inscripción no encontrada');
-    if (inscripcion.estado === 'cancelado')
-        throw new ForbiddenError('No se puede modificar una inscripción cancelada');
+    if (!inscripcion) throw new NotFoundError('Inscripción no encontrada');
 
     // Mapear 'pendiente' → 'pendiente_pago' por compatibilidad con payloads anteriores
     let estadoFinal = datos.estado;
@@ -210,7 +208,12 @@ export const actualizarInscripcion = async (
             ...(datos.idCategoria    !== undefined && { idCategoria:    datos.idCategoria }),
             ...(datos.monto_pagado   !== undefined && { monto_pagado:   datos.monto_pagado }),
             ...(datos.pago_confirmado !== undefined && { pago_confirmado: datos.pago_confirmado }),
-            ...(estadoFinal          !== undefined && { estado:          estadoFinal }),
+            ...(estadoFinal          !== undefined && {
+                // Para este punto 'pendiente' ya se remapeó arriba — el cast
+                // solo angosta el tipo, que sigue incluyendo 'pendiente' por
+                // el ensanchamiento del enum en el schema Zod.
+                estado: estadoFinal as 'pendiente_pago' | 'confirmado' | 'cancelado',
+            }),
             ...(datos.notas          !== undefined && { notas:           datos.notas }),
             fecha_actualizacion: new Date(),
         },
