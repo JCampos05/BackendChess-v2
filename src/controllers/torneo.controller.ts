@@ -45,7 +45,8 @@ export const listarTorneosPublicos = async (
             fechaDesde: hoy,
             estadoIn:   ESTADOS_PUBLICOS,
         });
-        res.json({ ok: true, data: resultado.items, total: resultado.total });
+        const data = await torneoService.anexarInfoCupoPublico(resultado.items as any[]);
+        res.json({ ok: true, data, total: resultado.total });
     } catch (err) { next(err); }
 };
 
@@ -63,7 +64,8 @@ export const listarTorneosActivos = async (
             activo:  true,
             estadoIn: ESTADOS_PUBLICOS,
         });
-        res.json({ ok: true, data: resultado.items, total: resultado.total });
+        const data = await torneoService.anexarInfoCupoPublico(resultado.items as any[]);
+        res.json({ ok: true, data, total: resultado.total });
     } catch (err) { next(err); }
 };
 
@@ -84,7 +86,8 @@ export const listarTorneosProximos = async (
             fechaDesde: hoy,
             estadoIn:   ESTADOS_PUBLICOS,
         });
-        res.json({ ok: true, data: resultado.items, total: resultado.total });
+        const data = await torneoService.anexarInfoCupoPublico(resultado.items as any[]);
+        res.json({ ok: true, data, total: resultado.total });
     } catch (err) { next(err); }
 };
 

@@ -131,6 +131,28 @@ export const listarTorneos = async (
     return { items, total, pagina, limite, totalPaginas: Math.ceil(total / limite) };
 };
 
+// Anexa info de cupo (inscritos/cupoDisponible/llena) a torneos para
+// superficies públicas — la landing solo mostraba "Cerrado" por fecha,
+// nunca por cupo alcanzado, porque estos listados no traían ningún dato de
+// inscritos (a diferencia de listarCategoriasPublicas, que sí lo calcula
+// por categoría desde hace tiempo).
+export const anexarInfoCupoPublico = async (torneos: any[]): Promise<any[]> => {
+    return Promise.all(torneos.map(async (torneo) => {
+        if (!torneo.cupo_maximo) {
+            return { ...torneo, inscritos: 0, cupoDisponible: null, llena: false };
+        }
+        const inscritos = await prisma.inscripcion.count({
+            where: { idTorneo: torneo.idTorneo, estado: { not: 'cancelado' } },
+        });
+        return {
+            ...torneo,
+            inscritos,
+            cupoDisponible: Math.max(torneo.cupo_maximo - inscritos, 0),
+            llena: inscritos >= torneo.cupo_maximo,
+        };
+    }));
+};
+
 export const obtenerTorneoPorId = async (idTorneo: number) => {
     await autoFinalizarVencidos();
     const torneo = await prisma.torneo.findUnique({
