@@ -11,9 +11,20 @@ import { inscribirEnTorneo, buscarJugadorSimilar, InscribirEnTorneoDto } from '.
 export const listarCategoriasPublicas = async (idTorneo: number) => {
     const torneo = await prisma.torneo.findUnique({
         where: { idTorneo },
-        select: { idTorneo: true, cierre_inscripciones: true },
+        select: { idTorneo: true, cierre_inscripciones: true, cupo_maximo: true },
     });
     if (!torneo) throw new NotFoundError('Torneo no encontrado');
+
+    // Cupo del TORNEO completo (todas las categorías juntas) — antes solo se
+    // consideraba el cupo por categoría, así que un torneo con cupo_maximo a
+    // nivel torneo (sin límite por categoría) nunca mostraba "lleno" en el
+    // formulario público, aunque el backend sí lo rechazara al inscribir.
+    const inscritosTorneo = torneo.cupo_maximo
+        ? await prisma.inscripcion.count({
+            where: { idTorneo, estado: { not: 'cancelado' } },
+        })
+        : 0;
+    const torneoLleno = torneo.cupo_maximo ? inscritosTorneo >= torneo.cupo_maximo : false;
 
     const categorias = await prisma.torneoCategoria.findMany({
         where: { idTorneo, activo: true },
@@ -36,6 +47,7 @@ export const listarCategoriasPublicas = async (idTorneo: number) => {
                 where: { idTorneo, idCategoria: tc.idCategoria, estado: { not: 'cancelado' } },
             })
             : 0;
+        const categoriaLlena = tc.cupo_maximo ? inscritos >= tc.cupo_maximo : false;
 
         return {
             idCategoria:         tc.categoria.idCategoria,
@@ -49,7 +61,7 @@ export const listarCategoriasPublicas = async (idTorneo: number) => {
             inscritos,
             cupoDisponible:      tc.cupo_maximo ? Math.max(tc.cupo_maximo - inscritos, 0) : null,
             cerrada:             await inscripcionesCerradas(cierreEfectivo),
-            llena:               tc.cupo_maximo ? inscritos >= tc.cupo_maximo : false,
+            llena:               categoriaLlena || torneoLleno,
         };
     }));
 };
