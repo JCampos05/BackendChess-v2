@@ -111,9 +111,34 @@ export const crearInscripcion = async (datos: CrearInscripcionDto) => {
         if (!torneo) throw new NotFoundError(`Torneo ${datos.idTorneo} no encontrado`);
         if (!torneo.activo) throw new ForbiddenError('El torneo no está activo');
 
-        // 3. Verificar cierre de inscripciones
-        if (await inscripcionesCerradas(torneo.cierre_inscripciones))
+        const torneoCategoria = datos.idCategoria
+            ? await tx.torneoCategoria.findFirst({
+                where: { idTorneo: datos.idTorneo, idCategoria: datos.idCategoria },
+            })
+            : null;
+
+        // 3. Verificar cierre de inscripciones (categoría tiene prioridad sobre torneo)
+        const fechaCierre = torneoCategoria?.cierre_inscripciones ?? torneo.cierre_inscripciones;
+        if (await inscripcionesCerradas(fechaCierre))
             throw new ForbiddenError('El plazo de inscripciones ha cerrado');
+
+        // 3.1 Verificar cupo del torneo y de la categoría — misma regla que la
+        // inscripción pública (ver inscripcion-admin.service.ts), para que un
+        // registro manual desde el panel admin no pueda saltarse el límite.
+        if (torneo.cupo_maximo) {
+            const inscritos = await tx.inscripcion.count({
+                where: { idTorneo: datos.idTorneo, estado: { not: 'cancelado' } },
+            });
+            if (inscritos >= torneo.cupo_maximo)
+                throw new ForbiddenError(`El torneo ha alcanzado su cupo máximo de ${torneo.cupo_maximo} jugadores`);
+        }
+        if (torneoCategoria?.cupo_maximo) {
+            const inscritosCategoria = await tx.inscripcion.count({
+                where: { idTorneo: datos.idTorneo, idCategoria: datos.idCategoria, estado: { not: 'cancelado' } },
+            });
+            if (inscritosCategoria >= torneoCategoria.cupo_maximo)
+                throw new ForbiddenError(`La categoría ha alcanzado su cupo máximo de ${torneoCategoria.cupo_maximo} jugadores`);
+        }
 
         // 4. Validar edad si aplica y calcularla para guardarla en la inscripción
         //    (se guarda al inscribir — ver comentario del campo `edad` en schema.prisma)
