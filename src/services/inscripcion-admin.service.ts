@@ -65,7 +65,27 @@ const resolverJugador = async (datos: {
             where: { idJugador: datos.idJugador },
         });
         if (!jugador) throw new NotFoundError('Jugador no encontrado');
-        return jugador;
+
+        // El formulario (modal "jugador similar" incluido) sigue capturando
+        // teléfono/fecha de nacimiento aunque el usuario haya seleccionado un
+        // jugador existente — si vienen datos nuevos, hay que persistirlos.
+        // Antes se devolvía el registro tal cual, así que una corrección de
+        // teléfono o fecha de nacimiento se perdía en silencio.
+        const telefonoLimpio = datos.telefono?.replace(/\s/g, '');
+        const hayCambios =
+            (telefonoLimpio && telefonoLimpio !== jugador.telefono) ||
+            (datos.fecha_nacimiento && new Date(datos.fecha_nacimiento).getTime() !== jugador.fecha_nacimiento?.getTime());
+
+        if (!hayCambios) return jugador;
+
+        return prisma.jugador.update({
+            where: { idJugador: jugador.idJugador },
+            data: {
+                ...(telefonoLimpio && { telefono: telefonoLimpio }),
+                ...(datos.fecha_nacimiento && { fecha_nacimiento: new Date(datos.fecha_nacimiento) }),
+                actualizacion: new Date(),
+            },
+        });
     }
 
     // Validar campos requeridos para jugador nuevo
