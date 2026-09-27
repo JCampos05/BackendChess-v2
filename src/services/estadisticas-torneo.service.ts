@@ -398,6 +398,35 @@ export const getListaInicialPublica = async (
         include: INCLUDE_JUGADOR,
     });
 
+    // Las estadísticas se crean cuando el torneo arranca. Antes de eso la lista
+    // inicial sale de las inscripciones con pago confirmado de esa categoría.
+    if (estadisticas.length === 0) {
+        const torneoCategoria = await prisma.torneoCategoria.findUnique({
+            where: { idTorneoCat: idTorneoCategoria },
+            select: { idTorneo: true, idCategoria: true },
+        });
+        if (!torneoCategoria || torneoCategoria.idTorneo !== idTorneo) return [];
+
+        const inscripciones = await prisma.inscripcion.findMany({
+            where: {
+                idTorneo,
+                idCategoria: torneoCategoria.idCategoria,
+                estado: 'confirmado',
+                pago_confirmado: true,
+            },
+            select: {
+                edad: true,
+                jugador: {
+                    select: { idJugador: true, nombre: true, apellido1: true, apellido2: true, rating: true },
+                },
+            },
+        });
+
+        return inscripciones
+            .map((i) => ({ ...i.jugador, jugador: { edad: i.edad } }))
+            .sort((a, b) => b.rating - a.rating);
+    }
+
     return estadisticas
         .filter((e) => e.jugador !== null)
         .map((e) => ({
