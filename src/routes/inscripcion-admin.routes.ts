@@ -11,5 +11,6 @@ router.get('/buscar-jugador',              ctrl.buscarJugador);
 router.get('/eventos-activos',             ctrl.getEventosActivos);
 router.get('/torneo/:idTorneo/categorias', ctrl.getCategoriasByTorneo);
 router.get('/liga/:idLiga/grupos',         ctrl.getGruposByLiga);
+router.get('/folio/:folio/comprobante',    ctrl.getComprobante);
 
 export default router;

@@ -4,6 +4,7 @@ import { NotFoundError, ConflictError, ForbiddenError } from '../middleware/erro
 import { PaginatedResult } from '../types';
 import { generarSlugUnico } from '../utils/slug';
 import { asignarFolioLiga } from './folio.service';
+import { conCodigoVerificacion } from './verificacion-folio.service';
 import {
     CrearLigaConGruposDto,
     ActualizarLigaConGruposDto,
@@ -147,6 +148,7 @@ export const crearLiga = async (datos: CrearLigaConGruposDto) => {
                 num_grupos:           grupos.length || datos.num_grupos,
                 clasifican_por_grupo: datos.clasifican_por_grupo,
                 idRitmoJuego:         datos.idRitmoJuego,
+                idSistemaPago:        datos.idSistemaPago,
                 costo_inscripcion:    datos.costo_inscripcion,
                 cierre_inscripciones: datos.cierre_inscripciones
                     ? new Date(datos.cierre_inscripciones)
@@ -204,6 +206,7 @@ export const actualizarLiga = async (idLiga: number, datos: ActualizarLigaConGru
                 ...(datos.num_grupos           !== undefined && { num_grupos:           datos.num_grupos }),
                 ...(datos.clasifican_por_grupo !== undefined && { clasifican_por_grupo: datos.clasifican_por_grupo }),
                 ...(datos.idRitmoJuego         !== undefined && { idRitmoJuego:         datos.idRitmoJuego }),
+                ...(datos.idSistemaPago        !== undefined && { idSistemaPago:        datos.idSistemaPago }),
                 ...(datos.costo_inscripcion    !== undefined && { costo_inscripcion:    datos.costo_inscripcion }),
                 ...(datos.cierre_inscripciones !== undefined && { cierre_inscripciones: datos.cierre_inscripciones ? new Date(datos.cierre_inscripciones) : null }),
                 ...(datos.max_jugadores        !== undefined && { max_jugadores:        datos.max_jugadores }),
@@ -395,7 +398,7 @@ export const inscribirJugadorLiga = async (
 
         // 7. Crear inscripción
         const { numero_inscripcion, folio } = await asignarFolioLiga(tx, idLiga);
-        return tx.jugadorLiga.create({
+        const inscripcion = await tx.jugadorLiga.create({
             data: {
                 idLiga,
                 numero_inscripcion,
@@ -413,6 +416,7 @@ export const inscribirJugadorLiga = async (
                 grupo:   { select: { idGrupoLiga: true, nombre: true } },
             },
         });
+        return conCodigoVerificacion(inscripcion);
     });
 };
 

@@ -8,6 +8,7 @@ import {
 import { normalizarNombreJugador } from '../utils/nombre.utils';
 import { jugadorPuedeInscribirse, inscripcionesCerradas } from '../utils/fecha.utils';
 import { asignarFolioTorneo, asignarFolioLiga } from './folio.service';
+import { conCodigoVerificacion } from './verificacion-folio.service';
 
 // ── Tipos de entrada ─────────────────────────────────────────
 
@@ -252,7 +253,7 @@ export const inscribirEnTorneo = async (datos: InscribirEnTorneoDto) => {
             });
         }
 
-        return inscripcion;
+        return conCodigoVerificacion(inscripcion);
     });
 };
 
@@ -303,7 +304,7 @@ export const inscribirEnLiga = async (datos: InscribirEnLigaDto) => {
 
     return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
         const { numero_inscripcion, folio } = await asignarFolioLiga(tx, datos.idLiga);
-        return tx.jugadorLiga.create({
+        const inscripcionLiga = await tx.jugadorLiga.create({
             data: {
                 idLiga: datos.idLiga,
                 idGrupoLiga: datos.idGrupoLiga,
@@ -330,6 +331,7 @@ export const inscribirEnLiga = async (datos: InscribirEnLigaDto) => {
                 grupo: { select: { idGrupoLiga: true, nombre: true } },
             },
         });
+        return conCodigoVerificacion(inscripcionLiga);
     });
 };
 

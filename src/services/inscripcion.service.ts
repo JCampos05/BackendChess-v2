@@ -8,6 +8,7 @@ import {
 } from '../validations/inscripcion.validations';
 import { inscripcionesCerradas, jugadorPuedeInscribirse, calcularEdadParaTorneo } from '../utils/fecha.utils';
 import { asignarFolioTorneo } from './folio.service';
+import { conCodigoVerificacion } from './verificacion-folio.service';
 
 // ── Obtener por ID ───────────────────────────────────────────
 
@@ -209,7 +210,7 @@ export const crearInscripcion = async (datos: CrearInscripcionDto) => {
             });
         }
 
-        return inscripcion;
+        return conCodigoVerificacion(inscripcion);
     });
 };
 

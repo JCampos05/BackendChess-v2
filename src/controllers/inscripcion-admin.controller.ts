@@ -1,6 +1,7 @@
 import { Response, NextFunction } from 'express';
 import { AuthRequest } from '../types';
 import * as service from '../services/inscripcion-admin.service';
+import { datosComprobante } from '../services/verificacion-folio.service';
 
 export const crear = async (
     req: AuthRequest,
@@ -81,5 +82,17 @@ export const buscarJugador = async (
         }
         const data = await service.buscarJugadorSimilar(q);
         res.json({ ok: true, total: data.length, data });
+    } catch (err) { next(err); }
+};
+
+// GET /api/inscripciones-admin/folio/:folio/comprobante — datos para reemitir el comprobante (con código del QR)
+export const getComprobante = async (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+) => {
+    try {
+        const data = await datosComprobante(req.params.folio);
+        res.json({ ok: true, data });
     } catch (err) { next(err); }
 };

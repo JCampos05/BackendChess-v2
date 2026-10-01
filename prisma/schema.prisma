@@ -254,6 +254,7 @@ model SistemaPago {
   actualizacion  DateTime?
 
   torneos        Torneo[]
+  ligas          InfoLiga[]
 
   @@index([activo])
   @@map("sistema_pago")
@@ -630,6 +631,8 @@ model InfoLiga {
   num_grupos           Int             @default(1)
   clasifican_por_grupo Int             @default(2)
   idRitmoJuego         Int?
+  // Cuenta donde se reciben los pagos de inscripción de esta liga (igual que Torneo.idSistemaPago)
+  idSistemaPago        Int?
   costo_inscripcion    Decimal         @default(0.00) @db.Decimal(10, 2)
   cierre_inscripciones DateTime?
   max_jugadores        Int?
@@ -644,6 +647,7 @@ model InfoLiga {
   fecha_actualizacion  DateTime?       @updatedAt
 
   ritmo_juego          RitmoJuego?  @relation(fields: [idRitmoJuego], references: [idRitmoJuego], onDelete: SetNull, onUpdate: Cascade)
+  sistema_pago         SistemaPago? @relation(fields: [idSistemaPago], references: [idSistemaPago], onDelete: SetNull, onUpdate: Cascade)
 
   grupos               GrupoLiga[]
   jugadores_liga       JugadorLiga[]

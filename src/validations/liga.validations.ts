@@ -22,6 +22,7 @@ export const crearLigaSchema = z.object({
     num_grupos:           z.number().int().min(1).default(1),
     clasifican_por_grupo: z.number().int().min(1).default(2),
     idRitmoJuego:         z.number().int().positive().nullish(),
+    idSistemaPago:        z.number().int().positive().nullish(),
     costo_inscripcion:    z.number().min(0).default(0),
     cierre_inscripciones: fechaHoraOpcional,
     max_jugadores:        z.number().int().positive().nullish(),

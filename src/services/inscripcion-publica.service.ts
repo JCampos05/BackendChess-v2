@@ -103,6 +103,7 @@ export const obtenerLigaPublicaPorSlug = async (slug: string) => {
             fecha_inicio: true, fecha_fin: true, tipo_sistema: true,
             costo_inscripcion: true, cierre_inscripciones: true, max_jugadores: true,
             notas: true, activo: true,
+            sistema_pago: { select: { nombreCuenta: true, banco: true, numeroCuenta: true, clabe: true, telefono: true } },
             ritmo_juego: { select: { nombre: true, minutos: true, incremento: true } },
             grupos: {
                 where: { activo: true },
