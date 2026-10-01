@@ -2,22 +2,30 @@ import { z } from 'zod';
 
 // ── Liga ─────────────────────────────────────────────────────
 
+// Los formularios del frontend mandan null (no undefined) en los campos opcionales
+// vacíos, por eso se aceptan con .nullish(). cierre_inscripciones llega de un
+// <input type="datetime-local"> ("2026-10-10T18:00", sin offset), así que basta
+// con que sea una fecha-hora interpretable.
+const fechaHoraOpcional = z.string()
+    .refine(v => !Number.isNaN(Date.parse(v)), 'Fecha y hora inválida')
+    .nullish();
+
 export const crearLigaSchema = z.object({
     nombre:               z.string().min(1).max(255),
-    descripcion:          z.string().optional(),
+    descripcion:          z.string().nullish(),
     fecha_inicio:         z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato YYYY-MM-DD'),
-    fecha_fin:            z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato YYYY-MM-DD').optional(),
-    lugar:                z.string().max(255).optional(),
-    direccion:            z.string().max(255).optional(),
-    url_maps:             z.string().url().optional(),
+    fecha_fin:            z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato YYYY-MM-DD').nullish(),
+    lugar:                z.string().max(255).nullish(),
+    direccion:            z.string().max(255).nullish(),
+    url_maps:             z.string().url().nullish(),
     tipo_sistema:         z.enum(['round_robin', 'suizo', 'grupos']).default('grupos'),
     num_grupos:           z.number().int().min(1).default(1),
     clasifican_por_grupo: z.number().int().min(1).default(2),
-    idRitmoJuego:         z.number().int().positive().optional(),
+    idRitmoJuego:         z.number().int().positive().nullish(),
     costo_inscripcion:    z.number().min(0).default(0),
-    cierre_inscripciones: z.string().datetime({ offset: true }).optional(),
-    max_jugadores:        z.number().int().positive().optional(),
-    notas:                z.string().optional(),
+    cierre_inscripciones: fechaHoraOpcional,
+    max_jugadores:        z.number().int().positive().nullish(),
+    notas:                z.string().nullish(),
 });
 
 export const actualizarLigaSchema = crearLigaSchema.partial();
@@ -32,11 +40,17 @@ export const filtrosLigaSchema = z.object({
 
 export const crearGrupoSchema = z.object({
     nombre:        z.string().min(1).max(100),
-    descripcion:   z.string().optional(),
-    max_jugadores: z.number().int().positive().optional(),
+    descripcion:   z.string().nullish(),
+    max_jugadores: z.number().int().positive().nullish(),
     rondas:        z.number().int().min(1).default(5),
-    premios:       z.record(z.unknown()).optional(),
-    desempates:    z.array(z.string()).optional(),
+    premios:       z.record(z.unknown()).nullish(),
+    desempates:    z.array(z.string()).nullish(),
+});
+
+// Liga + sus grupos en una sola petición: se crean juntos en una transacción
+// (todo o nada), sin dejar ligas huérfanas si un grupo falla.
+export const crearLigaConGruposSchema = crearLigaSchema.extend({
+    grupos: z.array(crearGrupoSchema).optional(),
 });
 
 export const actualizarGrupoSchema = crearGrupoSchema.partial();
@@ -144,6 +158,7 @@ export const actualizarPartidaLigaSchema = registrarPartidaLigaSchema.partial();
 // ── Types ─────────────────────────────────────────────────────
 
 export type CrearLigaDto               = z.infer<typeof crearLigaSchema>;
+export type CrearLigaConGruposDto      = z.infer<typeof crearLigaConGruposSchema>;
 export type ActualizarLigaDto          = z.infer<typeof actualizarLigaSchema>;
 export type FiltrosLigaDto             = z.infer<typeof filtrosLigaSchema>;
 export type CrearGrupoDto              = z.infer<typeof crearGrupoSchema>;
