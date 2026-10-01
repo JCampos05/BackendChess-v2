@@ -392,6 +392,9 @@ model Torneo {
   notas                String?        @db.Text
   rondas               Int            @default(5)
   cupo_maximo          Int?
+  // Contador atómico de folios de comprobante: se incrementa dentro de la transacción
+  // de cada inscripción y nunca decrece (un número cancelado no se reutiliza).
+  consecutivo_inscripciones Int       @default(0)
   cierre_inscripciones DateTime?
 
   // Zona horaria específica del torneo (hereda de config_gral si es null)
@@ -484,8 +487,12 @@ model Inscripcion {
   fecha_inscripcion   DateTime?
   fecha_actualizacion DateTime?
 
+  // Comprobante: nº de inscripción dentro del torneo y folio CMAA-T-ABREV-0042
+  numero_inscripcion  Int?
+  folio               String?            @unique @db.VarChar(40)
+
   jugador             Jugador            @relation(fields: [idJugador], references: [idJugador], onDelete: Cascade, onUpdate: Cascade)
-  torneo              Torneo             @relation(fields: [idTorneo], references: [idTorneo], onDelete: Cascade, onUpdate: Cascade)
+  torneo             Torneo             @relation(fields: [idTorneo], references: [idTorneo], onDelete: Cascade, onUpdate: Cascade)
   categoria           Categoria?         @relation(fields: [idCategoria], references: [idCategoria], onDelete: SetNull, onUpdate: Cascade)
 
   @@unique([idJugador, idTorneo], name: "unique_jugador_torneo")
@@ -626,6 +633,8 @@ model InfoLiga {
   costo_inscripcion    Decimal         @default(0.00) @db.Decimal(10, 2)
   cierre_inscripciones DateTime?
   max_jugadores        Int?
+  // Contador atómico de folios de comprobante (ver Torneo.consecutivo_inscripciones)
+  consecutivo_inscripciones Int        @default(0)
   activo               Boolean         @default(true)
   notas                String?         @db.Text
   fecha_creacion       DateTime        @default(now())
@@ -687,6 +696,11 @@ model JugadorLiga {
   posicion_grupo      Int?
   notas               String?           @db.Text
   fecha_actualizacion DateTime?         @updatedAt
+
+  // Comprobante: nº de inscripción dentro de la liga y folio CMAA-L-ABREV-0007
+  // (distinto de numero_jugador, que es el número de jugador asignado a mano)
+  numero_inscripcion  Int?
+  folio               String?           @unique @db.VarChar(40)
 
   liga     InfoLiga  @relation(fields: [idLiga], references: [idLiga], onDelete: Cascade, onUpdate: Cascade)
   grupo    GrupoLiga @relation(fields: [idGrupoLiga], references: [idGrupoLiga], onDelete: Cascade, onUpdate: Cascade)

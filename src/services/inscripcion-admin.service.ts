@@ -7,6 +7,7 @@ import {
 } from '../middleware/error.middleware';
 import { normalizarNombreJugador } from '../utils/nombre.utils';
 import { jugadorPuedeInscribirse, inscripcionesCerradas } from '../utils/fecha.utils';
+import { asignarFolioTorneo, asignarFolioLiga } from './folio.service';
 
 // ── Tipos de entrada ─────────────────────────────────────────
 
@@ -220,11 +221,14 @@ export const inscribirEnTorneo = async (datos: InscribirEnTorneoDto) => {
 
     // Crear inscripción y actualizar jugador en transacción
     return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+        const { numero_inscripcion, folio } = await asignarFolioTorneo(tx, datos.idTorneo);
         const inscripcion = await tx.inscripcion.create({
             data: {
                 idJugador: jugador.idJugador,
                 idTorneo: datos.idTorneo,
                 idCategoria: datos.idCategoria,
+                numero_inscripcion,
+                folio,
                 notas: datos.notas?.trim() ?? null,
                 edad: edadInscripcion,
                 estado: datos.pago_confirmado ? 'confirmado' : 'pendiente_pago',
@@ -235,7 +239,7 @@ export const inscribirEnTorneo = async (datos: InscribirEnTorneoDto) => {
             },
             include: {
                 jugador: { select: { idJugador: true, nombre: true, apellido1: true, apellido2: true } },
-                torneo: { select: { idTorneo: true, nombre: true, fecha: true } },
+                torneo: { select: { idTorneo: true, nombre: true, fecha: true, lugar: true, hora_inicio: true } },
                 categoria: { select: { idCategoria: true, nombre: true, costo: true } },
             },
         });
@@ -279,30 +283,35 @@ export const inscribirEnLiga = async (datos: InscribirEnLigaDto) => {
     });
     if (yaInscrito) throw new ConflictError('El jugador ya está inscrito en esta liga');
 
-    return prisma.jugadorLiga.create({
-        data: {
-            idLiga: datos.idLiga,
-            idGrupoLiga: datos.idGrupoLiga,
-            idJugador: jugador.idJugador,
-            rating_inicial: datos.rating_inicial ?? jugador.rating ?? 0,
-            numero_jugador: datos.numero_jugador ?? null,
-            posicion: datos.posicion ?? null,
-            fecha_inscripcion: new Date(),
-            pago_confirmado: datos.pago_confirmado ?? false,
-            monto_pagado: datos.monto_pagado ?? 0,
-            estado: datos.pago_confirmado ? 'confirmado' : 'inscrito',
-            puntos: 0,
-            partidas_jugadas: 0,
-            victorias: 0,
-            empates: 0,
-            derrotas: 0,
-            notas: datos.notas?.trim() ?? null,
-        },
-        include: {
-            jugador: { select: { idJugador: true, nombre: true, apellido1: true } },
-            liga: { select: { idLiga: true, nombre: true } },
-            grupo: { select: { idGrupoLiga: true, nombre: true } },
-        },
+    return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+        const { numero_inscripcion, folio } = await asignarFolioLiga(tx, datos.idLiga);
+        return tx.jugadorLiga.create({
+            data: {
+                idLiga: datos.idLiga,
+                idGrupoLiga: datos.idGrupoLiga,
+                idJugador: jugador.idJugador,
+                rating_inicial: datos.rating_inicial ?? jugador.rating ?? 0,
+                numero_jugador: datos.numero_jugador ?? null,
+                posicion: datos.posicion ?? null,
+                fecha_inscripcion: new Date(),
+                pago_confirmado: datos.pago_confirmado ?? false,
+                monto_pagado: datos.monto_pagado ?? 0,
+                estado: datos.pago_confirmado ? 'confirmado' : 'inscrito',
+                puntos: 0,
+                partidas_jugadas: 0,
+                victorias: 0,
+                empates: 0,
+                derrotas: 0,
+                notas: datos.notas?.trim() ?? null,
+                numero_inscripcion,
+                folio,
+            },
+            include: {
+                jugador: { select: { idJugador: true, nombre: true, apellido1: true } },
+                liga: { select: { idLiga: true, nombre: true, fecha_inicio: true, lugar: true } },
+                grupo: { select: { idGrupoLiga: true, nombre: true } },
+            },
+        });
     });
 };
 

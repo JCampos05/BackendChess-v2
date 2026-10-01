@@ -3,6 +3,7 @@ import prisma from '../config/database';
 import { NotFoundError, ConflictError, ForbiddenError } from '../middleware/error.middleware';
 import { PaginatedResult } from '../types';
 import { generarSlugUnico } from '../utils/slug';
+import { asignarFolioLiga } from './folio.service';
 import {
     CrearLigaDto,
     ActualizarLigaDto,
@@ -321,9 +322,12 @@ export const inscribirJugadorLiga = async (
             throw new ConflictError('El jugador ya está inscrito en esta liga');
 
         // 7. Crear inscripción
+        const { numero_inscripcion, folio } = await asignarFolioLiga(tx, idLiga);
         return tx.jugadorLiga.create({
             data: {
                 idLiga,
+                numero_inscripcion,
+                folio,
                 idGrupoLiga:    datos.idGrupoLiga,
                 idJugador:      datos.idJugador,
                 rating_inicial: jugador.rating,

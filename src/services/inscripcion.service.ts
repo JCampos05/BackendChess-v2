@@ -7,6 +7,7 @@ import {
     ConfirmarPagoDto,
 } from '../validations/inscripcion.validations';
 import { inscripcionesCerradas, jugadorPuedeInscribirse, calcularEdadParaTorneo } from '../utils/fecha.utils';
+import { asignarFolioTorneo } from './folio.service';
 
 // ── Obtener por ID ───────────────────────────────────────────
 
@@ -176,11 +177,14 @@ export const crearInscripcion = async (datos: CrearInscripcionDto) => {
         if (yaInscrito) throw new ConflictError('El jugador ya está inscrito en este torneo');
 
         // 6. Crear inscripción — estado inicial: 'pendiente_pago'
+        const { numero_inscripcion, folio } = await asignarFolioTorneo(tx, datos.idTorneo);
         const inscripcion = await tx.inscripcion.create({
             data: {
                 idJugador:           datos.idJugador,
                 idTorneo:            datos.idTorneo,
                 idCategoria:         datos.idCategoria,
+                numero_inscripcion,
+                folio,
                 monto_pagado:        datos.monto_pagado  ?? 0,
                 pago_confirmado:     datos.pago_confirmado ?? false,
                 estado:              'pendiente_pago',
