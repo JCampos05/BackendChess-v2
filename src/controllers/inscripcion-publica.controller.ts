@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
 import * as svc from '../services/inscripcion-publica.service';
-import { inscribirPublicoSchema, buscarJugadorPublicoSchema } from '../validations/inscripcion-publica.validations';
+import { inscribirPublicoSchema, inscribirPublicoLigaSchema, buscarJugadorPublicoSchema } from '../validations/inscripcion-publica.validations';
 
 const zodFail = (res: Response, error: ZodError): void => {
     const errores = error.errors.map(e =>
@@ -41,6 +41,25 @@ export const crear = async (req: Request, res: Response, next: NextFunction) => 
         if (!parse.success) { zodFail(res, parse.error); return; }
 
         const inscripcion = await svc.inscribirPublico(parse.data);
+        res.status(201).json({ ok: true, mensaje: 'Inscripción registrada', data: inscripcion });
+    } catch (err) { next(err); }
+};
+
+// GET /api/inscripciones-publicas/liga/slug/:slug
+export const obtenerLigaPorSlug = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const liga = await svc.obtenerLigaPublicaPorSlug(req.params.slug);
+        res.json({ ok: true, data: liga });
+    } catch (err) { next(err); }
+};
+
+// POST /api/inscripciones-publicas/liga
+export const crearLiga = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const parse = inscribirPublicoLigaSchema.safeParse(req.body);
+        if (!parse.success) { zodFail(res, parse.error); return; }
+
+        const inscripcion = await svc.inscribirPublicoLiga(parse.data);
         res.status(201).json({ ok: true, mensaje: 'Inscripción registrada', data: inscripcion });
     } catch (err) { next(err); }
 };

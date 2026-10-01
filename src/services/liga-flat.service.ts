@@ -2,6 +2,7 @@ import { Prisma } from '@prisma/client';
 import prisma from '../config/database';
 import { NotFoundError, ConflictError, ForbiddenError } from '../middleware/error.middleware';
 import * as ligaService from './liga.service';
+import { inscripcionesCerradas } from '../utils/fecha.utils';
 import {
     CrearGrupoFlatDto,
     ActualizarGrupoDto,
@@ -42,11 +43,31 @@ export const listarTodasLigas = async () => {
 };
 
 export const listarLigasActivas = async () => {
-    return prisma.infoLiga.findMany({
+    const ligas = await prisma.infoLiga.findMany({
         where:   { activo: true },
         orderBy: { fecha_inicio: 'desc' },
         include: INCLUDE_LIGA_BASE,
     });
+
+    // Información de cupo/cierre para el público (landing): cuántos hay inscritos
+    // y si la liga ya no admite más inscripciones. Campos aditivos, no cambian los existentes.
+    const inscritos = await prisma.jugadorLiga.groupBy({
+        by: ['idLiga'],
+        where: { idLiga: { in: ligas.map(l => l.idLiga) }, estado: { not: 'cancelado' } },
+        _count: { _all: true },
+    });
+    const conteo = new Map(inscritos.map(i => [i.idLiga, i._count._all]));
+
+    return Promise.all(ligas.map(async (liga) => {
+        const total = conteo.get(liga.idLiga) ?? 0;
+        return {
+            ...liga,
+            inscritos: total,
+            cupoDisponible: liga.max_jugadores ? Math.max(liga.max_jugadores - total, 0) : null,
+            llena: liga.max_jugadores ? total >= liga.max_jugadores : false,
+            cerrada: await inscripcionesCerradas(liga.cierre_inscripciones),
+        };
+    }));
 };
 
 export const obtenerStatsLiga = async (idLiga: number) => {

@@ -268,10 +268,28 @@ export const inscribirEnLiga = async (datos: InscribirEnLigaDto) => {
     if (!liga) throw new NotFoundError('Liga no encontrada');
     if (!grupo) throw new NotFoundError('Grupo no encontrado');
     if (grupo.idLiga !== datos.idLiga) throw new ForbiddenError('El grupo no pertenece a esta liga');
+    if (!liga.activo || !grupo.activo) throw new ForbiddenError('La liga o el grupo no está disponible para inscripción');
 
-    // Verificar límite de jugadores en el grupo
+    // Cierre de inscripciones de la liga
+    if (await inscripcionesCerradas(liga.cierre_inscripciones)) {
+        throw new ForbiddenError('Las inscripciones para esta liga están cerradas');
+    }
+
+    // Cupo de la liga completa (todos los grupos juntos)
+    if (liga.max_jugadores) {
+        const inscritosLiga = await prisma.jugadorLiga.count({
+            where: { idLiga: datos.idLiga, estado: { not: 'cancelado' } },
+        });
+        if (inscritosLiga >= liga.max_jugadores) {
+            throw new ForbiddenError(`La liga ha alcanzado su cupo máximo de ${liga.max_jugadores} jugadores`);
+        }
+    }
+
+    // Cupo del grupo (los cancelados no ocupan lugar)
     if (grupo.max_jugadores) {
-        const enGrupo = await prisma.jugadorLiga.count({ where: { idGrupoLiga: datos.idGrupoLiga } });
+        const enGrupo = await prisma.jugadorLiga.count({
+            where: { idGrupoLiga: datos.idGrupoLiga, estado: { not: 'cancelado' } },
+        });
         if (enGrupo >= grupo.max_jugadores) {
             throw new ForbiddenError('El grupo ha alcanzado el máximo de jugadores');
         }

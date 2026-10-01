@@ -17,8 +17,21 @@ export const inscribirPublicoSchema = z.object({
     notas: z.string().max(1000).optional(),
 });
 
+export const inscribirPublicoLigaSchema = z.object({
+    idJugador: z.number().int().positive().optional(),
+    nombre: z.string().min(1).max(100).optional(),
+    apellido1: z.string().min(1).max(100).optional(),
+    apellido2: z.string().max(100).optional(),
+    telefono: z.string().max(15).regex(/^\d+$/, 'Solo dígitos').optional(),
+    fecha_nacimiento: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato YYYY-MM-DD').optional(),
+    idLiga: z.number().int().positive('El idLiga es requerido'),
+    idGrupoLiga: z.number().int().positive('El idGrupoLiga es requerido'),
+    notas: z.string().max(1000).optional(),
+});
+
 export const buscarJugadorPublicoSchema = z.object({
     q: z.string().min(2, 'Mínimo 2 caracteres'),
 });
 
 export type InscribirPublicoDto = z.infer<typeof inscribirPublicoSchema>;
+export type InscribirPublicoLigaDto = z.infer<typeof inscribirPublicoLigaSchema>;
