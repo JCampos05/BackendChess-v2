@@ -143,7 +143,8 @@ export const crearLiga = async (datos: CrearLigaConGruposDto) => {
                 direccion:            datos.direccion,
                 url_maps:             datos.url_maps,
                 tipo_sistema:         datos.tipo_sistema,
-                num_grupos:           datos.num_grupos,
+                // Si vienen grupos, num_grupos es la cantidad real (no un dato aparte que pueda desfasarse).
+                num_grupos:           grupos.length || datos.num_grupos,
                 clasifican_por_grupo: datos.clasifican_por_grupo,
                 idRitmoJuego:         datos.idRitmoJuego,
                 costo_inscripcion:    datos.costo_inscripcion,
@@ -229,6 +230,12 @@ export const actualizarLiga = async (idLiga: number, datos: ActualizarLigaConGru
                 if (duplicado) throw new ConflictError(`Ya existe un grupo llamado "${g.nombre}" en esta liga`);
                 await tx.grupoLiga.create({ data: { idLiga, ...campos, activo: true } });
             }
+        }
+
+        // num_grupos debe reflejar los grupos activos reales, no el valor con que se creó la liga.
+        if (datos.grupos) {
+            const totalGrupos = await tx.grupoLiga.count({ where: { idLiga, activo: true } });
+            await tx.infoLiga.update({ where: { idLiga }, data: { num_grupos: totalGrupos } });
         }
 
         return tx.infoLiga.findUniqueOrThrow({ where: { idLiga }, include: INCLUDE_LIGA_BASE });
