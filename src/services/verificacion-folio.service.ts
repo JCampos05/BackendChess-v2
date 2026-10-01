@@ -19,7 +19,9 @@ const secreto = (): string => {
 export const firmarFolio = (folio: string): string =>
     createHmac('sha256', secreto()).update(folio).digest('hex').slice(0, 16);
 
-const firmaValida = (folio: string, codigo?: string): boolean => {
+const firmaValida = (folio: string, codigoCrudo?: string): boolean => {
+    // El código es hexadecimal: se descartan caracteres ajenos (espacios, "\" o "/" que se cuelan al copiar el enlace).
+    const codigo = codigoCrudo?.toLowerCase().replace(/[^0-9a-f]/g, '');
     if (!codigo) return false;
     const esperado = Buffer.from(firmarFolio(folio));
     const recibido = Buffer.from(codigo);
@@ -45,6 +47,9 @@ interface DetalleFolio {
     jugador: string;
     fechaInscripcion: Date | null;
     pagoConfirmado: boolean;
+    montoPagado: number;
+    estadoJugador: string;
+    estadoInscripcion: string;
     vigente: boolean;
 }
 
@@ -55,7 +60,8 @@ const buscarDetalle = async (folio: string): Promise<DetalleFolio | null> => {
             where: { folio },
             select: {
                 folio: true, estado: true, pago_confirmado: true, fecha_inscripcion: true,
-                jugador:   { select: { nombre: true, apellido1: true, apellido2: true } },
+                monto_pagado: true,
+                jugador:   { select: { nombre: true, apellido1: true, apellido2: true, estado: true } },
                 torneo:    { select: { nombre: true, lugar: true, fecha: true } },
                 categoria: { select: { nombre: true } },
             },
@@ -71,6 +77,9 @@ const buscarDetalle = async (folio: string): Promise<DetalleFolio | null> => {
             jugador: nombreCompleto(i.jugador),
             fechaInscripcion: i.fecha_inscripcion,
             pagoConfirmado: i.pago_confirmado,
+            montoPagado: Number(i.monto_pagado),
+            estadoJugador: i.jugador.estado,
+            estadoInscripcion: i.estado,
             vigente: i.estado !== 'cancelado',
         };
     }
@@ -80,7 +89,8 @@ const buscarDetalle = async (folio: string): Promise<DetalleFolio | null> => {
             where: { folio },
             select: {
                 folio: true, estado: true, pago_confirmado: true, fecha_inscripcion: true,
-                jugador: { select: { nombre: true, apellido1: true, apellido2: true } },
+                monto_pagado: true,
+                jugador: { select: { nombre: true, apellido1: true, apellido2: true, estado: true } },
                 liga:    { select: { nombre: true, lugar: true, fecha_inicio: true } },
                 grupo:   { select: { nombre: true } },
             },
@@ -96,6 +106,9 @@ const buscarDetalle = async (folio: string): Promise<DetalleFolio | null> => {
             jugador: nombreCompleto(i.jugador),
             fechaInscripcion: i.fecha_inscripcion,
             pagoConfirmado: i.pago_confirmado,
+            montoPagado: Number(i.monto_pagado),
+            estadoJugador: i.jugador.estado,
+            estadoInscripcion: i.estado,
             vigente: i.estado !== 'cancelado',
         };
     }
@@ -127,6 +140,9 @@ export const verificarFolioPublico = async (folioCrudo: string, codigo?: string)
             jugador: detalle.jugador,
             fechaInscripcion: detalle.fechaInscripcion,
             pagoConfirmado: detalle.pagoConfirmado,
+            montoPagado: detalle.montoPagado,
+            estadoJugador: detalle.estadoJugador,
+            estadoInscripcion: detalle.estadoInscripcion,
         }),
     };
 };
