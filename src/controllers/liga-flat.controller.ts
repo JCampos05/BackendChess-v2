@@ -6,7 +6,7 @@ import * as flatService from '../services/liga-flat.service';
 import {
     filtrosLigaSchema,
     crearLigaConGruposSchema,
-    actualizarLigaSchema,
+    actualizarLigaConGruposSchema,
     crearGrupoFlatSchema,
     actualizarGrupoSchema,
     crearRondaLigaFlatSchema,
@@ -89,7 +89,7 @@ export const crearInfoLiga = async (req: AuthRequest, res: Response, next: NextF
 export const actualizarInfoLiga = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
         const idLiga = Number(req.params.id);
-        const parse  = actualizarLigaSchema.safeParse(req.body);
+        const parse  = actualizarLigaConGruposSchema.safeParse(req.body);
         if (!parse.success) { zodFail(res, parse.error); return; }
         const liga = await ligaService.actualizarLiga(idLiga, parse.data);
         res.json({ ok: true, data: liga });

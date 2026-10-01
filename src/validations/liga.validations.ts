@@ -53,6 +53,14 @@ export const crearLigaConGruposSchema = crearLigaSchema.extend({
     grupos: z.array(crearGrupoSchema).optional(),
 });
 
+// Edición de liga + grupos en una sola petición (transacción). Los grupos con
+// idGrupoLiga se actualizan; los que no lo traen se crean.
+export const actualizarLigaConGruposSchema = actualizarLigaSchema.extend({
+    grupos: z.array(crearGrupoSchema.extend({
+        idGrupoLiga: z.number().int().positive().optional(),
+    })).optional(),
+});
+
 export const actualizarGrupoSchema = crearGrupoSchema.partial();
 
 // ── Inscripción a liga ────────────────────────────────────────
@@ -159,6 +167,7 @@ export const actualizarPartidaLigaSchema = registrarPartidaLigaSchema.partial();
 
 export type CrearLigaDto               = z.infer<typeof crearLigaSchema>;
 export type CrearLigaConGruposDto      = z.infer<typeof crearLigaConGruposSchema>;
+export type ActualizarLigaConGruposDto = z.infer<typeof actualizarLigaConGruposSchema>;
 export type ActualizarLigaDto          = z.infer<typeof actualizarLigaSchema>;
 export type FiltrosLigaDto             = z.infer<typeof filtrosLigaSchema>;
 export type CrearGrupoDto              = z.infer<typeof crearGrupoSchema>;

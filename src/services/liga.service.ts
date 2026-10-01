@@ -6,7 +6,7 @@ import { generarSlugUnico } from '../utils/slug';
 import { asignarFolioLiga } from './folio.service';
 import {
     CrearLigaConGruposDto,
-    ActualizarLigaDto,
+    ActualizarLigaConGruposDto,
     FiltrosLigaDto,
     CrearGrupoDto,
     ActualizarGrupoDto,
@@ -175,7 +175,7 @@ export const crearLiga = async (datos: CrearLigaConGruposDto) => {
     });
 };
 
-export const actualizarLiga = async (idLiga: number, datos: ActualizarLigaDto) => {
+export const actualizarLiga = async (idLiga: number, datos: ActualizarLigaConGruposDto) => {
     const actual = await _verificarLiga(idLiga);
 
     const nombreCambio = datos.nombre !== undefined && datos.nombre !== actual.nombre;
@@ -187,26 +187,51 @@ export const actualizarLiga = async (idLiga: number, datos: ActualizarLigaDto) =
         )
         : undefined;
 
-    return prisma.infoLiga.update({
-        where: { idLiga },
-        data:  {
-            ...(datos.nombre               !== undefined && { nombre:               datos.nombre }),
-            ...(slug !== undefined && { slug }),
-            ...(datos.descripcion          !== undefined && { descripcion:          datos.descripcion }),
-            ...(datos.fecha_inicio         !== undefined && { fecha_inicio: new Date(`${datos.fecha_inicio}T00:00:00`) }),
-            ...(datos.fecha_fin            !== undefined && { fecha_fin:    datos.fecha_fin ? new Date(`${datos.fecha_fin}T00:00:00`) : null }),
-            ...(datos.lugar                !== undefined && { lugar:                datos.lugar }),
-            ...(datos.direccion            !== undefined && { direccion:            datos.direccion }),
-            ...(datos.tipo_sistema         !== undefined && { tipo_sistema:         datos.tipo_sistema }),
-            ...(datos.num_grupos           !== undefined && { num_grupos:           datos.num_grupos }),
-            ...(datos.clasifican_por_grupo !== undefined && { clasifican_por_grupo: datos.clasifican_por_grupo }),
-            ...(datos.idRitmoJuego         !== undefined && { idRitmoJuego:         datos.idRitmoJuego }),
-            ...(datos.costo_inscripcion    !== undefined && { costo_inscripcion:    datos.costo_inscripcion }),
-            ...(datos.cierre_inscripciones !== undefined && { cierre_inscripciones: datos.cierre_inscripciones ? new Date(datos.cierre_inscripciones) : null }),
-            ...(datos.max_jugadores        !== undefined && { max_jugadores:        datos.max_jugadores }),
-            ...(datos.notas                !== undefined && { notas:                datos.notas }),
-        },
-        include: INCLUDE_LIGA_BASE,
+    // Liga y grupos se guardan en una sola transacción (todo o nada).
+    return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+        await tx.infoLiga.update({
+            where: { idLiga },
+            data:  {
+                ...(datos.nombre               !== undefined && { nombre:               datos.nombre }),
+                ...(slug !== undefined && { slug }),
+                ...(datos.descripcion          !== undefined && { descripcion:          datos.descripcion }),
+                ...(datos.fecha_inicio         !== undefined && { fecha_inicio: new Date(`${datos.fecha_inicio}T00:00:00`) }),
+                ...(datos.fecha_fin            !== undefined && { fecha_fin:    datos.fecha_fin ? new Date(`${datos.fecha_fin}T00:00:00`) : null }),
+                ...(datos.lugar                !== undefined && { lugar:                datos.lugar }),
+                ...(datos.direccion            !== undefined && { direccion:            datos.direccion }),
+                ...(datos.tipo_sistema         !== undefined && { tipo_sistema:         datos.tipo_sistema }),
+                ...(datos.num_grupos           !== undefined && { num_grupos:           datos.num_grupos }),
+                ...(datos.clasifican_por_grupo !== undefined && { clasifican_por_grupo: datos.clasifican_por_grupo }),
+                ...(datos.idRitmoJuego         !== undefined && { idRitmoJuego:         datos.idRitmoJuego }),
+                ...(datos.costo_inscripcion    !== undefined && { costo_inscripcion:    datos.costo_inscripcion }),
+                ...(datos.cierre_inscripciones !== undefined && { cierre_inscripciones: datos.cierre_inscripciones ? new Date(datos.cierre_inscripciones) : null }),
+                ...(datos.max_jugadores        !== undefined && { max_jugadores:        datos.max_jugadores }),
+                ...(datos.notas                !== undefined && { notas:                datos.notas }),
+            },
+        });
+
+        for (const g of datos.grupos ?? []) {
+            const campos = {
+                nombre:        g.nombre,
+                descripcion:   g.descripcion,
+                max_jugadores: g.max_jugadores,
+                rondas:        g.rondas,
+                premios:       (g.premios    ?? Prisma.JsonNull) as Prisma.InputJsonValue,
+                desempates:    (g.desempates ?? Prisma.JsonNull) as Prisma.InputJsonValue,
+            };
+
+            if (g.idGrupoLiga) {
+                const existente = await tx.grupoLiga.findFirst({ where: { idGrupoLiga: g.idGrupoLiga, idLiga } });
+                if (!existente) throw new NotFoundError(`El grupo ${g.idGrupoLiga} no pertenece a esta liga`);
+                await tx.grupoLiga.update({ where: { idGrupoLiga: g.idGrupoLiga }, data: campos });
+            } else {
+                const duplicado = await tx.grupoLiga.findFirst({ where: { idLiga, nombre: g.nombre, activo: true } });
+                if (duplicado) throw new ConflictError(`Ya existe un grupo llamado "${g.nombre}" en esta liga`);
+                await tx.grupoLiga.create({ data: { idLiga, ...campos, activo: true } });
+            }
+        }
+
+        return tx.infoLiga.findUniqueOrThrow({ where: { idLiga }, include: INCLUDE_LIGA_BASE });
     });
 };
 
