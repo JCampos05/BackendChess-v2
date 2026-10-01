@@ -4,7 +4,7 @@
 /ANALISIS_INTEGRAL.md
 /ANALISIS_RUTAS_Y_BD.md
 /models
-/prisma/migrations
+/prisma/migrations/*.sql
 CLAUDE.md
 routes.md
 BD-data.sql
