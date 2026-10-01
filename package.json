@@ -5,8 +5,10 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsc",
-    "start": "node dist/server.js",
+    "build": "tsc && node scripts/migrate-deploy.js",
+    "start": "node scripts/migrate-deploy.js && node dist/server.js",
+    "start:sin-migrar": "node dist/server.js",
+    "db:migrate:deploy": "prisma migrate deploy",
     "db:pull": "prisma db pull",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
