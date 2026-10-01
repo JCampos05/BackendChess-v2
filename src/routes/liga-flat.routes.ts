@@ -20,6 +20,7 @@ infoLigaRouter.get   ('/:id',       ctrl.obtenerInfoLiga);
 infoLigaRouter.get   ('/:id/stats', ctrl.obtenerStatsLiga);
 infoLigaRouter.post  ('/',          ctrl.crearInfoLiga);
 infoLigaRouter.put   ('/:id',       ctrl.actualizarInfoLiga);
+infoLigaRouter.patch ('/:id/es-actual', ctrl.toggleEsActualInfoLiga);
 infoLigaRouter.delete('/:id',       ctrl.eliminarInfoLiga);
 
 // ── /api/liga/grupos ─────────────────────────────────────────────

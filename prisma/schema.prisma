@@ -636,6 +636,9 @@ model InfoLiga {
   // Contador atómico de folios de comprobante (ver Torneo.consecutivo_inscripciones)
   consecutivo_inscripciones Int        @default(0)
   activo               Boolean         @default(true)
+  // Liga actual: el adminGral decide cuál o cuáles son "ligas actuales" (mismo criterio
+  // que Torneo.es_actual). Solo puede estar marcada una liga activa.
+  es_actual            Boolean         @default(false)
   notas                String?         @db.Text
   fecha_creacion       DateTime        @default(now())
   fecha_actualizacion  DateTime?       @updatedAt

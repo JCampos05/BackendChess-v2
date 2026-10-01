@@ -246,8 +246,21 @@ export const toggleActivoLiga = async (idLiga: number, activo: boolean) => {
     await _verificarLiga(idLiga);
     return prisma.infoLiga.update({
         where:  { idLiga },
-        data:   { activo },
-        select: { idLiga: true, nombre: true, activo: true },
+        // Una liga desactivada deja de ser "actual" (igual que los torneos).
+        data:   { activo, ...(activo === false && { es_actual: false }) },
+        select: { idLiga: true, nombre: true, activo: true, es_actual: true },
+    });
+};
+
+export const toggleEsActualLiga = async (idLiga: number, es_actual: boolean) => {
+    const liga = await _verificarLiga(idLiga);
+    if (es_actual && !liga.activo)
+        throw new ForbiddenError('Una liga debe estar activa para ser marcada como actual');
+
+    return prisma.infoLiga.update({
+        where:  { idLiga },
+        data:   { es_actual },
+        select: { idLiga: true, nombre: true, activo: true, es_actual: true },
     });
 };
 

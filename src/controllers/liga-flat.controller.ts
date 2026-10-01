@@ -96,6 +96,15 @@ export const actualizarInfoLiga = async (req: AuthRequest, res: Response, next: 
     } catch (err) { next(err); }
 };
 
+export const toggleEsActualInfoLiga = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+        const idLiga    = Number(req.params.id);
+        const es_actual = Boolean(req.body.es_actual);
+        const liga      = await ligaService.toggleEsActualLiga(idLiga, es_actual);
+        res.json({ ok: true, data: liga });
+    } catch (err) { next(err); }
+};
+
 export const eliminarInfoLiga = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
         const idLiga = Number(req.params.id);
