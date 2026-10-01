@@ -466,6 +466,18 @@ export const buscarJugadorSimilar = async (q: string) => {
                 orderBy: { fecha_inscripcion: 'desc' },
                 take: 10,
             },
+            jugadores_liga: {
+                select: {
+                    idJugadorLiga:     true,
+                    estado:            true,
+                    pago_confirmado:   true,
+                    fecha_inscripcion: true,
+                    liga:  { select: { idLiga: true, nombre: true, fecha_inicio: true, lugar: true } },
+                    grupo: { select: { idGrupoLiga: true, nombre: true } },
+                },
+                orderBy: { fecha_inscripcion: 'desc' },
+                take: 10,
+            },
         },
         orderBy: [{ apellido1: 'asc' }, { nombre: 'asc' }],
         take: 20,
