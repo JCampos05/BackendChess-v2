@@ -301,12 +301,16 @@ const INCLUDE_JUGADOR_LIGA = {
     grupo: { select: { idGrupoLiga: true, nombre: true } },
 } satisfies Prisma.JugadorLigaInclude;
 
-export const listarJugadoresLigaFlat = async (idLiga?: number, idGrupoLiga?: number) => {
+/**
+ * Por defecto excluye las canceladas (listas, mesas, emparejamientos). La vista de inscripciones las pide
+ * con `incluirCancelados` para seguir mostrándolas en la tabla — sin contarlas como inscritas.
+ */
+export const listarJugadoresLigaFlat = async (idLiga?: number, idGrupoLiga?: number, incluirCancelados = false) => {
     return prisma.jugadorLiga.findMany({
         where: {
             ...(idLiga && { idLiga }),
             ...(idGrupoLiga && { idGrupoLiga }),
-            estado: { not: 'cancelado' },
+            ...(!incluirCancelados && { estado: { not: 'cancelado' } }),
         },
         orderBy: [{ puntos: 'desc' }, { posicion_grupo: 'asc' }],
         include: INCLUDE_JUGADOR_LIGA,

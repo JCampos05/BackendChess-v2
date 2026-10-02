@@ -337,7 +337,8 @@ export const listarJugadoresLiga = async (req: AuthRequest, res: Response, next:
 export const listarJugadoresPorLiga = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
         const idLiga    = Number(req.params.idLiga);
-        const jugadores = await flatService.listarJugadoresLigaFlat(idLiga);
+        const incluirCancelados = req.query.incluirCancelados === 'true';
+        const jugadores = await flatService.listarJugadoresLigaFlat(idLiga, undefined, incluirCancelados);
         res.json({ ok: true, data: jugadores, total: jugadores.length });
     } catch (err) { next(err); }
 };
