@@ -69,6 +69,20 @@ export const verificarAccesoTorneoResuelto = (resolverIdTorneo: (req: AuthReques
 
 // ── Resolvers de idTorneo para recursos hijos ─────────────────
 
+/**
+ * idTorneo de un folio de comprobante. Los folios de liga (CMAA-L-…) devuelven null: un adminTorneo
+ * no gestiona ligas, así que para él ese folio "no existe" (adminGral no pasa por el resolver).
+ */
+export const resolverIdTorneoDesdeFolio = async (req: AuthRequest): Promise<number | null> => {
+    const folio = String(req.params.folio ?? '').trim().toUpperCase();
+    if (!folio.startsWith('CMAA-T-')) return null;
+    const inscripcion = await prisma.inscripcion.findUnique({
+        where: { folio },
+        select: { idTorneo: true },
+    });
+    return inscripcion?.idTorneo ?? null;
+};
+
 export const resolverIdTorneoDesdeSlug = async (req: AuthRequest): Promise<number | null> => {
     const torneo = await prisma.torneo.findUnique({
         where: { slug: req.params.slug },

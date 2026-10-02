@@ -32,6 +32,7 @@ import estadisticasPagoRoutes from './estadisticas-pago.routes';
 import inscripcionAdminRoutes from './inscripcion-admin.routes';
 import inscripcionesGeneralesRoutes from './inscripciones-generales.routes';
 import verificacionFolioRoutes from './verificacion-folio.routes';
+import comprobantesRoutes from './comprobantes.routes';
 import inscripcionPublicaRoutes from './inscripcion-publica.routes';
 
 // ── Operaciones de torneo (Bloque 3) ──────────────────────────
@@ -95,6 +96,7 @@ export const registerRoutes = (app: Application): void => {
     app.use(`${API}/inscripciones-generales`, inscripcionesGeneralesRoutes);
     app.use(`${API}/inscripciones-publicas`, inscripcionPublicaRoutes);
     app.use(`${API}/verificar-folio`, verificacionFolioRoutes);
+    app.use(`${API}/comprobantes`, comprobantesRoutes);
 
     // ── Patrocinadores ─────────────────────────────────────────────
     app.use(`${API}/patrocinadores`, patrocinadorRoutes);
