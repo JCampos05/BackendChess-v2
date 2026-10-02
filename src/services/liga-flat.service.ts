@@ -24,6 +24,7 @@ const INCLUDE_LIGA_BASE = {
         select: {
             idGrupoLiga:   true,
             nombre:        true,
+            descripcion:   true,
             max_jugadores: true,
             rondas:        true,
             activo:        true,
