@@ -334,13 +334,50 @@ export const actualizarJugadorLigaFlat = async (
     const jugadorLiga = await prisma.jugadorLiga.findUnique({ where: { idJugadorLiga } });
     if (!jugadorLiga) throw new NotFoundError('Inscripción no encontrada');
 
+    const cambiaGrupo = datos.idGrupoLiga !== undefined && datos.idGrupoLiga !== jugadorLiga.idGrupoLiga;
+    const reactiva    = jugadorLiga.estado === 'cancelado' && datos.estado !== undefined && datos.estado !== 'cancelado';
+
+    // Un jugador con partidas ya jugadas no puede cambiar de grupo: sus resultados pertenecen al grupo original.
+    if (cambiaGrupo && jugadorLiga.partidas_jugadas > 0)
+        throw new ForbiddenError('No se puede cambiar de grupo a un jugador que ya tiene partidas jugadas');
+
+    // Cupo: solo importa si entra a un grupo (cambio de grupo) o si vuelve a ocupar un lugar (reactivación)
+    if (cambiaGrupo || reactiva) {
+        const idGrupoDestino = datos.idGrupoLiga ?? jugadorLiga.idGrupoLiga;
+        const grupo = await prisma.grupoLiga.findFirst({
+            where: { idGrupoLiga: idGrupoDestino, idLiga: jugadorLiga.idLiga, activo: true },
+        });
+        if (!grupo) throw new NotFoundError('Grupo no encontrado en esta liga');
+
+        if (grupo.max_jugadores) {
+            const ocupados = await prisma.jugadorLiga.count({
+                where: { idGrupoLiga: idGrupoDestino, estado: { not: 'cancelado' }, idJugadorLiga: { not: idJugadorLiga } },
+            });
+            if (ocupados >= grupo.max_jugadores)
+                throw new ForbiddenError(`El grupo "${grupo.nombre}" está lleno`);
+        }
+    }
+    if (reactiva) {
+        const liga = await prisma.infoLiga.findUnique({ where: { idLiga: jugadorLiga.idLiga } });
+        if (liga?.max_jugadores) {
+            const ocupadosLiga = await prisma.jugadorLiga.count({
+                where: { idLiga: jugadorLiga.idLiga, estado: { not: 'cancelado' }, idJugadorLiga: { not: idJugadorLiga } },
+            });
+            if (ocupadosLiga >= liga.max_jugadores)
+                throw new ForbiddenError('La liga ya alcanzó su cupo máximo');
+        }
+    }
+
     return prisma.jugadorLiga.update({
         where: { idJugadorLiga },
         data:  {
-            ...(datos.idGrupoLiga !== undefined && { idGrupoLiga: datos.idGrupoLiga }),
-            ...(datos.posicion    !== undefined && { posicion:    datos.posicion }),
-            ...(datos.estado      !== undefined && { estado:      datos.estado }),
-            ...(datos.notas       !== undefined && { notas:       datos.notas }),
+            ...(datos.idGrupoLiga     !== undefined && { idGrupoLiga:     datos.idGrupoLiga }),
+            ...(datos.posicion        !== undefined && { posicion:        datos.posicion }),
+            ...(datos.estado          !== undefined && { estado:          datos.estado }),
+            ...(datos.notas           !== undefined && { notas:           datos.notas }),
+            ...(datos.pago_confirmado !== undefined && { pago_confirmado: datos.pago_confirmado }),
+            ...(datos.monto_pagado    !== undefined && { monto_pagado:    datos.monto_pagado }),
+            ...(datos.rating_inicial  !== undefined && { rating_inicial:  datos.rating_inicial }),
         },
         include: INCLUDE_JUGADOR_LIGA,
     });

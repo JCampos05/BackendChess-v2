@@ -152,10 +152,13 @@ export const inscribirJugadorLigaFlatSchema = inscribirJugadorLigaSchema.extend(
 });
 
 export const actualizarJugadorLigaSchema = z.object({
-    idGrupoLiga: z.number().int().positive().optional(),
-    posicion:    z.number().int().positive().optional(),
-    estado:      z.enum(['inscrito', 'confirmado', 'cancelado']).optional(),
-    notas:       z.string().optional(),
+    idGrupoLiga:     z.number().int().positive().optional(),
+    posicion:        z.number().int().positive().nullish(),
+    estado:          z.enum(['inscrito', 'confirmado', 'retirado', 'cancelado']).optional(),
+    notas:           z.string().nullish(),
+    pago_confirmado: z.boolean().optional(),
+    monto_pagado:    z.number().min(0).optional(),
+    rating_inicial:  z.number().int().min(0).optional(),
 });
 
 export const crearPartidaLigaSchema = registrarPartidaLigaSchema.extend({
