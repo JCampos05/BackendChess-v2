@@ -202,7 +202,14 @@ export const eliminarRondaFlat = async (idRondaLiga: number) => {
     if (ronda.estado !== 'planificada')
         throw new ForbiddenError('Solo se puede eliminar una ronda antes de ser iniciada');
 
-    await prisma.rondaLiga.delete({ where: { idRondaLiga } });
+    // Sus mesas se eliminan en cascada; también el historial de emparejamientos de esa ronda, para poder
+    // rehacerla sin que los cruces "ya jugados" de la ronda borrada estorben.
+    await prisma.$transaction([
+        prisma.historialEmparejamientoLiga.deleteMany({
+            where: { idLiga: ronda.idLiga, idGrupoLiga: ronda.idGrupoLiga, numeroRonda: ronda.numeroRonda },
+        }),
+        prisma.rondaLiga.delete({ where: { idRondaLiga } }),
+    ]);
     return { idRondaLiga };
 };
 
