@@ -1,6 +1,6 @@
 import { Prisma } from '@prisma/client';
 import prisma from '../config/database';
-import { NotFoundError, ConflictError, ForbiddenError } from '../middleware/error.middleware';
+import { NotFoundError, ConflictError, ForbiddenError, ValidationError } from '../middleware/error.middleware';
 import * as ligaService from './liga.service';
 import { inscripcionesCerradas } from '../utils/fecha.utils';
 import {
@@ -257,8 +257,50 @@ export const crearMesaFlat = async (datos: CrearMesaLigaDto) => {
 };
 
 export const actualizarMesaFlat = async (idMesaLiga: number, datos: ActualizarMesaLigaDto) => {
-    const mesa = await prisma.mesaLiga.findUnique({ where: { idMesaLiga } });
+    const mesa = await prisma.mesaLiga.findUnique({
+        where:   { idMesaLiga },
+        include: { ronda_liga: true },
+    });
     if (!mesa) throw new NotFoundError('Mesa no encontrada');
+
+    // Cambiar el emparejamiento (número de mesa o jugadores) solo se permite antes de iniciar la ronda
+    const cambiaEmparejamiento =
+        datos.numeroMesa !== undefined || datos.idJugadorBlanco !== undefined || datos.idJugadorNegro !== undefined;
+
+    if (cambiaEmparejamiento) {
+        if (mesa.ronda_liga.estado !== 'planificada')
+            throw new ForbiddenError('Solo se pueden editar los emparejamientos antes de iniciar la ronda');
+        if (mesa.estado === 'finalizada')
+            throw new ForbiddenError('No se puede editar una mesa con partida finalizada');
+
+        const idBlanco = datos.idJugadorBlanco ?? mesa.idJugadorBlanco;
+        const idNegro  = datos.idJugadorNegro  ?? mesa.idJugadorNegro;
+        if (idBlanco === idNegro)
+            throw new ValidationError('Un jugador no puede enfrentarse a sí mismo');
+
+        // Ningún jugador puede estar en dos mesas de la misma ronda
+        const otras = await prisma.mesaLiga.findMany({
+            where:  { idRondaLiga: mesa.idRondaLiga, idMesaLiga: { not: idMesaLiga } },
+            select: { numeroMesa: true, idJugadorBlanco: true, idJugadorNegro: true },
+        });
+        if (datos.numeroMesa !== undefined && otras.some(m => m.numeroMesa === datos.numeroMesa))
+            throw new ConflictError(`La mesa ${datos.numeroMesa} ya existe en esta ronda`);
+        const ocupados = new Set(otras.flatMap(m => [m.idJugadorBlanco, m.idJugadorNegro]));
+        if (ocupados.has(idBlanco) || ocupados.has(idNegro))
+            throw new ConflictError('Alguno de los jugadores ya tiene mesa en esta ronda');
+
+        // Solo jugadores activos de este grupo
+        const delGrupo = await prisma.jugadorLiga.count({
+            where: {
+                idLiga:      mesa.ronda_liga.idLiga,
+                idGrupoLiga: mesa.ronda_liga.idGrupoLiga,
+                idJugador:   { in: [idBlanco, idNegro] },
+                estado:      { notIn: ['cancelado', 'retirado'] },
+            },
+        });
+        if (delGrupo !== 2)
+            throw new ValidationError('Los dos jugadores deben pertenecer al grupo de la ronda');
+    }
 
     return prisma.mesaLiga.update({
         where: { idMesaLiga },
