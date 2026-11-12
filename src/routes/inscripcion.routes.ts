@@ -2,7 +2,6 @@ import { Router } from 'express';
 import { authMiddleware } from '../middleware/auth.middleware';
 import { cualquierAdmin, soloAdminGral } from '../middleware/roles.middleware';
 import { verificarAccesoTorneo, verificarAccesoTorneoResuelto, resolverIdTorneoDesdeInscripcion } from '../middleware/torneo-admin.middleware';
-import { limitadorInscripcionPublica } from '../middleware/rate-limit.middleware';
 import * as inscripcionController from '../controllers/inscripcion.controller';
 
 const router = Router();
@@ -29,8 +28,10 @@ router.get('/:id',
     inscripcionController.obtenerUna
 );
 
-// POST /api/inscripciones — pública: cualquier persona puede inscribirse sin auth
-router.post('/', limitadorInscripcionPublica, inscripcionController.crear);
+// POST /api/inscripciones — DESACTIVADA (2026-11). Era una creación pública sin sesión que ya no usa ninguna pantalla:
+// el formulario público usa /api/inscripciones-publicas y el panel usa /api/inscripciones-admin. Se deja comentada por
+// si se necesitara consultar; si se reactiva, volver a importar `limitadorInscripcionPublica` (rate-limit.middleware).
+// router.post('/', limitadorInscripcionPublica, inscripcionController.crear);
 
 // ── Solo admins ───────────────────────────────────────────────
 
