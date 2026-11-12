@@ -6,6 +6,7 @@ import {
     confirmarPagoSchema,
 } from '../validations/inscripcion.validations';
 import * as inscripcionService from '../services/inscripcion.service';
+import prisma from '../config/database';
 
 // GET /api/inscripciones/torneo/:idTorneo
 export const listarPorTorneo = async (
@@ -44,7 +45,18 @@ export const listarPorJugador = async (
             return;
         }
         // Nombre correcto: listarInscripcionesJugador
-        const inscripciones = await inscripcionService.listarInscripcionesJugador(idJugador);
+        let inscripciones = await inscripcionService.listarInscripcionesJugador(idJugador);
+
+        // El administrador de torneo solo ve las inscripciones de los torneos que tiene asignados
+        if (req.usuario?.rol === 'adminTorneo') {
+            const asignaciones = await prisma.usuarioTorneo.findMany({
+                where: { idUsuario: req.usuario.idUsuario, activo: true },
+                select: { idTorneo: true },
+            });
+            const permitidos = new Set(asignaciones.map(a => a.idTorneo));
+            inscripciones = inscripciones.filter(i => permitidos.has(i.idTorneo));
+        }
+
         res.json({ ok: true, data: inscripciones });
     } catch (err) {
         next(err);

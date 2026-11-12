@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { authMiddleware } from '../middleware/auth.middleware';
 import { soloAdminGral, cualquierAdmin } from '../middleware/roles.middleware';
-import { verificarAccesoTorneo, verificarAccesoTorneoResuelto, resolverIdTorneoDesdeRonda } from '../middleware/torneo-admin.middleware';
+import { verificarAccesoTorneo, verificarAccesoTorneoResuelto, resolverIdTorneoDesdeRonda, resolverIdTorneoDesdeCuerpo } from '../middleware/torneo-admin.middleware';
 import * as Ops from '../controllers/torneo-ops.controller';
 
 // ════════════════════════════════════════════════════════════
@@ -23,9 +23,10 @@ rondaRouter.get(
     authMiddleware, cualquierAdmin, verificarAccesoTorneo('idTorneo'),
     Ops.getRondasByTorneo,
 );
-rondaRouter.get('/', authMiddleware, cualquierAdmin, Ops.getAllRondas);
+// Listado global de todos los torneos → solo adminGral
+rondaRouter.get('/', authMiddleware, soloAdminGral, Ops.getAllRondas);
 rondaRouter.get('/:id', authMiddleware, cualquierAdmin, verificarAccesoTorneoResuelto(resolverIdTorneoDesdeRonda), Ops.getRondaById);
-rondaRouter.post('/', authMiddleware, cualquierAdmin, Ops.createRonda);
+rondaRouter.post('/', authMiddleware, cualquierAdmin, verificarAccesoTorneoResuelto(resolverIdTorneoDesdeCuerpo()), Ops.createRonda);
 rondaRouter.put('/:id', authMiddleware, cualquierAdmin, verificarAccesoTorneoResuelto(resolverIdTorneoDesdeRonda), Ops.updateRonda);
 // Borrar ronda → solo adminGral
 rondaRouter.delete('/:id', authMiddleware, soloAdminGral, Ops.deleteRonda);

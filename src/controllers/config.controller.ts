@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { AuthRequest } from '../types';
-import { actualizarConfigSchema } from '../validations/config.validations';
+import { actualizarConfigSchema, actualizarLimitesSchema } from '../validations/config.validations';
+import * as limitesService from '../services/rate-limit-config.service';
+import { loggerService } from '../services/security/logger.service';
 import * as configService from '../services/config.service';
 
 // GET /api/config
@@ -60,6 +62,44 @@ export const actualizarConfig = async (
         const datos  = actualizarConfigSchema.parse(req.body);
         const config = await configService.actualizarConfig(datos);
         res.json({ ok: true, mensaje: 'Configuración actualizada', data: config });
+    } catch (err) {
+        next(err);
+    }
+};
+
+// GET /api/config/limites — solo adminGral. Límites de peticiones vigentes, con su origen y rango permitido.
+export const obtenerLimites = async (
+    _req: AuthRequest,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        res.json({ ok: true, data: await limitesService.obtenerLimitesParaPanel() });
+    } catch (err) {
+        next(err);
+    }
+};
+
+// PUT /api/config/limites — solo adminGral. Cambia los límites y lo deja asentado en la bitácora.
+export const actualizarLimites = async (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const cambios = actualizarLimitesSchema.parse(req.body);
+        const { antes, despues } = await limitesService.guardarLimites(cambios);
+
+        await loggerService.info(
+            'actualizar_limites',
+            'config_limites',
+            1,
+            `Límites de peticiones: antes ${JSON.stringify(antes)}, ahora ${JSON.stringify(despues)}`,
+            req.usuario?.idUsuario,
+            req
+        );
+
+        res.json({ ok: true, mensaje: 'Límites actualizados', data: await limitesService.obtenerLimitesParaPanel() });
     } catch (err) {
         next(err);
     }

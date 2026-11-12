@@ -118,6 +118,59 @@ export const resolverIdTorneoDesdePartida = async (req: AuthRequest): Promise<nu
     return partida?.mesa.ronda.idTorneo ?? null;
 };
 
+/** idTorneo de una inscripción (parámetro :id). */
+export const resolverIdTorneoDesdeInscripcion = async (req: AuthRequest): Promise<number | null> => {
+    const idInscripcion = Number(req.params.id);
+    if (isNaN(idInscripcion)) return null;
+    const inscripcion = await prisma.inscripcion.findUnique({ where: { idInscripcion }, select: { idTorneo: true } });
+    return inscripcion?.idTorneo ?? null;
+};
+
+/** idTorneo de una estadística de torneo (parámetro :id). */
+export const resolverIdTorneoDesdeEstadistica = async (req: AuthRequest): Promise<number | null> => {
+    const idEstadistica = Number(req.params.id);
+    if (isNaN(idEstadistica)) return null;
+    const estadistica = await prisma.estadisticaTorneo.findUnique({ where: { idEstadistica }, select: { idTorneo: true } });
+    return estadistica?.idTorneo ?? null;
+};
+
+// ── Resolvers para rutas de CREACIÓN: el torneo no viene en la URL sino en el cuerpo de la petición ──
+
+const aEnteroPositivo = (valor: unknown): number | null => {
+    const n = Number(valor);
+    return Number.isInteger(n) && n > 0 ? n : null;
+};
+
+/** El cuerpo trae directamente `idTorneo` (o el campo indicado). */
+export const resolverIdTorneoDesdeCuerpo = (campo = 'idTorneo') =>
+    async (req: AuthRequest): Promise<number | null> => aEnteroPositivo(req.body?.[campo]);
+
+/** El cuerpo trae `idRonda`: se busca a qué torneo pertenece. */
+export const resolverIdTorneoDesdeCuerpoRonda = async (req: AuthRequest): Promise<number | null> => {
+    const idRonda = aEnteroPositivo(req.body?.idRonda);
+    if (!idRonda) return null;
+    const ronda = await prisma.ronda.findUnique({ where: { idRonda }, select: { idTorneo: true } });
+    return ronda?.idTorneo ?? null;
+};
+
+/** El cuerpo trae `idMesa`: se busca a qué torneo pertenece. */
+export const resolverIdTorneoDesdeCuerpoMesa = async (req: AuthRequest): Promise<number | null> => {
+    const idMesa = aEnteroPositivo(req.body?.idMesa);
+    if (!idMesa) return null;
+    const mesa = await prisma.mesa.findUnique({ where: { idMesa }, select: { ronda: { select: { idTorneo: true } } } });
+    return mesa?.ronda.idTorneo ?? null;
+};
+
+/** El cuerpo trae `emparejamientos[]`: todos deben ser del mismo torneo (si no, se rechaza). */
+export const resolverIdTorneoDesdeCuerpoEmparejamientos = async (req: AuthRequest): Promise<number | null> => {
+    const lista = req.body?.emparejamientos;
+    if (!Array.isArray(lista) || lista.length === 0) return null;
+    const ids = new Set(lista.map((e: any) => aEnteroPositivo(e?.idTorneo)));
+    if (ids.size !== 1) return null;
+    const [unico] = [...ids];
+    return unico;
+};
+
 // ── Helper privado compartido ──────────────────────────────────
 
 const _verificarAsignacion = async (

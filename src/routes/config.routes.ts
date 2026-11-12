@@ -24,4 +24,8 @@ router.get('/patrocinadores', configController.listarPatrocinadores);
 router.get('/completa', authMiddleware, soloAdminGral, configController.obtenerConfigCompleta);
 router.patch('/', authMiddleware, soloAdminGral, configController.actualizarConfig);
 
+// Límites de peticiones (rate limit) ajustables desde Configuración
+router.get('/limites', authMiddleware, soloAdminGral, configController.obtenerLimites);
+router.put('/limites', authMiddleware, soloAdminGral, configController.actualizarLimites);
+
 export default router;

@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { authMiddleware } from '../middleware/auth.middleware';
 import { cualquierAdmin } from '../middleware/roles.middleware';
-import { verificarAccesoTorneo } from '../middleware/torneo-admin.middleware';
+import { verificarAccesoTorneo, verificarAccesoTorneoResuelto, resolverIdTorneoDesdeCuerpo } from '../middleware/torneo-admin.middleware';
 import * as Ops from '../controllers/torneo-ops.controller';
 
 // ════════════════════════════════════════════════════════════
@@ -18,8 +18,8 @@ torneoCategoriaRouter.get(
 );
 
 // Protegidas
-torneoCategoriaRouter.post('/', authMiddleware, cualquierAdmin, Ops.upsertTorneoCategoria);
-torneoCategoriaRouter.put('/', authMiddleware, cualquierAdmin, Ops.upsertTorneoCategoria);
+torneoCategoriaRouter.post('/', authMiddleware, cualquierAdmin, verificarAccesoTorneoResuelto(resolverIdTorneoDesdeCuerpo()), Ops.upsertTorneoCategoria);
+torneoCategoriaRouter.put('/', authMiddleware, cualquierAdmin, verificarAccesoTorneoResuelto(resolverIdTorneoDesdeCuerpo()), Ops.upsertTorneoCategoria);
 torneoCategoriaRouter.delete(
     '/torneo/:idTorneo/categoria/:idCategoria',
     authMiddleware, cualquierAdmin, verificarAccesoTorneo('idTorneo'),

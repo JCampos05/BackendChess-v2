@@ -19,3 +19,12 @@ export const actualizarConfigSchema = z.object({
 });
 
 export type ActualizarConfigDto = z.infer<typeof actualizarConfigSchema>;
+
+// Límites de peticiones ajustables desde el panel. `null` quita el ajuste (vuelve al valor por defecto).
+// Los rangos deben coincidir con los de services/rate-limit-config.service.ts.
+export const actualizarLimitesSchema = z.object({
+    generalPorMinuto:    z.number().int().min(60, 'Mínimo 60 por minuto').max(3000, 'Máximo 3000 por minuto').nullable().optional(),
+    inscripcionPor15Min: z.number().int().min(5, 'Mínimo 5').max(500, 'Máximo 500').nullable().optional(),
+}).refine(d => Object.values(d).some(v => v !== undefined), { message: 'Indica al menos un límite' });
+
+export type ActualizarLimitesDto = z.infer<typeof actualizarLimitesSchema>;

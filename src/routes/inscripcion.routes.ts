@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import { authMiddleware } from '../middleware/auth.middleware';
 import { cualquierAdmin, soloAdminGral } from '../middleware/roles.middleware';
-import { verificarAccesoTorneo } from '../middleware/torneo-admin.middleware';
+import { verificarAccesoTorneo, verificarAccesoTorneoResuelto, resolverIdTorneoDesdeInscripcion } from '../middleware/torneo-admin.middleware';
+import { limitadorInscripcionPublica } from '../middleware/rate-limit.middleware';
 import * as inscripcionController from '../controllers/inscripcion.controller';
 
 const router = Router();
@@ -24,23 +25,26 @@ router.get('/jugador/:idJugador',
 // GET /api/inscripciones/:id
 router.get('/:id',
     authMiddleware, cualquierAdmin,
+    verificarAccesoTorneoResuelto(resolverIdTorneoDesdeInscripcion),
     inscripcionController.obtenerUna
 );
 
 // POST /api/inscripciones — pública: cualquier persona puede inscribirse sin auth
-router.post('/', inscripcionController.crear);
+router.post('/', limitadorInscripcionPublica, inscripcionController.crear);
 
 // ── Solo admins ───────────────────────────────────────────────
 
 // PATCH /api/inscripciones/:id
 router.patch('/:id',
     authMiddleware, cualquierAdmin,
+    verificarAccesoTorneoResuelto(resolverIdTorneoDesdeInscripcion),
     inscripcionController.actualizar
 );
 
 // PATCH /api/inscripciones/:id/confirmar-pago
 router.patch('/:id/confirmar-pago',
     authMiddleware, cualquierAdmin,
+    verificarAccesoTorneoResuelto(resolverIdTorneoDesdeInscripcion),
     inscripcionController.confirmarPago
 );
 
