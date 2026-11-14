@@ -10,7 +10,7 @@ const filtrosSchema = z.object({
     folio:  z.enum(['todos', 'con', 'sin']).default('todos'),
     pago:   z.enum(['todos', 'confirmado', 'pendiente']).default('todos'),
     pagina: z.coerce.number().int().min(1).default(1),
-    limite: z.coerce.number().int().min(1).max(5000).default(20),
+    limite: z.coerce.number().int().min(1).max(100).default(20),
 });
 
 const emitirSchema = z.object({
