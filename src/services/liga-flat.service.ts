@@ -327,10 +327,16 @@ export const finalizarMesaFlat = async (idMesaLiga: number, datos: RegistrarPart
 };
 
 export const eliminarMesaFlat = async (idMesaLiga: number) => {
-    const mesa = await prisma.mesaLiga.findUnique({ where: { idMesaLiga } });
+    const mesa = await prisma.mesaLiga.findUnique({
+        where: { idMesaLiga },
+        select: { idMesaLiga: true, estado: true, ronda_liga: { select: { estado: true } } },
+    });
     if (!mesa) throw new NotFoundError('Mesa no encontrada');
     if (mesa.estado === 'finalizada')
         throw new ForbiddenError('No se puede eliminar una mesa con partida finalizada');
+    // Solo mientras la ronda se está armando: una ronda en curso o finalizada ya tiene resultados y clasificación
+    if (mesa.ronda_liga.estado !== 'planificada')
+        throw new ForbiddenError(`No se puede eliminar una mesa de una ronda "${mesa.ronda_liga.estado}". Solo se pueden eliminar mesas de rondas planificadas.`);
 
     await prisma.mesaLiga.delete({ where: { idMesaLiga } });
     return { idMesaLiga };

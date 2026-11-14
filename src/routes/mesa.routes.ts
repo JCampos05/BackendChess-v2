@@ -22,7 +22,7 @@ mesaRouter.post('/', authMiddleware, cualquierAdmin, verificarAccesoTorneoResuel
 mesaRouter.post('/:id/bloquear', authMiddleware, cualquierAdmin, verificarAccesoTorneoResuelto(resolverIdTorneoDesdeMesa), Ops.bloquearMesa);
 mesaRouter.post('/:id/liberar', authMiddleware, cualquierAdmin, verificarAccesoTorneoResuelto(resolverIdTorneoDesdeMesa), Ops.liberarMesa);
 mesaRouter.put('/:id', authMiddleware, cualquierAdmin, verificarAccesoTorneoResuelto(resolverIdTorneoDesdeMesa), Ops.updateMesa);
-// Borrar mesa → solo adminGral
-mesaRouter.delete('/:id', authMiddleware, soloAdminGral, Ops.deleteMesa);
+// Borrar mesa: cualquier admin del torneo, solo si la ronda sigue pendiente (lo valida el servicio)
+mesaRouter.delete('/:id', authMiddleware, cualquierAdmin, verificarAccesoTorneoResuelto(resolverIdTorneoDesdeMesa), Ops.deleteMesa);
 
 export default mesaRouter;

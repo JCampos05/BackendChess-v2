@@ -1,6 +1,7 @@
 import prisma from '../config/database';
 import {
     NotFoundError,
+    ForbiddenError,
     ValidationError,
     AppError,
 } from '../middleware/error.middleware';
@@ -132,8 +133,17 @@ export async function createMesa(dto: CreateMesaDto) {
 }
 
 export async function deleteMesa(id: number) {
-    const mesa = await prisma.mesa.findUnique({ where: { idMesa: id } });
+    const mesa = await prisma.mesa.findUnique({
+        where: { idMesa: id },
+        select: { idMesa: true, ronda: { select: { estado: true } } },
+    });
     if (!mesa) throw new NotFoundError('Mesa no encontrada');
+    // Solo mientras la ronda se está armando: una ronda en curso o finalizada ya tiene resultados y clasificación
+    if (mesa.ronda.estado !== 'pendiente') {
+        throw new ForbiddenError(
+            `No se puede eliminar una mesa de una ronda "${mesa.ronda.estado}". Solo se pueden eliminar mesas de rondas pendientes.`
+        );
+    }
     await prisma.mesa.delete({ where: { idMesa: id } });
 }
 
