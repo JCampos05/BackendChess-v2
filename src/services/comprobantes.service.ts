@@ -9,6 +9,8 @@ import { firmarFolio } from './verificacion-folio.service';
 
 export interface FiltrosComprobantes {
     tipo: 'todos' | 'torneo' | 'liga';
+    /** Un torneo concreto: implica que solo hay inscripciones de torneo (las ligas quedan fuera). */
+    idTorneo?: number;
     q?: string;
     folio: 'todos' | 'con' | 'sin';
     pago: 'todos' | 'confirmado' | 'pendiente';
@@ -61,6 +63,7 @@ const whereTorneo = (f: FiltrosComprobantes): Prisma.InscripcionWhereInput => {
     const q = f.q?.trim();
     return {
         ...condicionesComunes(f),
+        ...(f.idTorneo && { idTorneo: f.idTorneo }),
         ...(q && {
             OR: [
                 { folio: { contains: q } },
@@ -135,7 +138,8 @@ const INCLUDE_LIGA = {
 
 export const listarComprobantes = async (f: FiltrosComprobantes) => {
     const incluirTorneos = f.tipo !== 'liga';
-    const incluirLigas = f.tipo !== 'torneo';
+    // Con un torneo elegido no tiene sentido mezclar ligas
+    const incluirLigas = f.tipo !== 'torneo' && !f.idTorneo;
     const desde = (f.pagina - 1) * f.limite;
 
     const wT = whereTorneo(f);
@@ -148,8 +152,9 @@ export const listarComprobantes = async (f: FiltrosComprobantes) => {
 
     // Un solo tipo: paginación directa en BD. Ambos: se trae hasta la página pedida de cada tabla,
     // se mezclan por fecha y se corta (el volumen de un comité lo permite sin una vista unida).
-    const tomar = f.tipo === 'todos' ? desde + f.limite : f.limite;
-    const saltar = f.tipo === 'todos' ? 0 : desde;
+    const mezcla = incluirTorneos && incluirLigas;
+    const tomar = mezcla ? desde + f.limite : f.limite;
+    const saltar = mezcla ? 0 : desde;
 
     const [inscripciones, jugadoresLiga] = await Promise.all([
         incluirTorneos
@@ -169,7 +174,7 @@ export const listarComprobantes = async (f: FiltrosComprobantes) => {
         ...jugadoresLiga.map(filaLiga),
     ].sort((a, b) => (b.fechaInscripcion?.getTime() ?? 0) - (a.fechaInscripcion?.getTime() ?? 0));
 
-    if (f.tipo === 'todos') filas = filas.slice(desde, desde + f.limite);
+    if (mezcla) filas = filas.slice(desde, desde + f.limite);
 
     const total = totalT + totalL;
     return {
@@ -182,18 +187,26 @@ export const listarComprobantes = async (f: FiltrosComprobantes) => {
 };
 
 /** Totales para las tarjetas de resumen (independientes de los filtros de la tabla). */
-export const resumenComprobantes = async () => {
-    const [torneosCon, torneosSin, ligasCon, ligasSin] = await Promise.all([
-        prisma.inscripcion.count({ where: { folio: { not: null } } }),
-        prisma.inscripcion.count({ where: { folio: null } }),
-        prisma.jugadorLiga.count({ where: { folio: { not: null } } }),
-        prisma.jugadorLiga.count({ where: { folio: null } }),
+export const resumenComprobantes = async (idTorneo?: number) => {
+    // Con un torneo elegido el resumen se acota a él (las ligas no aplican)
+    const t = idTorneo ? { idTorneo } : {};
+    const [torneosCon, torneosSin, ligasCon, ligasSin, pagadosT, pendientesT, pagadosL, pendientesL] = await Promise.all([
+        prisma.inscripcion.count({ where: { ...t, folio: { not: null } } }),
+        prisma.inscripcion.count({ where: { ...t, folio: null } }),
+        idTorneo ? 0 : prisma.jugadorLiga.count({ where: { folio: { not: null } } }),
+        idTorneo ? 0 : prisma.jugadorLiga.count({ where: { folio: null } }),
+        prisma.inscripcion.count({ where: { ...t, pago_confirmado: true } }),
+        prisma.inscripcion.count({ where: { ...t, pago_confirmado: false } }),
+        idTorneo ? 0 : prisma.jugadorLiga.count({ where: { pago_confirmado: true } }),
+        idTorneo ? 0 : prisma.jugadorLiga.count({ where: { pago_confirmado: false } }),
     ]);
     return {
         conFolio: torneosCon + ligasCon,
         sinFolio: torneosSin + ligasSin,
         torneos: torneosCon,
         ligas: ligasCon,
+        pagados: pagadosT + pagadosL,
+        pendientes: pendientesT + pendientesL,
     };
 };
 

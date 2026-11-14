@@ -5,11 +5,12 @@ import * as service from '../services/comprobantes.service';
 
 const filtrosSchema = z.object({
     tipo:   z.enum(['todos', 'torneo', 'liga']).default('todos'),
+    idTorneo: z.coerce.number().int().positive().optional(),
     q:      z.string().trim().max(100).optional(),
     folio:  z.enum(['todos', 'con', 'sin']).default('todos'),
     pago:   z.enum(['todos', 'confirmado', 'pendiente']).default('todos'),
     pagina: z.coerce.number().int().min(1).default(1),
-    limite: z.coerce.number().int().min(1).max(100).default(20),
+    limite: z.coerce.number().int().min(1).max(5000).default(20),
 });
 
 const emitirSchema = z.object({
@@ -33,9 +34,10 @@ export const listar = async (req: AuthRequest, res: Response, next: NextFunction
 };
 
 // GET /api/comprobantes/resumen
-export const resumen = async (_req: AuthRequest, res: Response, next: NextFunction) => {
+export const resumen = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
-        res.json({ ok: true, data: await service.resumenComprobantes() });
+        const idTorneo = z.coerce.number().int().positive().optional().safeParse(req.query.idTorneo);
+        res.json({ ok: true, data: await service.resumenComprobantes(idTorneo.success ? idTorneo.data : undefined) });
     } catch (err) { next(err); }
 };
 

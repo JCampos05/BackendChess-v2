@@ -417,7 +417,7 @@ export const getCategoriasByTorneo = async (idTorneo: number) => {
             idTorneoCat: true,
             rondas: true,
             ritmo_juego: true,
-            categoria: { select: { idCategoria: true, nombre: true, costo: true, edadMinima: true, edadMaxima: true } },
+            categoria: { select: { idCategoria: true, nombre: true, costo: true, edadMinima: true, edadMaxima: true, tipo_validacion_edad: true } },
         },
     });
 };
