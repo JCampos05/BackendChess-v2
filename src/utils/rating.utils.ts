@@ -216,3 +216,41 @@ export const resolverRatingsEnDatos = async <T>(datos: T): Promise<T> => {
     aplicar(datos, 0, CONTEXTO_POR_DEFECTO, mapas);
     return datos;
 };
+
+// ── Ritmo del torneo en las respuestas ───────────────────────────────────────────────────────────────────────
+// Cada torneo que viaja con sus categorías (`torneo_categorias`, con `ritmo_juego`) recibe `ritmo_rating`: la clase de
+// ritmo FIDE si todas sus categorías coinciden, 'mixto' si hay varias, o null si ninguna tiene ritmo. No se guarda en
+// la BD: se calcula con el catálogo de ritmos y los lineamientos vigentes.
+
+const esTorneoConCategorias = (o: Record<string, unknown>): boolean =>
+    typeof o.idTorneo === 'number' && Array.isArray(o.torneo_categorias) && !('ritmo_rating' in o);
+
+const recolectarTorneos = (v: unknown, prof: number, salida: Record<string, unknown>[]): void => {
+    if (prof > PROFUNDIDAD_MAXIMA) return;
+    if (Array.isArray(v)) {
+        for (const x of v) recolectarTorneos(x, prof + 1, salida);
+    } else if (esObjetoPlano(v)) {
+        if (esTorneoConCategorias(v)) salida.push(v);
+        for (const k of Object.keys(v)) recolectarTorneos(v[k], prof + 1, salida);
+    }
+};
+
+/** Agrega `ritmo_rating` a cada torneo de `datos` que traiga sus categorías. Modifica y devuelve `datos`. */
+export const anexarRitmoATorneos = async <T>(datos: T): Promise<T> => {
+    const torneos: Record<string, unknown>[] = [];
+    recolectarTorneos(datos, 0, torneos);
+    if (torneos.length === 0) return datos;
+
+    const [catalogo, umbrales] = await Promise.all([cargarCatalogoRitmos(), obtenerUmbrales()]);
+    for (const t of torneos) {
+        const categorias = t.torneo_categorias as Array<{ ritmo_juego?: string | null; activo?: boolean }>;
+        const clases = new Set<ClaseRitmo>();
+        for (const c of categorias) {
+            if (c.activo === false) continue;
+            const clase = claseDeRitmoPorNombre(c.ritmo_juego, catalogo, umbrales);
+            if (clase) clases.add(clase);
+        }
+        t.ritmo_rating = clases.size === 0 ? null : clases.size === 1 ? [...clases][0] : 'mixto';
+    }
+    return datos;
+};
