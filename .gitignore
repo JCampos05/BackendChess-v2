@@ -12,3 +12,4 @@ BD-Liga.sql
 BDv1.sql
 /scripts
 /.gitgnore
+prisma/seed-prueba-local.ts

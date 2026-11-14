@@ -144,7 +144,7 @@ export const obtenerEstadisticasPublicas = async (idJugador: number) => {
                 fecha_inscripcion: true,
                 fecha_actualizacion: true,
                 categoria: { select: { nombre: true } },
-                torneo: { select: { nombre: true, lugar: true, fecha: true, rondas: true } },
+                torneo: { select: { idTorneo: true, nombre: true, lugar: true, fecha: true, rondas: true } },
             },
         }),
         prisma.jugadorLiga.findMany({
