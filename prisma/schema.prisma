@@ -330,7 +330,12 @@ model Jugador {
   pago_confirmado  Boolean        @default(false)
   fecha_registro   DateTime?
   actualizacion    DateTime?
-  rating           Int            @default(0)
+  // Rating ESTATAL (el único que existía antes; el valor histórico de todos los jugadores es estatal).
+  // El campo se llama `rating_estatal` en código y API, pero la columna física sigue siendo `rating`
+  // (@map): renombrarla en la BD haría fallar al backend anterior durante el deploy y no aporta nada.
+  rating_estatal   Int            @default(0) @map("rating")
+  // Rating NACIONAL (FENAMAC). 0 = sin rating nacional, igual que el estatal.
+  rating_nacional  Int            @default(0)
 
   // Relaciones
   categoria                 Categoria?      @relation(fields: [idCategoria], references: [idCategoria], onDelete: SetNull, onUpdate: Cascade)
@@ -352,7 +357,8 @@ model Jugador {
   @@unique([nombre, apellido1, apellido2, fecha_nacimiento], name: "unique_jugador_identidad")
   @@index([apellido1, nombre])
   @@index([idCategoria])
-  @@index([rating])
+  @@index([rating_estatal])
+  @@index([rating_nacional])
   @@index([estado])
   @@map("jugadores")
 }
@@ -360,6 +366,12 @@ model Jugador {
 // ============================================================
 // TORNEOS
 // ============================================================
+
+enum TipoRating {
+  sin_rating
+  estatal
+  nacional
+}
 
 model Torneo {
   idTorneo             Int            @id @default(autoincrement())
@@ -392,6 +404,11 @@ model Torneo {
 
   notas                String?        @db.Text
   rondas               Int            @default(5)
+
+  // Qué rating usa este torneo (se muestra en inscripciones, listas y mesas, y ordena los emparejamientos).
+  // Los torneos existentes son 'estatal'. Para habilitar FIDE más adelante basta agregar el valor al enum TipoRating.
+  tipo_rating          TipoRating     @default(estatal)
+
   cupo_maximo          Int?
   // Contador atómico de folios de comprobante: se incrementa dentro de la transacción
   // de cada inscripción y nunca decrece (un número cancelado no se reutiliza).

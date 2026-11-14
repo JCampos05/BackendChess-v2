@@ -42,8 +42,8 @@ export async function getHistorialByJugador(idJugador: number, idTorneo: number)
     return prisma.historialEmparejamiento.findMany({
         where: { idTorneo, OR: [{ idJugador1: idJugador }, { idJugador2: idJugador }] },
         include: {
-            jugador1: { select: { ...selectJugador, rating: true } },
-            jugador2: { select: { ...selectJugador, rating: true } },
+            jugador1: { select: { ...selectJugador, rating_estatal: true, rating_nacional: true } },
+            jugador2: { select: { ...selectJugador, rating_estatal: true, rating_nacional: true } },
         },
         orderBy: { numeroRonda: 'asc' },
     });

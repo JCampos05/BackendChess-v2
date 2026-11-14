@@ -8,7 +8,8 @@ export const crearJugadorSchema = z.object({
     fecha_nacimiento: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato YYYY-MM-DD').optional(),
     idCategoria: z.number().int().positive().optional(),
     notas: z.string().optional(),
-    rating: z.number().int().min(0).max(9999).default(0),
+    rating_estatal: z.number().int().min(0).max(9999).default(0),
+    rating_nacional: z.number().int().min(0).max(9999).default(0),
 });
 
 export const actualizarJugadorSchema = z.object({
@@ -23,7 +24,8 @@ export const actualizarJugadorSchema = z.object({
     fecha_nacimiento: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato YYYY-MM-DD').optional().nullable(),
     idCategoria: z.number().int().positive().optional(),
     notas: z.string().optional().nullable(),
-    rating: z.number().int().min(0).max(9999).optional(),
+    rating_estatal: z.number().int().min(0).max(9999).optional(),
+    rating_nacional: z.number().int().min(0).max(9999).optional(),
     // Schema v2.1.0: pendiente_pago | activo | inactivo
     estado: z.enum(['pendiente_pago', 'activo', 'inactivo']).optional(),
 });

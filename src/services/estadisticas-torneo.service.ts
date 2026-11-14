@@ -1,6 +1,7 @@
 import { Prisma } from '@prisma/client';
 import prisma from '../config/database';
 import { NotFoundError } from '../middleware/error.middleware';
+import { obtenerTipoRatingTorneo, ratingSegunTipo } from '../utils/rating.utils';
 
 // ── Includes reutilizables ───────────────────────────────────
 
@@ -11,7 +12,7 @@ const INCLUDE_JUGADOR = {
             nombre: true,
             apellido1: true,
             apellido2: true,
-            rating: true,
+            rating_estatal: true, rating_nacional: true,
             fecha_nacimiento: true,
         },
     },
@@ -24,7 +25,7 @@ const INCLUDE_COMPLETO = {
             nombre: true,
             apellido1: true,
             apellido2: true,
-            rating: true,
+            rating_estatal: true, rating_nacional: true,
             fecha_nacimiento: true,
         },
     },
@@ -98,6 +99,8 @@ export const getEstadisticasHastaRonda = async (
     idTorneoCategoria: number,
     numeroRonda: number
 ) => {
+    const tipoRating = await obtenerTipoRatingTorneo(idTorneo);
+
     // 1. Buscar la categoría para obtener idCategoria
     const torneoCategoria = await prisma.torneoCategoria.findUnique({
         where: { idTorneoCat: idTorneoCategoria },
@@ -119,7 +122,7 @@ export const getEstadisticasHastaRonda = async (
                     nombre: true,
                     apellido1: true,
                     apellido2: true,
-                    rating: true,
+                    rating_estatal: true, rating_nacional: true,
                     fecha_nacimiento: true,
                 },
             },
@@ -200,7 +203,7 @@ export const getEstadisticasHastaRonda = async (
                 jugador: insc.jugador,
             };
         })
-        .sort((a, b) => b.puntos - a.puntos || b.victorias - a.victorias || b.jugador.rating - a.jugador.rating)
+        .sort((a, b) => b.puntos - a.puntos || b.victorias - a.victorias || ratingSegunTipo(b.jugador, tipoRating) - ratingSegunTipo(a.jugador, tipoRating))
         .map((e, i) => ({ ...e, posicion_actual: i + 1 }));
 
     return resultado;
@@ -393,6 +396,7 @@ export const getListaInicialPublica = async (
     idTorneo: number,
     idTorneoCategoria: number
 ) => {
+    const tipoRating = await obtenerTipoRatingTorneo(idTorneo);
     const estadisticas = await prisma.estadisticaTorneo.findMany({
         where: { idTorneo, idTorneoCategoria },
         include: INCLUDE_JUGADOR,
@@ -417,13 +421,13 @@ export const getListaInicialPublica = async (
             select: {
                 edad: true,
                 jugador: {
-                    select: { idJugador: true, nombre: true, apellido1: true, apellido2: true, rating: true },
+                    select: { idJugador: true, nombre: true, apellido1: true, apellido2: true, rating_estatal: true, rating_nacional: true },
                 },
             },
         });
 
         return inscripciones
-            .map((i) => ({ ...i.jugador, jugador: { edad: i.edad } }))
+            .map((i) => ({ ...i.jugador, rating: ratingSegunTipo(i.jugador, tipoRating), jugador: { edad: i.edad } }))
             .sort((a, b) => b.rating - a.rating);
     }
 
@@ -434,7 +438,9 @@ export const getListaInicialPublica = async (
             nombre: e.jugador!.nombre,
             apellido1: e.jugador!.apellido1,
             apellido2: e.jugador!.apellido2,
-            rating: e.jugador!.rating,
+            rating_estatal: e.jugador!.rating_estatal,
+            rating_nacional: e.jugador!.rating_nacional,
+            rating: ratingSegunTipo(e.jugador!, tipoRating),
         }))
         .sort((a, b) => b.rating - a.rating);
 };
@@ -470,7 +476,7 @@ export const getRankingFinalPublico = async (
                     nombre: true,
                     apellido1: true,
                     apellido2: true,
-                    rating: true,
+                    rating_estatal: true, rating_nacional: true,
                     fecha_nacimiento: true,
                 },
             },

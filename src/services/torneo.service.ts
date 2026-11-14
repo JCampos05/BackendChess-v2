@@ -191,6 +191,7 @@ export const crearTorneo = async (datos: CrearTorneoDto) => {
             hora_inicio:          datos.hora_inicio ? (datos.hora_inicio.length === 5 ? `${datos.hora_inicio}:00` : datos.hora_inicio) : null,
             hora_fin:             datos.hora_fin ? (datos.hora_fin.length === 5 ? `${datos.hora_fin}:00` : datos.hora_fin) : null,
             rondas:               datos.rondas,
+            tipo_rating:          datos.tipo_rating,
             cupo_maximo:          datos.cupo_maximo ?? null,
             notas:                datos.notas,
             cierre_inscripciones: datos.cierre_inscripciones
@@ -239,6 +240,7 @@ export const actualizarTorneo = async (
             ...(datos.hora_inicio !== undefined && { hora_inicio: datos.hora_inicio.length === 5 ? `${datos.hora_inicio}:00` : datos.hora_inicio }),
             ...(datos.hora_fin !== undefined && { hora_fin: datos.hora_fin.length === 5 ? `${datos.hora_fin}:00` : datos.hora_fin }),
             ...(datos.rondas       !== undefined && { rondas:       datos.rondas }),
+            ...(datos.tipo_rating  !== undefined && { tipo_rating:  datos.tipo_rating }),
             ...(datos.cupo_maximo  !== undefined && { cupo_maximo:  datos.cupo_maximo }),
             ...(datos.notas        !== undefined && { notas:        datos.notas }),
             ...(datos.cierre_inscripciones !== undefined && {

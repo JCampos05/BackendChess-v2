@@ -78,8 +78,8 @@ export async function getAllPartidas() {
         include: {
             mesa: {
                 include: {
-                    jugador_blanco: { select: { idJugador: true, nombre: true, apellido1: true, rating: true } },
-                    jugador_negro: { select: { idJugador: true, nombre: true, apellido1: true, rating: true } },
+                    jugador_blanco: { select: { idJugador: true, nombre: true, apellido1: true, rating_estatal: true, rating_nacional: true } },
+                    jugador_negro: { select: { idJugador: true, nombre: true, apellido1: true, rating_estatal: true, rating_nacional: true } },
                     ronda: { select: { idRonda: true, numeroRonda: true } },
                 },
             },
@@ -95,8 +95,8 @@ export async function getPartidaById(id: number) {
         include: {
             mesa: {
                 include: {
-                    jugador_blanco: { select: { idJugador: true, nombre: true, apellido1: true, apellido2: true, rating: true } },
-                    jugador_negro: { select: { idJugador: true, nombre: true, apellido1: true, apellido2: true, rating: true } },
+                    jugador_blanco: { select: { idJugador: true, nombre: true, apellido1: true, apellido2: true, rating_estatal: true, rating_nacional: true } },
+                    jugador_negro: { select: { idJugador: true, nombre: true, apellido1: true, apellido2: true, rating_estatal: true, rating_nacional: true } },
                     ronda: { select: { idRonda: true, numeroRonda: true, idTorneo: true, idTorneoCategoria: true } },
                 },
             },
@@ -118,8 +118,8 @@ export async function getPartidasByJugadorTorneo(idJugador: number, idTorneo: nu
         include: {
             mesa: {
                 include: {
-                    jugador_blanco: { select: { idJugador: true, nombre: true, apellido1: true, apellido2: true, rating: true } },
-                    jugador_negro: { select: { idJugador: true, nombre: true, apellido1: true, apellido2: true, rating: true } },
+                    jugador_blanco: { select: { idJugador: true, nombre: true, apellido1: true, apellido2: true, rating_estatal: true, rating_nacional: true } },
+                    jugador_negro: { select: { idJugador: true, nombre: true, apellido1: true, apellido2: true, rating_estatal: true, rating_nacional: true } },
                     ronda: { select: { idRonda: true, numeroRonda: true, fecha_inicio: true, fecha_fin: true } },
                 },
             },

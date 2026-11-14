@@ -6,6 +6,7 @@ import {
     ForbiddenError,
 } from '../middleware/error.middleware';
 import { normalizarNombreJugador } from '../utils/nombre.utils';
+import { obtenerTipoRatingTorneo } from '../utils/rating.utils';
 import { jugadorPuedeInscribirse, inscripcionesCerradas } from '../utils/fecha.utils';
 import { asignarFolioTorneo, asignarFolioLiga } from './folio.service';
 import { conCodigoVerificacion } from './verificacion-folio.service';
@@ -61,7 +62,7 @@ const resolverJugador = async (datos: {
     telefono?: string;
     fecha_nacimiento?: string;
     rating_inicial?: number;
-}) => {
+}, campoRating: 'rating_estatal' | 'rating_nacional' = 'rating_estatal') => {
     if (datos.idJugador) {
         const jugador = await prisma.jugador.findUnique({
             where: { idJugador: datos.idJugador },
@@ -129,7 +130,7 @@ const resolverJugador = async (datos: {
             ...nombres,
             telefono: datos.telefono.replace(/\s/g, ''),
             fecha_nacimiento: new Date(datos.fecha_nacimiento),
-            rating: datos.rating_inicial ?? 0,
+            [campoRating]: datos.rating_inicial ?? 0,
             estado: 'pendiente_pago',
             fecha_registro: new Date(),
             actualizacion: new Date(),
@@ -140,7 +141,9 @@ const resolverJugador = async (datos: {
 // ── Inscripción a torneo ─────────────────────────────────────
 
 export const inscribirEnTorneo = async (datos: InscribirEnTorneoDto) => {
-    const jugador = await resolverJugador(datos);
+    // Un jugador nuevo nace con el rating inicial capturado en el rating que usa el torneo (nacional o estatal)
+    const tipoRating = await obtenerTipoRatingTorneo(datos.idTorneo);
+    const jugador = await resolverJugador(datos, tipoRating === 'nacional' ? 'rating_nacional' : 'rating_estatal');
 
     const [torneo, categoria] = await Promise.all([
         prisma.torneo.findUnique({ where: { idTorneo: datos.idTorneo } }),
@@ -309,7 +312,7 @@ export const inscribirEnLiga = async (datos: InscribirEnLigaDto) => {
                 idLiga: datos.idLiga,
                 idGrupoLiga: datos.idGrupoLiga,
                 idJugador: jugador.idJugador,
-                rating_inicial: datos.rating_inicial ?? jugador.rating ?? 0,
+                rating_inicial: datos.rating_inicial ?? jugador.rating_estatal ?? 0,
                 numero_jugador: datos.numero_jugador ?? null,
                 posicion: datos.posicion ?? null,
                 fecha_inscripcion: new Date(),
@@ -454,7 +457,7 @@ export const buscarJugadorSimilar = async (q: string) => {
             apellido2:        true,
             fecha_nacimiento: true,
             telefono:         true,
-            rating:           true,
+            rating_estatal:           true, rating_nacional: true,
             estado:           true,
             inscripciones: {
                 select: {

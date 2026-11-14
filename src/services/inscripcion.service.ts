@@ -19,11 +19,11 @@ export const obtenerInscripcionPorId = async (idInscripcion: number) => {
                     nombre:    true,
                     apellido1: true,
                     apellido2: true,
-                    rating:    true,
+                    rating_estatal:    true, rating_nacional: true,
                     estado:    true,
                 },
             },
-            torneo:    { select: { idTorneo: true, nombre: true, fecha: true } },
+            torneo:    { select: { idTorneo: true, nombre: true, fecha: true, tipo_rating: true } },
             categoria: { select: { idCategoria: true, nombre: true, costo: true } },
         },
     });
@@ -51,12 +51,12 @@ export const listarInscripcionesTorneo = async (
                     apellido1:        true,
                     apellido2:        true,
                     telefono:         true,
-                    rating:           true,
+                    rating_estatal:           true, rating_nacional: true,
                     fecha_nacimiento: true,
                 },
             },
             categoria: { select: { idCategoria: true, nombre: true, costo: true } },
-            torneo:    { select: { fecha: true } },
+            torneo:    { select: { fecha: true, tipo_rating: true } },
         },
     });
 

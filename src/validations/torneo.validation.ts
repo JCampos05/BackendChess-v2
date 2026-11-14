@@ -20,6 +20,8 @@ export const crearTorneoSchema = z.object({
     idZonaHoraria: z.number().int().min(1).max(24).optional().nullable(),
     idSistemaPago: z.number().int().positive().optional().nullable(),
     es_actual: z.boolean().default(true),
+    // Qué rating usa el torneo. Para habilitar FIDE: agregar el valor aquí y en el enum TipoRating del schema.
+    tipo_rating: z.enum(['sin_rating', 'estatal', 'nacional']).default('estatal'),
 });
 
 export const actualizarTorneoSchema = crearTorneoSchema.partial();

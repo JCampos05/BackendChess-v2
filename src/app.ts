@@ -6,6 +6,7 @@ import cors from 'cors';
 import { errorHandler, CorsError } from './middleware/error.middleware';
 import { registerRoutes } from './routes/index.routes';
 import { limitadorGeneral } from './middleware/rate-limit.middleware';
+import { resolverRatingEnRespuestas } from './middleware/rating.middleware';
 
 export const app = express();
 
@@ -64,6 +65,10 @@ app.get('/health', (req, res) => {
         env: process.env.NODE_ENV,
     });
 });
+
+// ── Rating según el tipo del torneo ───────────────────────────
+// Agrega `rating` (estatal / nacional / 0) a cada jugador de las respuestas JSON, según el torneo al que pertenece.
+app.use(resolverRatingEnRespuestas);
 
 // ── Rutas ─────────────────────────────────────────────────────
 registerRoutes(app);
