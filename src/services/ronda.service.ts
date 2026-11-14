@@ -73,8 +73,8 @@ export async function getRondaById(id: number) {
             ...includeCategoria,
             mesas: {
                 include: {
-                    jugador_blanco: { select: { idJugador: true, nombre: true, apellido1: true, apellido2: true, rating_estatal: true, rating_nacional: true } },
-                    jugador_negro: { select: { idJugador: true, nombre: true, apellido1: true, apellido2: true, rating_estatal: true, rating_nacional: true } },
+                    jugador_blanco: { select: { idJugador: true, nombre: true, apellido1: true, apellido2: true, rating_estatal: true, rating_nacional_estandar: true, rating_nacional_rapido: true, rating_nacional_blitz: true } },
+                    jugador_negro: { select: { idJugador: true, nombre: true, apellido1: true, apellido2: true, rating_estatal: true, rating_nacional_estandar: true, rating_nacional_rapido: true, rating_nacional_blitz: true } },
                 },
             },
         },

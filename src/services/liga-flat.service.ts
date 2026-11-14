@@ -218,8 +218,8 @@ export const eliminarRondaFlat = async (idRondaLiga: number) => {
 // ============================================================
 
 const INCLUDE_MESA = {
-    jugador_blanco: { select: { idJugador: true, nombre: true, apellido1: true, rating_estatal: true, rating_nacional: true } },
-    jugador_negro:  { select: { idJugador: true, nombre: true, apellido1: true, rating_estatal: true, rating_nacional: true } },
+    jugador_blanco: { select: { idJugador: true, nombre: true, apellido1: true, rating_estatal: true, rating_nacional_estandar: true, rating_nacional_rapido: true, rating_nacional_blitz: true } },
+    jugador_negro:  { select: { idJugador: true, nombre: true, apellido1: true, rating_estatal: true, rating_nacional_estandar: true, rating_nacional_rapido: true, rating_nacional_blitz: true } },
     partida_liga:   true,
 } satisfies Prisma.MesaLigaInclude;
 
@@ -344,7 +344,7 @@ const INCLUDE_JUGADOR_LIGA = {
     jugador: {
         select: {
             idJugador: true, nombre: true, apellido1: true,
-            apellido2: true, rating_estatal: true, rating_nacional: true, telefono: true,
+            apellido2: true, rating_estatal: true, rating_nacional_estandar: true, rating_nacional_rapido: true, rating_nacional_blitz: true, telefono: true,
         },
     },
     grupo: { select: { idGrupoLiga: true, nombre: true } },

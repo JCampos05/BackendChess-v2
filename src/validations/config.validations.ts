@@ -28,3 +28,15 @@ export const actualizarLimitesSchema = z.object({
 }).refine(d => Object.values(d).some(v => v !== undefined), { message: 'Indica al menos un límite' });
 
 export type ActualizarLimitesDto = z.infer<typeof actualizarLimitesSchema>;
+
+// Lineamientos de clasificación de ritmos (blitz / rápido / estándar). `restablecer: true` vuelve a los valores
+// por defecto de FIDE. Los rangos deben coincidir con los de services/ritmo-rating-config.service.ts.
+export const actualizarRitmosFideSchema = z.union([
+    z.object({ restablecer: z.literal(true) }),
+    z.object({
+        blitzMaximo:  z.number().int().min(1, 'El blitz debe durar al menos 1 minuto').max(30, 'El blitz no puede pasar de 30 minutos'),
+        rapidoMaximo: z.number().int().min(2, 'Mínimo 2 minutos').max(180, 'El rápido no puede pasar de 180 minutos'),
+    }).refine(d => d.rapidoMaximo > d.blitzMaximo, { message: 'El límite del rápido debe ser mayor que el del blitz', path: ['rapidoMaximo'] }),
+]);
+
+export type ActualizarRitmosFideDto = z.infer<typeof actualizarRitmosFideSchema>;

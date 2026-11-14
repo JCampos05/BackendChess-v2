@@ -9,7 +9,9 @@ export const crearJugadorSchema = z.object({
     idCategoria: z.number().int().positive().optional(),
     notas: z.string().optional(),
     rating_estatal: z.number().int().min(0).max(9999).default(0),
-    rating_nacional: z.number().int().min(0).max(9999).default(0),
+    rating_nacional_estandar: z.number().int().min(0).max(9999).default(0),
+    rating_nacional_rapido: z.number().int().min(0).max(9999).default(0),
+    rating_nacional_blitz: z.number().int().min(0).max(9999).default(0),
 });
 
 export const actualizarJugadorSchema = z.object({
@@ -25,7 +27,9 @@ export const actualizarJugadorSchema = z.object({
     idCategoria: z.number().int().positive().optional(),
     notas: z.string().optional().nullable(),
     rating_estatal: z.number().int().min(0).max(9999).optional(),
-    rating_nacional: z.number().int().min(0).max(9999).optional(),
+    rating_nacional_estandar: z.number().int().min(0).max(9999).optional(),
+    rating_nacional_rapido: z.number().int().min(0).max(9999).optional(),
+    rating_nacional_blitz: z.number().int().min(0).max(9999).optional(),
     // Schema v2.1.0: pendiente_pago | activo | inactivo
     estado: z.enum(['pendiente_pago', 'activo', 'inactivo']).optional(),
 });

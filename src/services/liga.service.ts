@@ -76,7 +76,7 @@ export const obtenerLigaPorId = async (idLiga: number) => {
                             posicion_grupo: true,
                             estado:        true,
                             jugador: {
-                                select: { idJugador: true, nombre: true, apellido1: true, rating_estatal: true, rating_nacional: true },
+                                select: { idJugador: true, nombre: true, apellido1: true, rating_estatal: true, rating_nacional_estandar: true, rating_nacional_rapido: true, rating_nacional_blitz: true },
                             },
                         },
                         orderBy: [{ puntos: 'desc' }, { posicion_grupo: 'asc' }],
@@ -105,7 +105,7 @@ export const obtenerLigaPorSlug = async (slug: string) => {
                             posicion_grupo: true,
                             estado:        true,
                             jugador: {
-                                select: { idJugador: true, nombre: true, apellido1: true, rating_estatal: true, rating_nacional: true },
+                                select: { idJugador: true, nombre: true, apellido1: true, rating_estatal: true, rating_nacional_estandar: true, rating_nacional_rapido: true, rating_nacional_blitz: true },
                             },
                         },
                         orderBy: [{ puntos: 'desc' }, { posicion_grupo: 'asc' }],
@@ -345,7 +345,7 @@ export const listarJugadoresLiga = async (idLiga: number, idGrupoLiga?: number) 
                     nombre:     true,
                     apellido1:  true,
                     apellido2:  true,
-                    rating_estatal:     true, rating_nacional: true,
+                    rating_estatal:     true, rating_nacional_estandar: true, rating_nacional_rapido: true, rating_nacional_blitz: true,
                     telefono:   true,
                 },
             },
@@ -412,7 +412,7 @@ export const inscribirJugadorLiga = async (
                 notas:          datos.notas,
             },
             include: {
-                jugador: { select: { idJugador: true, nombre: true, apellido1: true, rating_estatal: true, rating_nacional: true } },
+                jugador: { select: { idJugador: true, nombre: true, apellido1: true, rating_estatal: true, rating_nacional_estandar: true, rating_nacional_rapido: true, rating_nacional_blitz: true } },
                 grupo:   { select: { idGrupoLiga: true, nombre: true } },
             },
         });
@@ -540,8 +540,8 @@ export const listarMesasLiga = async (idRondaLiga: number) => {
         where:   { idRondaLiga },
         orderBy: { numeroMesa: 'asc' },
         include: {
-            jugador_blanco: { select: { idJugador: true, nombre: true, apellido1: true, rating_estatal: true, rating_nacional: true } },
-            jugador_negro:  { select: { idJugador: true, nombre: true, apellido1: true, rating_estatal: true, rating_nacional: true } },
+            jugador_blanco: { select: { idJugador: true, nombre: true, apellido1: true, rating_estatal: true, rating_nacional_estandar: true, rating_nacional_rapido: true, rating_nacional_blitz: true } },
+            jugador_negro:  { select: { idJugador: true, nombre: true, apellido1: true, rating_estatal: true, rating_nacional_estandar: true, rating_nacional_rapido: true, rating_nacional_blitz: true } },
             partida_liga:   true,
         },
     });
@@ -622,8 +622,8 @@ export const generarMesasLiga = async (idLiga: number, idRondaLiga: number) => {
             where:   { idRondaLiga },
             orderBy: { numeroMesa: 'asc' },
             include: {
-                jugador_blanco: { select: { idJugador: true, nombre: true, apellido1: true, rating_estatal: true, rating_nacional: true } },
-                jugador_negro:  { select: { idJugador: true, nombre: true, apellido1: true, rating_estatal: true, rating_nacional: true } },
+                jugador_blanco: { select: { idJugador: true, nombre: true, apellido1: true, rating_estatal: true, rating_nacional_estandar: true, rating_nacional_rapido: true, rating_nacional_blitz: true } },
+                jugador_negro:  { select: { idJugador: true, nombre: true, apellido1: true, rating_estatal: true, rating_nacional_estandar: true, rating_nacional_rapido: true, rating_nacional_blitz: true } },
             },
         });
     });
@@ -707,7 +707,7 @@ export const obtenerTablaPosiciones = async (idLiga: number, idGrupoLiga?: numbe
                     nombre:     true,
                     apellido1:  true,
                     apellido2:  true,
-                    rating_estatal:     true, rating_nacional: true,
+                    rating_estatal:     true, rating_nacional_estandar: true, rating_nacional_rapido: true, rating_nacional_blitz: true,
                 },
             },
             grupo: { select: { idGrupoLiga: true, nombre: true } },

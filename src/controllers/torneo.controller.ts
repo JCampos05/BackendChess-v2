@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { AuthRequest } from '../types';
 import { ZodError } from 'zod';
 import * as torneoService from '../services/torneo.service';
+import { clasificarCategoriasDeTorneo } from '../services/ritmo-rating-config.service';
 import {
     crearTorneoSchema,
     actualizarTorneoSchema,
@@ -249,6 +250,21 @@ export const obtenerCategoriasTorneo = async (
         const idTorneo  = Number(req.params.id);
         const categorias = await torneoService.obtenerCategoriasTorneo(idTorneo);
         res.json({ success: true, categorias, total: categorias.length });
+    } catch (err) { next(err); }
+};
+
+// GET /api/torneos/:id/clasificacion-ritmos (público)
+// Clase de ritmo FIDE (estándar/rápido/blitz) de cada categoría del torneo, y el ritmo del torneo:
+// la clase común si todas coinciden, 'mixto' si hay varias, null si ninguna categoría tiene ritmo.
+export const clasificacionRitmos = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
+    try {
+        const idTorneo = Number(req.params.id);
+        if (isNaN(idTorneo)) { res.status(400).json({ ok: false, mensaje: 'ID de torneo inválido' }); return; }
+        res.json({ ok: true, data: await clasificarCategoriasDeTorneo(idTorneo) });
     } catch (err) { next(err); }
 };
 

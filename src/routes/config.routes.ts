@@ -27,5 +27,7 @@ router.patch('/', authMiddleware, soloAdminGral, configController.actualizarConf
 // Límites de peticiones (rate limit) ajustables desde Configuración
 router.get('/limites', authMiddleware, soloAdminGral, configController.obtenerLimites);
 router.put('/limites', authMiddleware, soloAdminGral, configController.actualizarLimites);
+router.get('/ritmos-fide', authMiddleware, soloAdminGral, configController.obtenerRitmosFide);
+router.put('/ritmos-fide', authMiddleware, soloAdminGral, configController.actualizarRitmosFide);
 
 export default router;

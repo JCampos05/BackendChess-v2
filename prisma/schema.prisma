@@ -334,8 +334,11 @@ model Jugador {
   // El campo se llama `rating_estatal` en código y API, pero la columna física sigue siendo `rating`
   // (@map): renombrarla en la BD haría fallar al backend anterior durante el deploy y no aporta nada.
   rating_estatal   Int            @default(0) @map("rating")
-  // Rating NACIONAL (FENAMAC). 0 = sin rating nacional, igual que el estatal.
-  rating_nacional  Int            @default(0)
+  // Rating NACIONAL (FENAMAC), uno por ritmo de juego según la clasificación FIDE (estándar / rápido / blitz).
+  // 0 = sin rating en ese ritmo, igual que el estatal.
+  rating_nacional_estandar Int    @default(0)
+  rating_nacional_rapido   Int    @default(0)
+  rating_nacional_blitz    Int    @default(0)
 
   // Relaciones
   categoria                 Categoria?      @relation(fields: [idCategoria], references: [idCategoria], onDelete: SetNull, onUpdate: Cascade)
@@ -358,7 +361,6 @@ model Jugador {
   @@index([apellido1, nombre])
   @@index([idCategoria])
   @@index([rating_estatal])
-  @@index([rating_nacional])
   @@index([estado])
   @@map("jugadores")
 }

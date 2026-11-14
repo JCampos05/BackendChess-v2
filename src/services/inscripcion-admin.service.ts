@@ -6,7 +6,8 @@ import {
     ForbiddenError,
 } from '../middleware/error.middleware';
 import { normalizarNombreJugador } from '../utils/nombre.utils';
-import { obtenerTipoRatingTorneo } from '../utils/rating.utils';
+import { obtenerTipoRatingTorneo, campoRatingNacional, CampoRatingNacional } from '../utils/rating.utils';
+import { claseDeCategoriaEnTorneo } from './ritmo-rating-config.service';
 import { jugadorPuedeInscribirse, inscripcionesCerradas } from '../utils/fecha.utils';
 import { asignarFolioTorneo, asignarFolioLiga } from './folio.service';
 import { conCodigoVerificacion } from './verificacion-folio.service';
@@ -62,7 +63,7 @@ const resolverJugador = async (datos: {
     telefono?: string;
     fecha_nacimiento?: string;
     rating_inicial?: number;
-}, campoRating: 'rating_estatal' | 'rating_nacional' = 'rating_estatal') => {
+}, campoRating: 'rating_estatal' | CampoRatingNacional | null = 'rating_estatal') => {
     if (datos.idJugador) {
         const jugador = await prisma.jugador.findUnique({
             where: { idJugador: datos.idJugador },
@@ -130,7 +131,7 @@ const resolverJugador = async (datos: {
             ...nombres,
             telefono: datos.telefono.replace(/\s/g, ''),
             fecha_nacimiento: new Date(datos.fecha_nacimiento),
-            [campoRating]: datos.rating_inicial ?? 0,
+            ...(campoRating && { [campoRating]: datos.rating_inicial ?? 0 }),
             estado: 'pendiente_pago',
             fecha_registro: new Date(),
             actualizacion: new Date(),
@@ -141,9 +142,16 @@ const resolverJugador = async (datos: {
 // ── Inscripción a torneo ─────────────────────────────────────
 
 export const inscribirEnTorneo = async (datos: InscribirEnTorneoDto) => {
-    // Un jugador nuevo nace con el rating inicial capturado en el rating que usa el torneo (nacional o estatal)
+    // Un jugador nuevo nace con el rating inicial capturado en el rating que usa el torneo: el estatal, o el nacional
+    // del ritmo de la categoría elegida. Sin tipo "con rating" o sin ritmo definido no hay dónde guardarlo.
     const tipoRating = await obtenerTipoRatingTorneo(datos.idTorneo);
-    const jugador = await resolverJugador(datos, tipoRating === 'nacional' ? 'rating_nacional' : 'rating_estatal');
+    let campoRating: 'rating_estatal' | CampoRatingNacional | null = null;
+    if (tipoRating === 'estatal') campoRating = 'rating_estatal';
+    else if (tipoRating === 'nacional') {
+        const clase = await claseDeCategoriaEnTorneo(datos.idTorneo, datos.idCategoria);
+        campoRating = clase ? campoRatingNacional(clase) : null;
+    }
+    const jugador = await resolverJugador(datos, campoRating);
 
     const [torneo, categoria] = await Promise.all([
         prisma.torneo.findUnique({ where: { idTorneo: datos.idTorneo } }),
@@ -457,7 +465,7 @@ export const buscarJugadorSimilar = async (q: string) => {
             apellido2:        true,
             fecha_nacimiento: true,
             telefono:         true,
-            rating_estatal:           true, rating_nacional: true,
+            rating_estatal:           true, rating_nacional_estandar: true, rating_nacional_rapido: true, rating_nacional_blitz: true,
             estado:           true,
             inscripciones: {
                 select: {

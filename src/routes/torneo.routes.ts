@@ -13,6 +13,7 @@ router.get('/activos', ctrl.listarTorneosActivos);
 router.get('/proximos', ctrl.listarTorneosProximos);
 router.get('/todos', ctrl.listarTodosTorneos);
 router.get('/:id/categorias', ctrl.obtenerCategoriasTorneo);
+router.get('/:id/clasificacion-ritmos', ctrl.clasificacionRitmos);
 
 // ── Autenticadas ──────────────────────────────────────────────
 router.use(authMiddleware);

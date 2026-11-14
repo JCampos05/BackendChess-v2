@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { AuthRequest } from '../types';
-import { actualizarConfigSchema, actualizarLimitesSchema } from '../validations/config.validations';
+import { actualizarConfigSchema, actualizarLimitesSchema, actualizarRitmosFideSchema } from '../validations/config.validations';
+import * as ritmosRatingService from '../services/ritmo-rating-config.service';
 import * as limitesService from '../services/rate-limit-config.service';
 import { loggerService } from '../services/security/logger.service';
 import * as configService from '../services/config.service';
@@ -100,6 +101,46 @@ export const actualizarLimites = async (
         );
 
         res.json({ ok: true, mensaje: 'Límites actualizados', data: await limitesService.obtenerLimitesParaPanel() });
+    } catch (err) {
+        next(err);
+    }
+};
+
+// GET /api/config/ritmos-fide — solo adminGral. Lineamientos vigentes de clasificación de ritmos (blitz/rápido/estándar).
+export const obtenerRitmosFide = async (
+    _req: AuthRequest,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        res.json({ ok: true, data: await ritmosRatingService.obtenerUmbralesParaPanel() });
+    } catch (err) {
+        next(err);
+    }
+};
+
+// PUT /api/config/ritmos-fide — solo adminGral. Cambia los lineamientos (o los restablece) y lo asienta en la bitácora.
+export const actualizarRitmosFide = async (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const datos = actualizarRitmosFideSchema.parse(req.body);
+        const { antes, despues } = await ritmosRatingService.guardarUmbrales(
+            'restablecer' in datos ? null : { blitzMaximo: datos.blitzMaximo, rapidoMaximo: datos.rapidoMaximo }
+        );
+
+        await loggerService.info(
+            'actualizar_ritmos_fide',
+            'config_ritmos_fide',
+            1,
+            `Lineamientos de ritmos: antes ${JSON.stringify(antes)}, ahora ${JSON.stringify(despues)}`,
+            req.usuario?.idUsuario,
+            req
+        );
+
+        res.json({ ok: true, mensaje: 'Lineamientos actualizados', data: await ritmosRatingService.obtenerUmbralesParaPanel() });
     } catch (err) {
         next(err);
     }

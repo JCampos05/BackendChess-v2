@@ -27,7 +27,7 @@ export interface UpdateMesaDto {
 }
 
 const selectJugadorBase = {
-    idJugador: true, nombre: true, apellido1: true, apellido2: true, rating_estatal: true, rating_nacional: true,
+    idJugador: true, nombre: true, apellido1: true, apellido2: true, rating_estatal: true, rating_nacional_estandar: true, rating_nacional_rapido: true, rating_nacional_blitz: true,
 };
 
 const includeJugadores = {
@@ -41,8 +41,8 @@ export async function getAllMesas() {
     return prisma.mesa.findMany({
         include: {
             ronda: { select: { idRonda: true, numeroRonda: true, estado: true } },
-            jugador_blanco: { select: { idJugador: true, nombre: true, apellido1: true, rating_estatal: true, rating_nacional: true } },
-            jugador_negro: { select: { idJugador: true, nombre: true, apellido1: true, rating_estatal: true, rating_nacional: true } },
+            jugador_blanco: { select: { idJugador: true, nombre: true, apellido1: true, rating_estatal: true, rating_nacional_estandar: true, rating_nacional_rapido: true, rating_nacional_blitz: true } },
+            jugador_negro: { select: { idJugador: true, nombre: true, apellido1: true, rating_estatal: true, rating_nacional_estandar: true, rating_nacional_rapido: true, rating_nacional_blitz: true } },
             partida: true,
         },
         orderBy: { fecha_creacion: 'desc' },
