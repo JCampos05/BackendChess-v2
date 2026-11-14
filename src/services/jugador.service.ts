@@ -9,6 +9,7 @@ import {
 import { normalizarNombreJugador } from '../utils/nombre.utils';
 import { jugadorPuedeInscribirse } from '../utils/fecha.utils';
 import { PaginatedResult } from '../types';
+import { cargarCatalogoRitmos, claseDeRitmoPorNombre, obtenerUmbrales } from './ritmo-rating-config.service';
 
 // ── Listado ──────────────────────────────────────────────────
 
@@ -140,6 +141,7 @@ export const obtenerEstadisticasPublicas = async (idJugador: number) => {
             orderBy: { fecha_inscripcion: 'desc' },
             select: {
                 idTorneo: true,
+                idCategoria: true,
                 pago_confirmado: true,
                 fecha_inscripcion: true,
                 fecha_actualizacion: true,
@@ -190,10 +192,36 @@ export const obtenerEstadisticasPublicas = async (idJugador: number) => {
         : [];
     const resultadoPorTorneo = new Map(resultados.map(r => [r.idTorneo, r]));
 
-    const historialConResultado = historial.map(({ idTorneo, ...resto }) => ({
-        ...resto,
-        resultado: resultadoPorTorneo.get(idTorneo) ?? null,
-    }));
+    // Rondas y ritmo de juego de la categoría en la que jugó cada torneo
+    const pares = historial
+        .filter(h => h.idCategoria != null)
+        .map(h => ({ idTorneo: h.idTorneo, idCategoria: h.idCategoria as number }));
+    const [categoriasTorneo, catalogoRitmos, umbrales] = pares.length
+        ? await Promise.all([
+            prisma.torneoCategoria.findMany({
+                where: { OR: pares },
+                select: { idTorneo: true, idCategoria: true, rondas: true, ritmo_juego: true },
+            }),
+            cargarCatalogoRitmos(),
+            obtenerUmbrales(),
+        ])
+        : [[], new Map(), undefined as never];
+    const categoriaTorneoPor = new Map(categoriasTorneo.map(c => [`${c.idTorneo}-${c.idCategoria}`, c]));
+
+    const historialConResultado = historial.map(({ idTorneo, idCategoria, ...resto }) => {
+        const ct = idCategoria != null ? categoriaTorneoPor.get(`${idTorneo}-${idCategoria}`) : undefined;
+        return {
+            ...resto,
+            resultado: resultadoPorTorneo.get(idTorneo) ?? null,
+            categoria_torneo: ct
+                ? {
+                    rondas: ct.rondas,
+                    ritmo_juego: ct.ritmo_juego ?? null,
+                    clase_ritmo: claseDeRitmoPorNombre(ct.ritmo_juego, catalogoRitmos, umbrales),
+                }
+                : null,
+        };
+    });
 
     return {
         jugador,
