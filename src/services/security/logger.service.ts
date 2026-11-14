@@ -3,6 +3,7 @@ import prisma from '../../config/database';
 import { Request } from 'express';
 import { obtenerZonaSistema } from '../../utils/fecha.utils';
 import { DateTime } from 'luxon';
+import { obtenerIpCliente } from '../../utils/ip.utils';
 
 // ── Obtener fecha actual en la zona configurada del sistema ──
 const ahoraEnSistema = async (): Promise<Date> => {
@@ -11,15 +12,7 @@ const ahoraEnSistema = async (): Promise<Date> => {
 };
 
 // ── Extraer IP del request ───────────────────────────────────
-const extraerIp = (req?: Request): string | null => {
-    if (!req) return null;
-    const forwarded = req.headers['x-forwarded-for'];
-    if (forwarded) {
-        const ip = Array.isArray(forwarded) ? forwarded[0] : forwarded.split(',')[0];
-        return ip.trim();
-    }
-    return req.socket?.remoteAddress ?? null;
-};
+const extraerIp = (req?: Request): string | null => obtenerIpCliente(req);
 
 // ── Función base de log ──────────────────────────────────────
 const log = async (

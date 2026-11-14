@@ -28,10 +28,9 @@ router.get('/:id',
     inscripcionController.obtenerUna
 );
 
-// POST /api/inscripciones — DESACTIVADA (2026-11). Era una creación pública sin sesión que ya no usa ninguna pantalla:
-// el formulario público usa /api/inscripciones-publicas y el panel usa /api/inscripciones-admin. Se deja comentada por
-// si se necesitara consultar; si se reactiva, volver a importar `limitadorInscripcionPublica` (rate-limit.middleware).
-// router.post('/', limitadorInscripcionPublica, inscripcionController.crear);
+// POST /api/inscripciones — ELIMINADA (2026-11). Era una creación pública sin sesión que ninguna pantalla usaba:
+// el formulario público usa /api/inscripciones-publicas y el panel usa /api/inscripciones-admin. Se borraron también
+// su controlador, servicio y esquema; si hiciera falta algo parecido, usar esas dos rutas.
 
 // ── Solo admins ───────────────────────────────────────────────
 

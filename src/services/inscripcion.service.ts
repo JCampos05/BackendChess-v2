@@ -2,13 +2,10 @@ import { Prisma } from '@prisma/client';
 import prisma from '../config/database';
 import { NotFoundError, ConflictError, ForbiddenError } from '../middleware/error.middleware';
 import {
-    CrearInscripcionDto,
     ActualizarInscripcionDto,
     ConfirmarPagoDto,
 } from '../validations/inscripcion.validations';
-import { inscripcionesCerradas, jugadorPuedeInscribirse, calcularEdadParaTorneo } from '../utils/fecha.utils';
-import { asignarFolioTorneo } from './folio.service';
-import { conCodigoVerificacion } from './verificacion-folio.service';
+import { calcularEdadParaTorneo } from '../utils/fecha.utils';
 
 // ── Obtener por ID ───────────────────────────────────────────
 
@@ -63,8 +60,7 @@ export const listarInscripcionesTorneo = async (
         },
     });
 
-    // Compatibilidad con inscripciones creadas antes de que `crearInscripcion`
-    // guardara `edad`: si quedó null, se calcula al vuelo (no se persiste).
+    // Compatibilidad con inscripciones antiguas que no guardaron `edad`: si quedó null, se calcula al vuelo (no se persiste).
     return inscripciones.map((insc) => {
         if (insc.edad !== null || !insc.jugador.fecha_nacimiento) return insc;
         return {
@@ -92,125 +88,6 @@ export const listarInscripcionesJugador = async (idJugador: number) => {
             },
             categoria: { select: { idCategoria: true, nombre: true } },
         },
-    });
-};
-
-// ── Crear inscripción ────────────────────────────────────────
-
-export const crearInscripcion = async (datos: CrearInscripcionDto) => {
-    return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-
-        // 1. Verificar jugador
-        const jugador = await tx.jugador.findUnique({
-            where: { idJugador: datos.idJugador },
-        });
-        if (!jugador) throw new NotFoundError(`Jugador ${datos.idJugador} no encontrado`);
-        if (jugador.estado === 'inactivo')
-            throw new ForbiddenError(`El jugador ${jugador.nombre} ${jugador.apellido1} está inactivo`);
-
-        // 2. Verificar torneo
-        const torneo = await tx.torneo.findUnique({ where: { idTorneo: datos.idTorneo } });
-        if (!torneo) throw new NotFoundError(`Torneo ${datos.idTorneo} no encontrado`);
-        if (!torneo.activo) throw new ForbiddenError('El torneo no está activo');
-
-        const torneoCategoria = datos.idCategoria
-            ? await tx.torneoCategoria.findFirst({
-                where: { idTorneo: datos.idTorneo, idCategoria: datos.idCategoria },
-            })
-            : null;
-
-        // 3. Verificar cierre de inscripciones (categoría tiene prioridad sobre torneo)
-        const fechaCierre = torneoCategoria?.cierre_inscripciones ?? torneo.cierre_inscripciones;
-        if (await inscripcionesCerradas(fechaCierre))
-            throw new ForbiddenError('El plazo de inscripciones ha cerrado');
-
-        // 3.1 Verificar cupo del torneo y de la categoría — misma regla que la
-        // inscripción pública (ver inscripcion-admin.service.ts), para que un
-        // registro manual desde el panel admin no pueda saltarse el límite.
-        if (torneo.cupo_maximo) {
-            const inscritos = await tx.inscripcion.count({
-                where: { idTorneo: datos.idTorneo, estado: { not: 'cancelado' } },
-            });
-            if (inscritos >= torneo.cupo_maximo)
-                throw new ForbiddenError(`El torneo ha alcanzado su cupo máximo de ${torneo.cupo_maximo} jugadores`);
-        }
-        if (torneoCategoria?.cupo_maximo) {
-            const inscritosCategoria = await tx.inscripcion.count({
-                where: { idTorneo: datos.idTorneo, idCategoria: datos.idCategoria, estado: { not: 'cancelado' } },
-            });
-            if (inscritosCategoria >= torneoCategoria.cupo_maximo)
-                throw new ForbiddenError(`La categoría ha alcanzado su cupo máximo de ${torneoCategoria.cupo_maximo} jugadores`);
-        }
-
-        // 4. Validar edad si aplica y calcularla para guardarla en la inscripción
-        //    (se guarda al inscribir — ver comentario del campo `edad` en schema.prisma)
-        let edadCalculada: number | null = null;
-        if (datos.idCategoria && jugador.fecha_nacimiento) {
-            const categoria = await tx.categoria.findUnique({
-                where:  { idCategoria: datos.idCategoria },
-                select: { edadMinima: true, edadMaxima: true, tipo_validacion_edad: true },
-            });
-            if (categoria) {
-                const check = jugadorPuedeInscribirse(
-                    jugador.fecha_nacimiento,
-                    torneo.fecha,
-                    categoria.edadMinima,
-                    categoria.edadMaxima,
-                    categoria.tipo_validacion_edad
-                );
-                if (!check.puede)
-                    throw new ForbiddenError(check.motivo ?? 'El jugador no cumple los requisitos de edad');
-                edadCalculada = check.edad;
-            }
-        } else if (jugador.fecha_nacimiento) {
-            edadCalculada = calcularEdadParaTorneo(jugador.fecha_nacimiento, torneo.fecha, 'anio_torneo');
-        }
-
-        // 5. Verificar duplicado
-        const yaInscrito = await tx.inscripcion.findUnique({
-            where: {
-                unique_jugador_torneo: {
-                    idJugador: datos.idJugador,
-                    idTorneo:  datos.idTorneo,
-                },
-            },
-        });
-        if (yaInscrito) throw new ConflictError('El jugador ya está inscrito en este torneo');
-
-        // 6. Crear inscripción — estado inicial: 'pendiente_pago'
-        const { numero_inscripcion, folio } = await asignarFolioTorneo(tx, datos.idTorneo);
-        const inscripcion = await tx.inscripcion.create({
-            data: {
-                idJugador:           datos.idJugador,
-                idTorneo:            datos.idTorneo,
-                idCategoria:         datos.idCategoria,
-                numero_inscripcion,
-                folio,
-                monto_pagado:        datos.monto_pagado  ?? 0,
-                pago_confirmado:     datos.pago_confirmado ?? false,
-                estado:              'pendiente_pago',
-                edad:                edadCalculada,
-                notas:               datos.notas,
-                fecha_inscripcion:   new Date(),
-                fecha_actualizacion: new Date(),
-            },
-            include: {
-                jugador: {
-                    select: { idJugador: true, nombre: true, apellido1: true, apellido2: true },
-                },
-                categoria: { select: { idCategoria: true, nombre: true } },
-            },
-        });
-
-        // 7. Si el pago ya viene confirmado, activar al jugador
-        if (datos.pago_confirmado && jugador.estado === 'pendiente_pago') {
-            await tx.jugador.update({
-                where: { idJugador: datos.idJugador },
-                data:  { estado: 'activo', pago_confirmado: true, actualizacion: new Date() },
-            });
-        }
-
-        return conCodigoVerificacion(inscripcion);
     });
 };
 

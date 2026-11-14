@@ -1,7 +1,6 @@
 import { Response, NextFunction } from 'express';
 import { AuthRequest } from '../types';
 import {
-    crearInscripcionSchema,
     actualizarInscripcionSchema,
     confirmarPagoSchema,
 } from '../validations/inscripcion.validations';
@@ -77,28 +76,6 @@ export const obtenerUna = async (
         }
         const inscripcion = await inscripcionService.obtenerInscripcionPorId(idInscripcion);
         res.json({ ok: true, data: inscripcion });
-    } catch (err) {
-        next(err);
-    }
-};
-
-// POST /api/inscripciones
-export const crear = async (
-    req: AuthRequest,
-    res: Response,
-    next: NextFunction
-): Promise<void> => {
-    try {
-        // Ruta 100% pública (sin authMiddleware) — nunca confiar en
-        // pago_confirmado/monto_pagado del cliente, o cualquiera podría
-        // marcarse como pagado sin pasar por el flujo real de pago.
-        const datos = crearInscripcionSchema.parse({
-            ...req.body,
-            pago_confirmado: false,
-            monto_pagado: 0,
-        });
-        const inscripcion = await inscripcionService.crearInscripcion(datos);
-        res.status(201).json({ ok: true, mensaje: 'Jugador inscrito', data: inscripcion });
     } catch (err) {
         next(err);
     }

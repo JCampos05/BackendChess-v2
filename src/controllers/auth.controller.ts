@@ -7,6 +7,7 @@ import {
     verificarPasswordSchema,
 } from '../validations/auth.validations';
 import * as authService from '../services/auth.service';
+import { obtenerIpCliente } from '../utils/ip.utils';
 
 // POST /api/seguridad/login
 export const login = async (
@@ -16,8 +17,7 @@ export const login = async (
 ): Promise<void> => {
     try {
         const datos     = loginSchema.parse(req.body);
-        const fwd       = req.headers['x-forwarded-for'];
-        const ip        = ((Array.isArray(fwd) ? fwd[0] : (fwd ?? '').split(',')[0]).trim() || req.ip || '').substring(0, 45);
+        const ip        = obtenerIpCliente(req) ?? '';
         const userAgent = req.headers['user-agent'] ?? '';
 
         const resultado = await authService.login(datos, ip, userAgent);
@@ -34,8 +34,7 @@ export const logout = async (
     next: NextFunction
 ): Promise<void> => {
     try {
-        const fwd2      = req.headers['x-forwarded-for'];
-        const ip        = ((Array.isArray(fwd2) ? fwd2[0] : (fwd2 ?? '').split(',')[0]).trim() || req.ip || '').substring(0, 45);
+        const ip        = obtenerIpCliente(req) ?? '';
         const userAgent = req.headers['user-agent'] ?? '';
 
         // authService.logout recibe (token, idUsuario, ip, userAgent)
