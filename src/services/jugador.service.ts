@@ -256,6 +256,7 @@ export const obtenerEstadisticasPublicas = async (idJugador: number) => {
         const ct = idCategoria != null ? categoriaTorneoPor.get(`${idTorneo}-${idCategoria}`) : undefined;
         return {
             ...resto,
+            idCategoria,
             resultado: combinarResultado(resultadoPorTorneo.get(idTorneo), conteoPartidas.get(idTorneo)),
             categoria_torneo: ct
                 ? {
