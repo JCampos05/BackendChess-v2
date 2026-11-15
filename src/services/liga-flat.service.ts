@@ -27,6 +27,8 @@ const INCLUDE_LIGA_BASE = {
             descripcion:   true,
             max_jugadores: true,
             rondas:        true,
+            premios:       true,
+            desempates:    true,
             activo:        true,
         },
     },
