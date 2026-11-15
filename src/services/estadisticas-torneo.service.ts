@@ -434,9 +434,13 @@ export const getListaInicialPublica = async (
             .sort((a, b) => b.rating - a.rating);
     }
 
+    // La edad con la que se inscribió cada jugador (no se publica la fecha de nacimiento)
+    const edadPor = await edadesDeInscripcion(idTorneo, estadisticas.map((e) => e.idJugador));
+
     return estadisticas
         .filter((e) => e.jugador !== null)
         .map((e) => ({
+            jugador: { edad: edadPor.get(e.idJugador) ?? null },
             idJugador: e.jugador!.idJugador,
             nombre: e.jugador!.nombre,
             apellido1: e.jugador!.apellido1,
@@ -448,6 +452,16 @@ export const getListaInicialPublica = async (
             rating: ratingSegunTipo(e.jugador!, tipoRating, claseRitmo),
         }))
         .sort((a, b) => b.rating - a.rating);
+};
+
+/** Edad con la que se inscribió cada jugador en el torneo (idJugador → edad). */
+const edadesDeInscripcion = async (idTorneo: number, idsJugador: number[]) => {
+    if (idsJugador.length === 0) return new Map<number, number | null>();
+    const inscripciones = await prisma.inscripcion.findMany({
+        where: { idTorneo, idJugador: { in: idsJugador } },
+        select: { idJugador: true, edad: true },
+    });
+    return new Map<number, number | null>(inscripciones.map((i) => [i.idJugador, i.edad]));
 };
 
 export const getRankingFinalPublico = async (
@@ -482,7 +496,6 @@ export const getRankingFinalPublico = async (
                     apellido1: true,
                     apellido2: true,
                     rating_estatal: true, rating_nacional_estandar: true, rating_nacional_rapido: true, rating_nacional_blitz: true,
-                    fecha_nacimiento: true,
                 },
             },
         },
@@ -491,9 +504,12 @@ export const getRankingFinalPublico = async (
 
     if (estadisticas.length === 0) throw new NotFoundError('No se encontró ranking final para esta categoría');
 
+    const edadPor = await edadesDeInscripcion(idTorneo, estadisticas.map((e) => e.idJugador));
+
     return {
         ranking: estadisticas.map((e) => ({
             ...e,
+            jugador: { ...e.jugador, edad: edadPor.get(e.idJugador) ?? null },
             puntos: parseFloat(String(e.puntos)) || 0,
             desempates: parsearDesempates(e.desempates),
         })),
