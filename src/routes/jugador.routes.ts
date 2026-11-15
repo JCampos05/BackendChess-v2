@@ -16,13 +16,17 @@ router.get('/buscar', jugadorController.buscar);
 // IMPORTANTE: antes de /:id por la misma razón que /buscar.
 router.get('/search', jugadorController.buscarPorCampos);
 
-// GET /api/jugadores/:id/stats — estadísticas públicas (torneos + ligas) para /players-stats
-router.get('/:id/stats', jugadorController.obtenerEstadisticasPublicas);
+// Consulta pública de jugadores (/players-stats): sin ids numéricos, solo tokens opacos.
+router.get('/consulta/buscar', jugadorController.buscarPublico);
+router.get('/consulta/:token/stats', jugadorController.obtenerEstadisticasPublicas);
 
 // ── Autenticadas ──────────────────────────────────────────────
 
 // GET /api/jugadores
 router.get('/', authMiddleware, cualquierAdmin, jugadorController.listar);
+
+// GET /api/jugadores/:id/stats — historial del jugador para gestión (solo administradores)
+router.get('/:id/stats', authMiddleware, cualquierAdmin, jugadorController.obtenerEstadisticasAdmin);
 
 // GET /api/jugadores/:id
 router.get('/:id', authMiddleware, cualquierAdmin, jugadorController.obtenerUno);

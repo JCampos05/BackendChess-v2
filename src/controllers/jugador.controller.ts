@@ -6,6 +6,7 @@ import {
     filtrosJugadorSchema,
 } from '../validations/jugador.validations';
 import * as jugadorService from '../services/jugador.service';
+import { idDeToken } from '../utils/token-publico';
 
 // GET /api/jugadores
 export const listar = async (
@@ -60,8 +61,46 @@ export const buscarPorCampos = async (
     }
 };
 
-// GET /api/jugadores/:id/stats — público, usado por /players-stats
+// GET /api/jugadores/consulta/buscar?q= — público, usado por /players-stats (sin ids numéricos)
+export const buscarPublico = async (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const termino = (req.query.q as string) ?? '';
+        if (termino.trim().length < 2) {
+            res.status(400).json({ ok: false, mensaje: 'Mínimo 2 caracteres' });
+            return;
+        }
+        const jugadores = await jugadorService.buscarJugadoresPublico(termino);
+        res.json({ ok: true, data: jugadores });
+    } catch (err) {
+        next(err);
+    }
+};
+
+// GET /api/jugadores/consulta/:token/stats — público, usado por /players-stats
 export const obtenerEstadisticasPublicas = async (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const idJugador = idDeToken(String(req.params.token));
+        if (!idJugador) {
+            res.status(404).json({ ok: false, mensaje: 'Jugador no encontrado' });
+            return;
+        }
+        const data = await jugadorService.obtenerEstadisticasPublicas(idJugador);
+        res.json({ ok: true, data });
+    } catch (err) {
+        next(err);
+    }
+};
+
+// GET /api/jugadores/:id/stats — administradores (gestión de jugadores), con id numérico
+export const obtenerEstadisticasAdmin = async (
     req: AuthRequest,
     res: Response,
     next: NextFunction

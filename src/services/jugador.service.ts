@@ -9,6 +9,7 @@ import {
 import { normalizarNombreJugador } from '../utils/nombre.utils';
 import { jugadorPuedeInscribirse } from '../utils/fecha.utils';
 import { PaginatedResult } from '../types';
+import { tokenDeJugador } from '../utils/token-publico';
 import { cargarCatalogoRitmos, claseDeRitmoPorNombre, obtenerUmbrales } from './ritmo-rating-config.service';
 
 // ── Listado ──────────────────────────────────────────────────
@@ -75,6 +76,15 @@ export const buscarJugadoresPorNombre = async (termino: string) => {
         take: 15,
         orderBy: [{ apellido1: 'asc' }, { nombre: 'asc' }],
     });
+};
+
+// ── Búsqueda pública para la consulta de jugadores ─────────────
+// Igual que la búsqueda por nombre, pero sin exponer el id numérico: devuelve un token opaco
+// que sirve para abrir el perfil (ver utils/token-publico.ts).
+
+export const buscarJugadoresPublico = async (termino: string) => {
+    const jugadores = await buscarJugadoresPorNombre(termino);
+    return jugadores.map(({ idJugador, ...resto }) => ({ ...resto, token: tokenDeJugador(idJugador) }));
 };
 
 // ── Búsqueda pública por campos separados (nombre/apellido1/apellido2) ──
@@ -160,7 +170,7 @@ export const obtenerEstadisticasPublicas = async (idJugador: number) => {
                 idCategoria: true,
                 fecha_inscripcion: true,
                 categoria: { select: { nombre: true } },
-                torneo: { select: { idTorneo: true, nombre: true, lugar: true, fecha: true, rondas: true, tipo_rating: true } },
+                torneo: { select: { idTorneo: true, slug: true, nombre: true, lugar: true, fecha: true, rondas: true, tipo_rating: true } },
             },
         }),
         prisma.jugadorLiga.findMany({
@@ -309,8 +319,10 @@ export const obtenerEstadisticasPublicas = async (idJugador: number) => {
         })
         .sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime());
 
+    const { idJugador: _id, ...jugadorPublico } = jugador;
+
     return {
-        jugador,
+        jugador: { ...jugadorPublico, token: tokenDeJugador(idJugador) },
         ultimoTorneo: historialConResultado[0] ?? null,
         historial: historialConResultado,
         ligas,
