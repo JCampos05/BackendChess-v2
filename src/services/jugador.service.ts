@@ -116,6 +116,16 @@ export const buscarJugadoresPorCampos = async (filtros: {
 // getPublicStats) ya esperaba este endpoint con esta forma exacta desde
 // antes; nunca se había implementado en el backend.
 
+/** Usa la fila guardada; si no tiene partidas contadas, toma el conteo real y conserva posición y rating. */
+const combinarResultado = <T extends { partidas_jugadas: number }>(
+    guardado: T | undefined,
+    real: { puntos: number; partidas_jugadas: number; victorias: number; empates: number; derrotas: number } | undefined
+) => {
+    if (guardado && (guardado.partidas_jugadas > 0 || !real)) return guardado;
+    if (!real) return null;
+    return { posicion_actual: null, rating_torneo: null, ...(guardado ?? {}), ...real };
+};
+
 export const obtenerEstadisticasPublicas = async (idJugador: number) => {
     const jugador = await prisma.jugador.findUnique({
         where: { idJugador },
@@ -195,6 +205,37 @@ export const obtenerEstadisticasPublicas = async (idJugador: number) => {
         : [];
     const resultadoPorTorneo = new Map(resultados.map(r => [r.idTorneo, r]));
 
+    // La tabla de estadísticas solo se llena al guardar clasificaciones; si un torneo no la tiene
+    // (o quedó en ceros) se cuentan las partidas reales del jugador, igual que en la vista de resultados.
+    const partidasDelJugador = idsTorneo.length
+        ? await prisma.partida.findMany({
+            where: {
+                mesa: {
+                    ronda: { idTorneo: { in: idsTorneo } },
+                    OR: [{ idJugadorBlanco: idJugador }, { idJugadorNegro: idJugador }],
+                },
+            },
+            select: {
+                resultado: true,
+                mesa: { select: { idJugadorBlanco: true, ronda: { select: { idTorneo: true } } } },
+            },
+        })
+        : [];
+    const conteoPartidas = new Map<number, { puntos: number; partidas_jugadas: number; victorias: number; empates: number; derrotas: number }>();
+    for (const p of partidasDelJugador) {
+        const idT = p.mesa.ronda.idTorneo;
+        const c = conteoPartidas.get(idT) ?? { puntos: 0, partidas_jugadas: 0, victorias: 0, empates: 0, derrotas: 0 };
+        const conBlancas = p.mesa.idJugadorBlanco === idJugador;
+        if (p.resultado === '0.5-0.5') {
+            c.empates++; c.puntos += 0.5; c.partidas_jugadas++;
+        } else if (p.resultado === '1-0' || p.resultado === '0-1') {
+            const gano = (p.resultado === '1-0') === conBlancas;
+            if (gano) { c.victorias++; c.puntos += 1; } else { c.derrotas++; }
+            c.partidas_jugadas++;
+        }
+        conteoPartidas.set(idT, c);
+    }
+
     // Rondas y ritmo de juego de la categoría en la que jugó cada torneo
     const pares = historial
         .filter(h => h.idCategoria != null)
@@ -215,7 +256,7 @@ export const obtenerEstadisticasPublicas = async (idJugador: number) => {
         const ct = idCategoria != null ? categoriaTorneoPor.get(`${idTorneo}-${idCategoria}`) : undefined;
         return {
             ...resto,
-            resultado: resultadoPorTorneo.get(idTorneo) ?? null,
+            resultado: combinarResultado(resultadoPorTorneo.get(idTorneo), conteoPartidas.get(idTorneo)),
             categoria_torneo: ct
                 ? {
                     rondas: ct.rondas,
