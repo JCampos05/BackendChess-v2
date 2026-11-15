@@ -50,13 +50,17 @@ export const listarJugadores = async (
 // ── Búsqueda rápida por nombre ───────────────────────────────
 
 export const buscarJugadoresPorNombre = async (termino: string) => {
+    // "juan perez" busca jugadores donde CADA palabra aparezca en el nombre o en algún apellido
+    const palabras = termino.trim().split(/\s+/).filter(Boolean).slice(0, 5);
     return prisma.jugador.findMany({
         where: {
-            OR: [
-                { nombre: { contains: termino } },
-                { apellido1: { contains: termino } },
-                { apellido2: { contains: termino } },
-            ],
+            AND: palabras.map(palabra => ({
+                OR: [
+                    { nombre: { contains: palabra } },
+                    { apellido1: { contains: palabra } },
+                    { apellido2: { contains: palabra } },
+                ],
+            })),
         },
         select: {
             idJugador: true,
@@ -123,12 +127,14 @@ export const obtenerEstadisticasPublicas = async (idJugador: number) => {
             rating_estatal: true,
             rating_nacional_estandar: true, rating_nacional_rapido: true, rating_nacional_blitz: true,
             estado: true,
-            fecha_nacimiento: true,
             fecha_registro: true,
             categoria: { select: { nombre: true } },
         },
     });
     if (!jugador) throw new NotFoundError('Jugador no encontrado');
+
+    // Consulta pública: no se exponen fecha de nacimiento ni datos de pago (esos solo salen
+    // en el comprobante con su código QR).
 
     const [historial, ligas] = await Promise.all([
         prisma.inscripcion.findMany({
@@ -142,11 +148,9 @@ export const obtenerEstadisticasPublicas = async (idJugador: number) => {
             select: {
                 idTorneo: true,
                 idCategoria: true,
-                pago_confirmado: true,
                 fecha_inscripcion: true,
-                fecha_actualizacion: true,
                 categoria: { select: { nombre: true } },
-                torneo: { select: { idTorneo: true, nombre: true, lugar: true, fecha: true, rondas: true } },
+                torneo: { select: { idTorneo: true, nombre: true, lugar: true, fecha: true, rondas: true, tipo_rating: true } },
             },
         }),
         prisma.jugadorLiga.findMany({
@@ -154,7 +158,6 @@ export const obtenerEstadisticasPublicas = async (idJugador: number) => {
             orderBy: { liga: { fecha_inicio: 'desc' } },
             select: {
                 estado: true,
-                pago_confirmado: true,
                 puntos: true,
                 partidas_jugadas: true,
                 victorias: true,
@@ -162,7 +165,6 @@ export const obtenerEstadisticasPublicas = async (idJugador: number) => {
                 derrotas: true,
                 posicion_grupo: true,
                 fecha_inscripcion: true,
-                fecha_actualizacion: true,
                 liga: {
                     select: { nombre: true, descripcion: true, lugar: true, fecha_inicio: true, fecha_fin: true },
                 },
@@ -182,6 +184,7 @@ export const obtenerEstadisticasPublicas = async (idJugador: number) => {
             select: {
                 idTorneo: true,
                 posicion_actual: true,
+                rating_torneo: true,
                 puntos: true,
                 partidas_jugadas: true,
                 victorias: true,
@@ -223,11 +226,54 @@ export const obtenerEstadisticasPublicas = async (idJugador: number) => {
         };
     });
 
+    // Resumen de carrera: solo cuenta torneos donde ya se jugó al menos una partida
+    const torneosJugados = historialConResultado.filter(h => (h.resultado?.partidas_jugadas ?? 0) > 0);
+    const ligasJugadas = ligas.filter(l => (l.partidas_jugadas ?? 0) > 0);
+    const suma = (campo: 'partidas_jugadas' | 'victorias' | 'empates' | 'derrotas') =>
+        torneosJugados.reduce((t, h) => t + (h.resultado?.[campo] ?? 0), 0) +
+        ligasJugadas.reduce((t, l) => t + (l[campo] ?? 0), 0);
+    const partidas = suma('partidas_jugadas');
+    const victorias = suma('victorias');
+    const posiciones = torneosJugados
+        .map(h => h.resultado?.posicion_actual ?? 0)
+        .filter(pos => pos > 0);
+
+    const resumen = {
+        torneosJugados: torneosJugados.length,
+        ligasJugadas: ligasJugadas.length,
+        partidas,
+        victorias,
+        empates: suma('empates'),
+        derrotas: suma('derrotas'),
+        porcentajeVictorias: partidas > 0 ? Math.round((victorias / partidas) * 100) : 0,
+        mejorPosicion: posiciones.length ? Math.min(...posiciones) : null,
+        podios: posiciones.filter(pos => pos <= 3).length,
+    };
+
+    // Rating con el que jugó cada torneo, separado por tipo de rating (y ritmo en el nacional)
+    const evolucionRating = historialConResultado
+        .filter(h => (h.resultado?.rating_torneo ?? 0) > 0 && h.torneo.tipo_rating !== 'sin_rating')
+        .map(h => {
+            const clase = h.categoria_torneo?.clase_ritmo ?? null;
+            const serie = h.torneo.tipo_rating === 'nacional'
+                ? (clase ? `nacional_${clase}` : 'nacional')
+                : 'estatal';
+            return {
+                serie,
+                fecha: h.torneo.fecha,
+                torneo: h.torneo.nombre,
+                rating: h.resultado!.rating_torneo as number,
+            };
+        })
+        .sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime());
+
     return {
         jugador,
         ultimoTorneo: historialConResultado[0] ?? null,
         historial: historialConResultado,
         ligas,
+        resumen,
+        evolucionRating,
         estadisticas: { totalTorneos: historial.length },
     };
 };
