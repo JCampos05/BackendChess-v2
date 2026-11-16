@@ -3,10 +3,10 @@ import { z } from 'zod';
 // La obligatoriedad real de nombre/apellido1/telefono/fecha_nacimiento para
 // un jugador NUEVO ya la valida `resolverJugador` en runtime (mismo criterio
 // que usa hoy el registro manual de un admin) — aquí se dejan opcionales
-// porque también puede venir solo `idJugador` (jugador ya existente,
-// resuelto vía el modal "¿eres tú?").
+// porque también puede venir solo `tokenJugador` (jugador ya existente,
+// resuelto vía el modal "¿eres tú?"). Nunca se acepta el id numérico: el token es opaco.
 export const inscribirPublicoSchema = z.object({
-    idJugador: z.number().int().positive().optional(),
+    tokenJugador: z.string().min(10).max(64).optional(),
     nombre: z.string().min(1).max(100).optional(),
     apellido1: z.string().min(1).max(100).optional(),
     apellido2: z.string().max(100).optional(),
@@ -18,7 +18,7 @@ export const inscribirPublicoSchema = z.object({
 });
 
 export const inscribirPublicoLigaSchema = z.object({
-    idJugador: z.number().int().positive().optional(),
+    tokenJugador: z.string().min(10).max(64).optional(),
     nombre: z.string().min(1).max(100).optional(),
     apellido1: z.string().min(1).max(100).optional(),
     apellido2: z.string().max(100).optional(),

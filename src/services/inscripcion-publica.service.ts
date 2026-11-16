@@ -1,5 +1,6 @@
 import prisma from '../config/database';
-import { NotFoundError } from '../middleware/error.middleware';
+import { NotFoundError, ValidationError } from '../middleware/error.middleware';
+import { tokenDeJugador, idDeToken } from '../utils/token-publico';
 import { inscripcionesCerradas } from '../utils/fecha.utils';
 import { inscribirEnTorneo, inscribirEnLiga, buscarJugadorSimilar, InscribirEnTorneoDto, InscribirEnLigaDto } from './inscripcion-admin.service';
 
@@ -67,13 +68,40 @@ export const listarCategoriasPublicas = async (idTorneo: number) => {
 };
 
 // ── Búsqueda de jugador, sanitizada para uso público ──────────
-// Reusa buscarJugadorSimilar (misma comparación por nombre/apellido que ya
-// usa el registro manual de admin) pero nunca expone el teléfono del
-// jugador a un llamante sin autenticar.
+// Reusa buscarJugadorSimilar (misma comparación por nombre/apellido que usa el
+// registro manual de admin) pero solo devuelve lo necesario para que la persona
+// se reconozca: nombre, un token opaco y su última participación. Nunca expone
+// teléfono, fecha de nacimiento, ratings, estado, pagos ni ids numéricos.
+
+type UltimaParticipacion = { tipo: 'torneo' | 'liga'; evento: string; detalle: string; fecha: Date | null } | null;
 
 export const buscarJugadorPublico = async (q: string) => {
     const resultados = await buscarJugadorSimilar(q);
-    return resultados.map(({ telefono, ...resto }) => resto);
+    return resultados.map(j => {
+        const t = j.inscripciones[0];
+        const l = j.jugadores_liga[0];
+        let ultima: UltimaParticipacion = null;
+        if (l && (!t || (l.fecha_inscripcion?.getTime() ?? 0) > (t.fecha_inscripcion?.getTime() ?? 0))) {
+            ultima = { tipo: 'liga', evento: l.liga.nombre ?? '', detalle: l.grupo.nombre, fecha: l.liga.fecha_inicio };
+        } else if (t) {
+            ultima = { tipo: 'torneo', evento: t.torneo.nombre ?? '', detalle: t.categoria?.nombre ?? '', fecha: t.torneo.fecha };
+        }
+        return {
+            token: tokenDeJugador(j.idJugador),
+            nombre: j.nombre,
+            apellido1: j.apellido1,
+            apellido2: j.apellido2,
+            ultima,
+        };
+    });
+};
+
+/** Convierte el token opaco que manda el formulario público en el id interno; token inválido = error 400. */
+const idDesdeToken = (token?: string): number | undefined => {
+    if (!token) return undefined;
+    const id = idDeToken(token);
+    if (!id) throw new ValidationError('La selección del jugador no es válida, vuelve a intentarlo');
+    return id;
 };
 
 // ── Crear inscripción pública ─────────────────────────────────
@@ -83,9 +111,11 @@ export const buscarJugadorPublico = async (q: string) => {
 
 export type InscribirPublicoDto = Omit<InscribirEnTorneoDto, 'pago_confirmado' | 'monto_pagado' | 'rating_inicial'>;
 
-export const inscribirPublico = async (datos: InscribirPublicoDto) => {
+export const inscribirPublico = async (datos: InscribirPublicoDto & { tokenJugador?: string }) => {
+    const { tokenJugador, ...resto } = datos;
     return inscribirEnTorneo({
-        ...datos,
+        ...resto,
+        idJugador: idDesdeToken(tokenJugador),
         pago_confirmado: false,
         monto_pagado: 0,
     });
@@ -145,9 +175,11 @@ export const obtenerLigaPublicaPorSlug = async (slug: string) => {
 /** Inscripción pública a liga: reusa inscribirEnLiga (cierre, cupos, duplicado) y fuerza pago sin confirmar. */
 export type InscribirPublicoLigaPayload = Omit<InscribirEnLigaDto, 'pago_confirmado' | 'monto_pagado' | 'rating_inicial' | 'numero_jugador' | 'posicion'>;
 
-export const inscribirPublicoLiga = async (datos: InscribirPublicoLigaPayload) => {
+export const inscribirPublicoLiga = async (datos: InscribirPublicoLigaPayload & { tokenJugador?: string }) => {
+    const { tokenJugador, ...resto } = datos;
     return inscribirEnLiga({
-        ...datos,
+        ...resto,
+        idJugador: idDesdeToken(tokenJugador),
         pago_confirmado: false,
         monto_pagado: 0,
     });
