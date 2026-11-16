@@ -22,6 +22,10 @@ router.get('/consulta/:token/stats', jugadorController.obtenerEstadisticasPublic
 
 // ── Autenticadas ──────────────────────────────────────────────
 
+// Carga masiva de ratings (solo adminGral). Antes de /:id para que 'ratings' no se tome como ID.
+router.get('/ratings/todos', authMiddleware, soloAdminGral, jugadorController.listarParaRatings);
+router.post('/ratings/masivo', authMiddleware, soloAdminGral, jugadorController.actualizarRatingsMasivo);
+
 // GET /api/jugadores
 router.get('/', authMiddleware, cualquierAdmin, jugadorController.listar);
 

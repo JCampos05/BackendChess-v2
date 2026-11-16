@@ -5,6 +5,7 @@ import {
     CrearJugadorDto,
     ActualizarJugadorDto,
     FiltrosJugadorDto,
+    RatingsMasivoDto,
 } from '../validations/jugador.validations';
 import { normalizarNombreJugador } from '../utils/nombre.utils';
 import { jugadorPuedeInscribirse } from '../utils/fecha.utils';
@@ -536,4 +537,45 @@ const _verificarExiste = async (idJugador: number) => {
     });
     if (!jugador) throw new NotFoundError('Jugador no encontrado');
     return jugador;
+};
+// ── Actualización masiva de ratings ──────────────────────────
+
+/** Todos los jugadores (sin paginar) con sus ratings: base de la carga masiva del Excel de ratings. */
+export const listarJugadoresParaRatings = async () => {
+    return prisma.jugador.findMany({
+        select: {
+            idJugador: true,
+            nombre: true,
+            apellido1: true,
+            apellido2: true,
+            rating_estatal: true,
+            rating_nacional_estandar: true,
+            rating_nacional_rapido: true,
+            rating_nacional_blitz: true,
+        },
+        orderBy: [{ apellido1: 'asc' }, { apellido2: 'asc' }, { nombre: 'asc' }],
+    });
+};
+
+/** Escribe un mismo campo de rating en muchos jugadores, por lotes y dentro de transacciones. */
+export const actualizarRatingsMasivo = async (datos: RatingsMasivoDto) => {
+    const { campo, cambios } = datos;
+    const ahora = new Date();
+    const TAM_LOTE = 200;
+    let actualizados = 0;
+
+    for (let i = 0; i < cambios.length; i += TAM_LOTE) {
+        const lote = cambios.slice(i, i + TAM_LOTE);
+        const resultados = await prisma.$transaction(
+            lote.map(c =>
+                prisma.jugador.updateMany({
+                    where: { idJugador: c.idJugador },
+                    data: { [campo]: c.rating, actualizacion: ahora },
+                })
+            )
+        );
+        actualizados += resultados.reduce((suma, r) => suma + r.count, 0);
+    }
+
+    return { solicitados: cambios.length, actualizados };
 };

@@ -4,6 +4,7 @@ import {
     crearJugadorSchema,
     actualizarJugadorSchema,
     filtrosJugadorSchema,
+    ratingsMasivoSchema,
 } from '../validations/jugador.validations';
 import * as jugadorService from '../services/jugador.service';
 import { idDeToken } from '../utils/token-publico';
@@ -252,6 +253,34 @@ export const verificarElegibilidad = async (
             idTorneo,
             idCategoria
         );
+        res.json({ ok: true, data: resultado });
+    } catch (err) {
+        next(err);
+    }
+};
+// GET /api/jugadores/ratings/todos — todos los jugadores con sus ratings (solo adminGral)
+export const listarParaRatings = async (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const data = await jugadorService.listarJugadoresParaRatings();
+        res.json({ ok: true, data });
+    } catch (err) {
+        next(err);
+    }
+};
+
+// POST /api/jugadores/ratings/masivo — aplica un mismo campo de rating a muchos jugadores (solo adminGral)
+export const actualizarRatingsMasivo = async (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+): Promise<void> => {
+    try {
+        const datos = ratingsMasivoSchema.parse(req.body);
+        const resultado = await jugadorService.actualizarRatingsMasivo(datos);
         res.json({ ok: true, data: resultado });
     } catch (err) {
         next(err);

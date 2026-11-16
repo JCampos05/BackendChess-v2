@@ -46,3 +46,27 @@ export const filtrosJugadorSchema = z.object({
 export type CrearJugadorDto = z.infer<typeof crearJugadorSchema>;
 export type ActualizarJugadorDto = z.infer<typeof actualizarJugadorSchema>;
 export type FiltrosJugadorDto = z.infer<typeof filtrosJugadorSchema>;
+
+// ── Actualización masiva de ratings (admin general) ──────────
+
+export const CAMPOS_RATING = [
+    'rating_estatal',
+    'rating_nacional_estandar',
+    'rating_nacional_rapido',
+    'rating_nacional_blitz',
+] as const;
+
+export const ratingsMasivoSchema = z.object({
+    campo: z.enum(CAMPOS_RATING),
+    cambios: z
+        .array(
+            z.object({
+                idJugador: z.number().int().positive(),
+                rating: z.number().int().min(0).max(9999),
+            })
+        )
+        .min(1, 'No hay cambios que aplicar')
+        .max(20000),
+});
+
+export type RatingsMasivoDto = z.infer<typeof ratingsMasivoSchema>;
