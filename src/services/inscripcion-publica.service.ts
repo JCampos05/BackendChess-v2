@@ -113,9 +113,13 @@ export type InscribirPublicoDto = Omit<InscribirEnTorneoDto, 'pago_confirmado' |
 
 export const inscribirPublico = async (datos: InscribirPublicoDto & { tokenJugador?: string }) => {
     const { tokenJugador, ...resto } = datos;
+    const idJugador = idDesdeToken(tokenJugador);
+    // Con un registro existente elegido, el formulario público NO modifica sus datos guardados
+    // (teléfono, fecha de nacimiento): cualquier corrección la hace un administrador.
+    if (idJugador) { delete resto.telefono; delete resto.fecha_nacimiento; }
     return inscribirEnTorneo({
         ...resto,
-        idJugador: idDesdeToken(tokenJugador),
+        idJugador,
         pago_confirmado: false,
         monto_pagado: 0,
     });
@@ -177,9 +181,13 @@ export type InscribirPublicoLigaPayload = Omit<InscribirEnLigaDto, 'pago_confirm
 
 export const inscribirPublicoLiga = async (datos: InscribirPublicoLigaPayload & { tokenJugador?: string }) => {
     const { tokenJugador, ...resto } = datos;
+    const idJugador = idDesdeToken(tokenJugador);
+    // Con un registro existente elegido, el formulario público NO modifica sus datos guardados
+    // (teléfono, fecha de nacimiento): cualquier corrección la hace un administrador.
+    if (idJugador) { delete resto.telefono; delete resto.fecha_nacimiento; }
     return inscribirEnLiga({
         ...resto,
-        idJugador: idDesdeToken(tokenJugador),
+        idJugador,
         pago_confirmado: false,
         monto_pagado: 0,
     });
