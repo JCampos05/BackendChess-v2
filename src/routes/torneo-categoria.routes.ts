@@ -9,12 +9,11 @@ import * as Ops from '../controllers/torneo-ops.controller';
 // ════════════════════════════════════════════════════════════
 const torneoCategoriaRouter = Router();
 
-// Públicas (lectura) — usadas también por vistas públicas (ej. jugador-resultado),
-// se dejan sin auth a propósito, no forman parte del blindaje de adminTorneo.
-torneoCategoriaRouter.get('/torneo/:idTorneo', Ops.getCategoriasByTorneo);
+// Lectura por id: solo el panel (las vistas públicas usan /api/consulta/torneos/:slug/categorias).
+torneoCategoriaRouter.get('/torneo/:idTorneo', authMiddleware, cualquierAdmin, Ops.getCategoriasByTorneo);
 torneoCategoriaRouter.get(
     '/torneo/:idTorneo/categoria/:idCategoria',
-    Ops.getTorneoCategoria,
+    authMiddleware, cualquierAdmin, Ops.getTorneoCategoria,
 );
 
 // Protegidas

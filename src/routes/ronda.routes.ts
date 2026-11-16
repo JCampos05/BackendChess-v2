@@ -9,9 +9,6 @@ import * as Ops from '../controllers/torneo-ops.controller';
 // ════════════════════════════════════════════════════════════
 const rondaRouter = Router();
 
-// Pública — estática antes que dinámica
-rondaRouter.get('/public/torneo/:idTorneo', Ops.getRondasByTorneoPublico);
-
 // Protegidas — rutas con más segmentos antes que las genéricas para evitar colisiones
 rondaRouter.get(
     '/torneo/:idTorneo/categoria/:idTorneoCategoria',

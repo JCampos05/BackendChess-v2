@@ -34,6 +34,7 @@ import inscripcionesGeneralesRoutes from './inscripciones-generales.routes';
 import verificacionFolioRoutes from './verificacion-folio.routes';
 import comprobantesRoutes from './comprobantes.routes';
 import inscripcionPublicaRoutes from './inscripcion-publica.routes';
+import consultaPublicaRoutes from './consulta-publica.routes';
 
 // ── Operaciones de torneo (Bloque 3) ──────────────────────────
 import torneoCategoriaRouter from './torneo-categoria.routes';
@@ -95,6 +96,7 @@ export const registerRoutes = (app: Application): void => {
     app.use(`${API}/inscripciones-admin`, inscripcionAdminRoutes);
     app.use(`${API}/inscripciones-generales`, inscripcionesGeneralesRoutes);
     app.use(`${API}/inscripciones-publicas`, inscripcionPublicaRoutes);
+    app.use(`${API}/consulta`, consultaPublicaRoutes);
     app.use(`${API}/verificar-folio`, verificacionFolioRoutes);
     app.use(`${API}/comprobantes`, comprobantesRoutes);
 

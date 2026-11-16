@@ -8,7 +8,6 @@ import { limitadorInscripcionPublica, limitadorBusquedaPublica } from '../middle
 // ════════════════════════════════════════════════════════════
 const router = Router();
 
-router.get('/torneo/:idTorneo/categorias', ctrl.obtenerCategorias);
 router.get('/buscar-jugador', limitadorBusquedaPublica, ctrl.buscarJugador);
 router.post('/', limitadorInscripcionPublica, ctrl.crear);
 

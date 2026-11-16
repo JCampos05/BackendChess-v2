@@ -9,12 +9,12 @@ import * as ctrl from '../controllers/estadisticas-torneo.controller';
 
 const router = Router();
 
-// ── Públicas — sin auth ──────────────────────────────────────
-router.get('/lista-inicial/:idTorneo/:idTorneoCategoria', ctrl.getListaInicialPublica);
-router.get('/ranking-final/:idTorneo/:idTorneoCategoria', ctrl.getRankingFinalPublico);
-
 // ── Protegidas ───────────────────────────────────────────────
+// La consulta pública usa /api/consulta/torneos/:slug/categorias/:categoria/... (sin ids numéricos).
 router.use(authMiddleware, cualquierAdmin);
+
+router.get('/lista-inicial/:idTorneo/:idTorneoCategoria', verificarAccesoTorneo('idTorneo'), ctrl.getListaInicialPublica);
+router.get('/ranking-final/:idTorneo/:idTorneoCategoria', verificarAccesoTorneo('idTorneo'), ctrl.getRankingFinalPublico);
 
 // Listado global de todos los torneos → solo adminGral
 router.get('/', soloAdminGral, ctrl.getAllEstadisticas);

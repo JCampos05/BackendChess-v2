@@ -7,7 +7,6 @@ const router = Router();
 
 // ── Públicas ──────────────────────────────────────────────────
 router.get('/publicas',         ligaCtrl.listarLigasPublicas);
-router.get('/:id/posiciones',   ligaCtrl.tablaPosiciones);      // tabla pública
 
 // ── Autenticadas — Ligas es exclusivo de adminGral, adminTorneo no lo ve ──
 router.use(authMiddleware);

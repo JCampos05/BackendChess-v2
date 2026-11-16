@@ -12,11 +12,13 @@ router.get('/publicos', ctrl.listarTorneosPublicos);
 router.get('/activos', ctrl.listarTorneosActivos);
 router.get('/proximos', ctrl.listarTorneosProximos);
 router.get('/todos', ctrl.listarTodosTorneos);
-router.get('/:id/categorias', ctrl.obtenerCategoriasTorneo);
-router.get('/:id/clasificacion-ritmos', ctrl.clasificacionRitmos);
 
 // ── Autenticadas ──────────────────────────────────────────────
 router.use(authMiddleware);
+
+// Por id: solo el panel. Las vistas públicas usan /api/consulta/torneos/:slug/... (sin ids numéricos).
+router.get('/:id/categorias', cualquierAdmin, ctrl.obtenerCategoriasTorneo);
+router.get('/:id/clasificacion-ritmos', cualquierAdmin, ctrl.clasificacionRitmos);
 
 router.get('/',    cualquierAdmin, ctrl.listarTorneos);
 // Debe ir antes de '/:id' — si no, Express interpretaría "slug" como el valor de :id

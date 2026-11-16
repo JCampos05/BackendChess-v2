@@ -9,9 +9,6 @@ import * as Ops from '../controllers/torneo-ops.controller';
 // ════════════════════════════════════════════════════════════
 const mesaRouter = Router();
 
-// Pública
-mesaRouter.get('/public/ronda/:idRonda', Ops.getMesasByRondaPublico);
-
 // Protegidas — rutas estáticas/compuestas antes que dinámicas /:id
 // Listado global de todos los torneos → solo adminGral
 mesaRouter.get('/', authMiddleware, soloAdminGral, Ops.getAllMesas);

@@ -8,7 +8,6 @@ export const infoLigaRouter = Router();
 
 infoLigaRouter.get('/activas', ctrl.listarLigasActivasPublico);
 infoLigaRouter.get('/todas',   ctrl.listarTodasLigasPublico);
-infoLigaRouter.get('/:id/publico', ctrl.obtenerInfoLiga);
 
 // Autenticadas — Ligas es exclusivo de adminGral, adminTorneo no lo ve
 infoLigaRouter.use(authMiddleware);
@@ -26,9 +25,6 @@ infoLigaRouter.delete('/:id',       ctrl.eliminarInfoLiga);
 // ── /api/liga/grupos ─────────────────────────────────────────────
 export const grupoLigaRouter = Router();
 
-grupoLigaRouter.get('/liga/:idLiga/publico', ctrl.listarGruposPorLiga);
-grupoLigaRouter.get('/:id/tabla/publico',    ctrl.obtenerTablaGrupo);
-
 grupoLigaRouter.use(authMiddleware);
 grupoLigaRouter.use(soloAdminGral);
 grupoLigaRouter.get   ('/',             ctrl.listarGrupos);
@@ -42,8 +38,6 @@ grupoLigaRouter.delete('/:id',          ctrl.eliminarGrupo);
 // ── /api/liga/rondas ─────────────────────────────────────────────
 export const rondaLigaRouter = Router();
 
-rondaLigaRouter.get('/liga/:idLiga/publico',   ctrl.listarRondasPorLiga);
-rondaLigaRouter.get('/grupo/:idGrupo/publico', ctrl.listarRondasPorGrupo);
 
 rondaLigaRouter.use(authMiddleware);
 rondaLigaRouter.use(soloAdminGral);
@@ -60,7 +54,6 @@ rondaLigaRouter.delete('/:id',            ctrl.eliminarRonda);
 // ── /api/liga/mesas ──────────────────────────────────────────────
 export const mesaLigaRouter = Router();
 
-mesaLigaRouter.get('/ronda/:idRonda/publico', ctrl.listarMesasPorRonda);
 
 mesaLigaRouter.use(authMiddleware);
 mesaLigaRouter.use(soloAdminGral);
