@@ -75,25 +75,59 @@ export const listarCategoriasPublicas = async (idTorneo: number) => {
 
 type UltimaParticipacion = { tipo: 'torneo' | 'liga'; evento: string; detalle: string; fecha: Date | null } | null;
 
+type JugadorConHistorial = Awaited<ReturnType<typeof buscarJugadorSimilar>>[number];
+
+const aCandidatoPublico = (j: JugadorConHistorial) => {
+    const t = j.inscripciones[0];
+    const l = j.jugadores_liga[0];
+    let ultima: UltimaParticipacion = null;
+    if (l && (!t || (l.fecha_inscripcion?.getTime() ?? 0) > (t.fecha_inscripcion?.getTime() ?? 0))) {
+        ultima = { tipo: 'liga', evento: l.liga.nombre ?? '', detalle: l.grupo.nombre, fecha: l.liga.fecha_inicio };
+    } else if (t) {
+        ultima = { tipo: 'torneo', evento: t.torneo.nombre ?? '', detalle: t.categoria?.nombre ?? '', fecha: t.torneo.fecha };
+    }
+    return {
+        token: tokenDeJugador(j.idJugador),
+        nombre: j.nombre,
+        apellido1: j.apellido1,
+        apellido2: j.apellido2,
+        ultima,
+    };
+};
+
 export const buscarJugadorPublico = async (q: string) => {
     const resultados = await buscarJugadorSimilar(q);
-    return resultados.map(j => {
-        const t = j.inscripciones[0];
-        const l = j.jugadores_liga[0];
-        let ultima: UltimaParticipacion = null;
-        if (l && (!t || (l.fecha_inscripcion?.getTime() ?? 0) > (t.fecha_inscripcion?.getTime() ?? 0))) {
-            ultima = { tipo: 'liga', evento: l.liga.nombre ?? '', detalle: l.grupo.nombre, fecha: l.liga.fecha_inicio };
-        } else if (t) {
-            ultima = { tipo: 'torneo', evento: t.torneo.nombre ?? '', detalle: t.categoria?.nombre ?? '', fecha: t.torneo.fecha };
-        }
-        return {
-            token: tokenDeJugador(j.idJugador),
-            nombre: j.nombre,
-            apellido1: j.apellido1,
-            apellido2: j.apellido2,
-            ultima,
-        };
-    });
+    return resultados.map(aCandidatoPublico);
+};
+
+const sinAcentos = (t?: string | null): string =>
+    (t ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').trim().toLowerCase();
+
+/**
+ * Jugador ya registrado con el mismo nombre completo (sin importar mayúsculas ni acentos) cuando la persona
+ * NO eligió su perfil ("Ninguno de estos"). Si además la fecha de nacimiento coincide, es la misma persona:
+ * se devuelve como candidato para que la UI le pida verificar o elegir su perfil. Si la fecha difiere, es un
+ * homónimo (o un dato mal escrito) y no se puede resolver desde el formulario público: se pide contactar a un admin.
+ * Así el formulario público nunca sobrescribe los datos de un jugador existente.
+ */
+export const detectarJugadorExistente = async (datos: {
+    tokenJugador?: string; nombre?: string; apellido1?: string; apellido2?: string; fecha_nacimiento?: string;
+}) => {
+    if (datos.tokenJugador || !datos.nombre || !datos.apellido1) return null;
+    const nombre = sinAcentos(datos.nombre);
+    const ap1 = sinAcentos(datos.apellido1);
+    const ap2 = sinAcentos(datos.apellido2);
+
+    const posibles = await buscarJugadorSimilar(`${datos.nombre.trim()} ${datos.apellido1.trim()}`);
+    const iguales = posibles.filter(j =>
+        sinAcentos(j.nombre) === nombre && sinAcentos(j.apellido1) === ap1 && sinAcentos(j.apellido2) === ap2);
+    if (iguales.length === 0) return null;
+
+    const dia = (f?: Date | string | null) => (f ? new Date(f).toISOString().slice(0, 10) : '');
+    const mismaPersona = iguales.filter(j => datos.fecha_nacimiento && dia(j.fecha_nacimiento) === datos.fecha_nacimiento);
+    return mismaPersona.length > 0
+        ? { tipo: 'misma_persona' as const, candidatos: mismaPersona.map(aCandidatoPublico) }
+        : { tipo: 'homonimo' as const, candidatos: [] };
 };
 
 /** Convierte el token opaco que manda el formulario público en el id interno; token inválido = error 400. */
