@@ -29,6 +29,7 @@ import {
 import { categoriaRouter, ritmoJuegoRouter, sistemaCompetenciaRouter, sistemaDesempateRouter, sistemaPagoRouter } from './catalogo.routes';
 import estadisticaRoutes from './estadistica-torneo.routes';
 import estadisticasPagoRoutes from './estadisticas-pago.routes';
+import finanzasLigaRoutes from './finanzas-liga.routes';
 import inscripcionAdminRoutes from './inscripcion-admin.routes';
 import inscripcionesGeneralesRoutes from './inscripciones-generales.routes';
 import verificacionFolioRoutes from './verificacion-folio.routes';
@@ -93,6 +94,7 @@ export const registerRoutes = (app: Application): void => {
 
     app.use(`${API}/estadisticas`, estadisticaRoutes);
     app.use(`${API}/estadisticas-pago`, estadisticasPagoRoutes);
+    app.use(`${API}/finanzas-liga`, finanzasLigaRoutes);
     app.use(`${API}/inscripciones-admin`, inscripcionAdminRoutes);
     app.use(`${API}/inscripciones-generales`, inscripcionesGeneralesRoutes);
     app.use(`${API}/inscripciones-publicas`, inscripcionPublicaRoutes);
