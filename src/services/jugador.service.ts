@@ -8,7 +8,7 @@ import {
     RatingsMasivoDto,
 } from '../validations/jugador.validations';
 import { normalizarNombreJugador } from '../utils/nombre.utils';
-import { jugadorPuedeInscribirse } from '../utils/fecha.utils';
+import { jugadorPuedeInscribirse, calcularEdadParaTorneo } from '../utils/fecha.utils';
 import { PaginatedResult } from '../types';
 import { tokenDeJugador } from '../utils/token-publico';
 import { cargarCatalogoRitmos, claseDeRitmoPorNombre, obtenerUmbrales } from './ritmo-rating-config.service';
@@ -423,7 +423,7 @@ export const actualizarJugador = async (
             })
             : {};
 
-    return prisma.jugador.update({
+    const actualizado = await prisma.jugador.update({
         where: { idJugador },
         data: {
             ...nombresNormalizados,
@@ -452,6 +452,32 @@ export const actualizarJugador = async (
             categoria: { select: { idCategoria: true, nombre: true } },
         },
     });
+
+    // La edad de cada inscripción es una copia guardada al inscribirse: si se corrige la fecha de nacimiento
+    // hay que recalcularla, si no las listas siguen mostrando la edad del dato equivocado.
+    if (datos.fecha_nacimiento !== undefined && actualizado.fecha_nacimiento) {
+        await recalcularEdadesDeInscripciones(idJugador, actualizado.fecha_nacimiento);
+    }
+
+    return actualizado;
+};
+
+/** Recalcula `edad` en todas las inscripciones del jugador con su fecha de nacimiento actual (fecha del torneo + tipo de validación de la categoría). */
+export const recalcularEdadesDeInscripciones = async (idJugador: number, fechaNacimiento: Date) => {
+    const inscripciones = await prisma.inscripcion.findMany({
+        where: { idJugador },
+        select: {
+            idInscripcion: true,
+            torneo: { select: { fecha: true } },
+            categoria: { select: { tipo_validacion_edad: true } },
+        },
+    });
+    await Promise.all(inscripciones.map((i) =>
+        prisma.inscripcion.update({
+            where: { idInscripcion: i.idInscripcion },
+            data: { edad: calcularEdadParaTorneo(fechaNacimiento, i.torneo.fecha, i.categoria?.tipo_validacion_edad ?? 'anio_torneo') },
+        })
+    ));
 };
 
 // ── Cambiar estado ───────────────────────────────────────────
