@@ -2,6 +2,7 @@ import { Prisma } from '@prisma/client';
 import prisma from '../config/database';
 import { NotFoundError, ConflictError, ForbiddenError } from '../middleware/error.middleware';
 import { generarSlugUnico } from '../utils/slug';
+import { cierreAFecha, inscripcionesCerradas } from '../utils/fecha.utils';
 import {
     CrearTorneoDto,
     ActualizarTorneoDto,
@@ -138,8 +139,9 @@ export const listarTorneos = async (
 // por categoría desde hace tiempo).
 export const anexarInfoCupoPublico = async (torneos: any[]): Promise<any[]> => {
     return Promise.all(torneos.map(async (torneo) => {
+        const cerrada = await inscripcionesCerradas(torneo.cierre_inscripciones);
         if (!torneo.cupo_maximo) {
-            return { ...torneo, inscritos: 0, cupoDisponible: null, llena: false };
+            return { ...torneo, inscritos: 0, cupoDisponible: null, llena: false, cerrada };
         }
         const inscritos = await prisma.inscripcion.count({
             where: { idTorneo: torneo.idTorneo, estado: { not: 'cancelado' } },
@@ -149,6 +151,7 @@ export const anexarInfoCupoPublico = async (torneos: any[]): Promise<any[]> => {
             inscritos,
             cupoDisponible: Math.max(torneo.cupo_maximo - inscritos, 0),
             llena: inscritos >= torneo.cupo_maximo,
+            cerrada,
         };
     }));
 };
@@ -195,7 +198,7 @@ export const crearTorneo = async (datos: CrearTorneoDto) => {
             cupo_maximo:          datos.cupo_maximo ?? null,
             notas:                datos.notas,
             cierre_inscripciones: datos.cierre_inscripciones
-                ? new Date(datos.cierre_inscripciones)
+                ? cierreAFecha(datos.cierre_inscripciones)
                 : undefined,
             idZonaHoraria:        datos.idZonaHoraria,
             idSistemaPago:        datos.idSistemaPago,
@@ -244,7 +247,7 @@ export const actualizarTorneo = async (
             ...(datos.cupo_maximo  !== undefined && { cupo_maximo:  datos.cupo_maximo }),
             ...(datos.notas        !== undefined && { notas:        datos.notas }),
             ...(datos.cierre_inscripciones !== undefined && {
-                cierre_inscripciones: new Date(datos.cierre_inscripciones),
+                cierre_inscripciones: cierreAFecha(datos.cierre_inscripciones),
             }),
             ...(datos.idZonaHoraria !== undefined && {
                 zona_horaria: datos.idZonaHoraria === null

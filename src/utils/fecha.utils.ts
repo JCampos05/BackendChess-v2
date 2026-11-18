@@ -82,17 +82,34 @@ export const ahoraEnZona = (zona: string): DateTime => {
 
 // ── Utilidades de comparación ───────────────────────────────
 
-// Verifica si las inscripciones de un torneo están cerradas
+// ── Cierre de inscripciones: hora de pared de la zona del sistema ──
+// El admin captura el cierre como una hora "de reloj" ("20 nov, 18:00") sin zona. Se guarda tal cual, como hora de
+// pared dentro de la columna DateTime (que Prisma maneja como UTC): 18:00 se guarda como 18:00Z. NO es un instante real:
+// al decidir si ya cerró, esa hora de pared se interpreta en la zona horaria configurada en Configuración general.
+// Los formularios y las pantallas leen/escriben esa misma hora de pared (sin convertir con la zona del navegador).
+
+/** "YYYY-MM-DDTHH:mm[:ss]" capturado en el formulario → Date con esa hora de pared (sin depender de la zona del servidor). */
+export const cierreAFecha = (valor: string): Date => {
+    const conZona = /(Z|[+-]\d{2}:\d{2})$/.test(valor);
+    return new Date(conZona ? valor : `${valor}Z`);
+};
+
+/** La hora de pared guardada (Date) → DateTime en la zona horaria configurada del sistema. */
+export const cierreEnZonaSistema = async (cierre: Date | string): Promise<DateTime> => {
+    const pared = DateTime.fromJSDate(typeof cierre === 'string' ? new Date(cierre) : cierre, { zone: 'utc' });
+    return DateTime.fromObject(
+        { year: pared.year, month: pared.month, day: pared.day, hour: pared.hour, minute: pared.minute, second: pared.second },
+        { zone: await obtenerZonaSistema() }
+    );
+};
+
+// Verifica si las inscripciones ya cerraron según la zona horaria configurada
 export const inscripcionesCerradas = async (
     cierre: Date | string | null
 ): Promise<boolean> => {
     if (!cierre) return false;
     const ahora = await ahoraLocal();
-    const fechaCierre = DateTime.fromJSDate(
-        typeof cierre === 'string' ? new Date(cierre) : cierre,
-        { zone: await obtenerZonaSistema() }
-    );
-    return ahora >= fechaCierre;
+    return ahora >= (await cierreEnZonaSistema(cierre));
 };
 
 // Verifica si un torneo ya pasó (para auto-desactivación)
@@ -120,16 +137,24 @@ export const calcularEdadParaTorneo = (
     fechaTorneo: Date,
     tipo: 'anio_torneo' | 'fecha_exacta'
 ): number => {
-    const nacimiento = DateTime.fromJSDate(fechaNacimiento);
-    const torneo = DateTime.fromJSDate(fechaTorneo);
+    // Ambas son columnas de fecha (sin hora) que Prisma entrega como medianoche UTC: se leen con componentes UTC.
+    // Con la zona del servidor, quien nace el 1 de enero salía un año mayor en servidores al oeste de UTC.
+    const anioNac = fechaNacimiento.getUTCFullYear();
+    const anioTorneo = fechaTorneo.getUTCFullYear();
 
     if (tipo === 'anio_torneo') {
         // Estándar FIDE: solo importa el año
-        return torneo.year - nacimiento.year;
+        return anioTorneo - anioNac;
     }
 
-    // fecha_exacta: edad precisa al día del torneo
-    return Math.floor(torneo.diff(nacimiento, 'years').years);
+    // fecha_exacta: edad cumplida al día del torneo
+    let edad = anioTorneo - anioNac;
+    const mesNac = fechaNacimiento.getUTCMonth();
+    const mesTorneo = fechaTorneo.getUTCMonth();
+    if (mesTorneo < mesNac || (mesTorneo === mesNac && fechaTorneo.getUTCDate() < fechaNacimiento.getUTCDate())) {
+        edad--;
+    }
+    return edad;
 };
 
 // Verifica si un jugador puede inscribirse en una categoría

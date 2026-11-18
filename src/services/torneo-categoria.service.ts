@@ -1,4 +1,5 @@
 import prisma from '../config/database';
+import { cierreAFecha } from '../utils/fecha.utils';
 import {
     NotFoundError,
     ValidationError,
@@ -71,7 +72,7 @@ export async function upsertTorneoCategoria(dto: UpsertTorneoCategoriaDto) {
                 ...(desempates !== undefined && { desempates: desempates ?? Prisma.JsonNull }),
                 ...(activo !== undefined && { activo }),
                 ...(cierre_inscripciones !== undefined && {
-                    cierre_inscripciones: cierre_inscripciones ? new Date(cierre_inscripciones as string) : null,
+                    cierre_inscripciones: cierre_inscripciones ? cierreAFecha(cierre_inscripciones as string) : null,
                 }),
                 ...(cupo_maximo !== undefined && { cupo_maximo: cupo_maximo ?? null }),
             },
@@ -92,7 +93,7 @@ export async function upsertTorneoCategoria(dto: UpsertTorneoCategoriaDto) {
             premios: premios ?? undefined,
             desempates: desempates ?? undefined,
             activo: activo ?? true,
-            cierre_inscripciones: cierre_inscripciones ? new Date(cierre_inscripciones as string) : undefined,
+            cierre_inscripciones: cierre_inscripciones ? cierreAFecha(cierre_inscripciones as string) : undefined,
             cupo_maximo: cupo_maximo ?? undefined,
         },
         include: includeCategoria,

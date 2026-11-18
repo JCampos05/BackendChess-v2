@@ -3,6 +3,7 @@ import prisma from '../config/database';
 import { NotFoundError, ConflictError, ForbiddenError } from '../middleware/error.middleware';
 import { PaginatedResult } from '../types';
 import { generarSlugUnico } from '../utils/slug';
+import { cierreAFecha, inscripcionesCerradas } from '../utils/fecha.utils';
 import { asignarFolioLiga } from './folio.service';
 import { conCodigoVerificacion } from './verificacion-folio.service';
 import {
@@ -151,7 +152,7 @@ export const crearLiga = async (datos: CrearLigaConGruposDto) => {
                 idSistemaPago:        datos.idSistemaPago,
                 costo_inscripcion:    datos.costo_inscripcion,
                 cierre_inscripciones: datos.cierre_inscripciones
-                    ? new Date(datos.cierre_inscripciones)
+                    ? cierreAFecha(datos.cierre_inscripciones)
                     : undefined,
                 max_jugadores:        datos.max_jugadores,
                 notas:                datos.notas,
@@ -208,7 +209,7 @@ export const actualizarLiga = async (idLiga: number, datos: ActualizarLigaConGru
                 ...(datos.idRitmoJuego         !== undefined && { idRitmoJuego:         datos.idRitmoJuego }),
                 ...(datos.idSistemaPago        !== undefined && { idSistemaPago:        datos.idSistemaPago }),
                 ...(datos.costo_inscripcion    !== undefined && { costo_inscripcion:    datos.costo_inscripcion }),
-                ...(datos.cierre_inscripciones !== undefined && { cierre_inscripciones: datos.cierre_inscripciones ? new Date(datos.cierre_inscripciones) : null }),
+                ...(datos.cierre_inscripciones !== undefined && { cierre_inscripciones: datos.cierre_inscripciones ? cierreAFecha(datos.cierre_inscripciones) : null }),
                 ...(datos.max_jugadores        !== undefined && { max_jugadores:        datos.max_jugadores }),
                 ...(datos.notas                !== undefined && { notas:                datos.notas }),
             },
@@ -365,7 +366,7 @@ export const inscribirJugadorLiga = async (
         if (!liga.activo)  throw new ForbiddenError('La liga no está activa');
 
         // 2. Verificar cierre de inscripciones
-        if (liga.cierre_inscripciones && new Date() > liga.cierre_inscripciones)
+        if (await inscripcionesCerradas(liga.cierre_inscripciones))
             throw new ForbiddenError('Las inscripciones para esta liga están cerradas');
 
         // 3. Verificar que el grupo pertenece a la liga
