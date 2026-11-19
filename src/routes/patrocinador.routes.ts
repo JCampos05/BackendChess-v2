@@ -16,6 +16,7 @@ router.get('/:id', ctrl.obtener);
 router.post  ('/',           authMiddleware, soloAdminGral, ctrl.crear);
 router.put   ('/:id',        authMiddleware, soloAdminGral, ctrl.actualizar);
 router.delete('/:id',        authMiddleware, soloAdminGral, ctrl.eliminar);
+router.put   ('/:id/torneos', authMiddleware, soloAdminGral, ctrl.asignarTorneos);
 router.patch ('/:id/toggle', authMiddleware, soloAdminGral, ctrl.toggle);
 
 export default router;

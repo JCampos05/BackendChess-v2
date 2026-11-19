@@ -29,6 +29,18 @@ const INCLUDE_BASE = {
             telefono:      true,
         },
     },
+    // Patrocinadores activos (landing y listados públicos): sin datos de contacto, que son internos
+    patrocinadores: {
+        where:   { patrocinador: { activo: true } },
+        orderBy: [{ orden: 'asc' as const }, { idTorneoPatrocinador: 'asc' as const }],
+        select: {
+            nivel:  true,
+            orden:  true,
+            patrocinador: {
+                select: { idPatrocinador: true, nombre: true, logo_url: true, sitio_web: true },
+            },
+        },
+    },
     torneo_categorias: {
         where:  { activo: true },
         select: {

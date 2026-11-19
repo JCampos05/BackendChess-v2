@@ -64,3 +64,19 @@ export const toggle = async (req: AuthRequest, res: Response, next: NextFunction
         res.json({ ok: true, mensaje: `Patrocinador ${data.activo ? 'activado' : 'desactivado'}`, data });
     } catch (e) { next(e); }
 };
+
+// PUT /api/patrocinadores/:id/torneos  { torneos: [{ idTorneo, nivel? }] }
+export const asignarTorneos = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+        const niveles = ['principal', 'oro', 'plata', 'bronce', 'general'];
+        const lista = req.body?.torneos;
+        const valido = Array.isArray(lista) && lista.every((t: any) =>
+            Number.isInteger(t?.idTorneo) && t.idTorneo > 0 && (t.nivel === undefined || niveles.includes(t.nivel)));
+        if (!valido) {
+            res.status(400).json({ ok: false, mensaje: 'Datos inválidos', errores: ['Se espera una lista de torneos con idTorneo y nivel opcional'] });
+            return;
+        }
+        const data = await svc.asignarTorneos(Number(req.params.id), lista);
+        res.json({ ok: true, mensaje: 'Torneos del patrocinador actualizados', data });
+    } catch (e) { next(e); }
+};

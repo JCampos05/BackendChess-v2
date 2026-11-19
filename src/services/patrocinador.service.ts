@@ -18,6 +18,8 @@ export const listar = async (activo?: boolean) => {
     return prisma.patrocinador.findMany({
         where: activo !== undefined ? { activo } : {},
         orderBy: { nombre: 'asc' },
+        // Torneos a los que está asignado (para el formulario de administración)
+        include: { torneos: { select: { idTorneo: true, nivel: true, orden: true } } },
     });
 };
 
@@ -87,5 +89,36 @@ export const toggleActivo = async (idPatrocinador: number) => {
     return prisma.patrocinador.update({
         where: { idPatrocinador },
         data: { activo: !p.activo },
+    });
+};
+
+
+// ── Asignar torneos ───────────────────────────────────────────
+
+export interface AsignacionTorneoDto {
+    idTorneo: number;
+    nivel?: 'principal' | 'oro' | 'plata' | 'bronce' | 'general';
+    orden?: number;
+}
+
+/** Deja al patrocinador asignado exactamente a los torneos indicados (agrega, actualiza el nivel y quita el resto). */
+export const asignarTorneos = async (idPatrocinador: number, torneos: AsignacionTorneoDto[]) => {
+    await obtenerPorId(idPatrocinador);
+    const ids = [...new Set(torneos.map(t => t.idTorneo))];
+    const existentes = await prisma.torneo.findMany({ where: { idTorneo: { in: ids } }, select: { idTorneo: true } });
+    if (existentes.length !== ids.length) throw new NotFoundError('Alguno de los torneos no existe');
+
+    await prisma.$transaction([
+        prisma.torneoPatrocinador.deleteMany({ where: { idPatrocinador, idTorneo: { notIn: ids } } }),
+        ...torneos.map(t => prisma.torneoPatrocinador.upsert({
+            where: { idTorneo_idPatrocinador: { idTorneo: t.idTorneo, idPatrocinador } },
+            create: { idTorneo: t.idTorneo, idPatrocinador, nivel: t.nivel ?? 'general', orden: t.orden ?? 0 },
+            update: { nivel: t.nivel ?? 'general', ...(t.orden !== undefined && { orden: t.orden }) },
+        })),
+    ]);
+
+    return prisma.torneoPatrocinador.findMany({
+        where: { idPatrocinador },
+        select: { idTorneo: true, nivel: true, orden: true },
     });
 };
