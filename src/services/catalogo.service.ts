@@ -17,6 +17,8 @@ export interface CreateCategoriaDto {
     nota?: string | null;
     edadMinima?: number | null;
     edadMaxima?: number | null;
+    anioNacimientoDesde?: number | null;
+    anioNacimientoHasta?: number | null;
 }
 export interface UpdateCategoriaDto extends Partial<CreateCategoriaDto> { }
 
@@ -60,6 +62,16 @@ function validarEdades(edadMinima?: number | null, edadMaxima?: number | null) {
         throw new ValidationError('La edad mínima no puede ser mayor que la edad máxima');
 }
 
+function validarAniosNacimiento(desde?: number | null, hasta?: number | null) {
+    const anioMax = new Date().getFullYear() + 1;
+    for (const [valor, etiqueta] of [[desde, 'inicial'], [hasta, 'final']] as const) {
+        if (valor != null && (!Number.isInteger(valor) || valor < 1900 || valor > anioMax))
+            throw new ValidationError(`El año de nacimiento ${etiqueta} debe estar entre 1900 y ${anioMax}`);
+    }
+    if (desde != null && hasta != null && desde > hasta)
+        throw new ValidationError('El año de nacimiento inicial no puede ser mayor que el final');
+}
+
 function safePrismaDelete(e: unknown, entidad: string): never {
     if ((e as { code?: string }).code === 'P2003')
         throw new ConflictError(`No se puede eliminar ${entidad} porque está siendo utilizado/a`);
@@ -91,6 +103,7 @@ export async function createCategoria(dto: CreateCategoriaDto) {
     if (!dto.nombre?.trim()) throw new ValidationError('El nombre es obligatorio');
     if (dto.costo < 0) throw new ValidationError('El costo debe ser mayor o igual a 0');
     validarEdades(dto.edadMinima, dto.edadMaxima);
+    validarAniosNacimiento(dto.anioNacimientoDesde, dto.anioNacimientoHasta);
 
     const dup = await prisma.categoria.findFirst({
         where: { nombre: { equals: dto.nombre.trim() } },
@@ -104,6 +117,8 @@ export async function createCategoria(dto: CreateCategoriaDto) {
             nota: dto.nota?.trim() ?? null,
             edadMinima: dto.edadMinima ?? null,
             edadMaxima: dto.edadMaxima ?? null,
+            anioNacimientoDesde: dto.anioNacimientoDesde ?? null,
+            anioNacimientoHasta: dto.anioNacimientoHasta ?? null,
         },
     });
 }
@@ -127,6 +142,10 @@ export async function updateCategoria(id: number, dto: UpdateCategoriaDto) {
     const edadMin = dto.edadMinima !== undefined ? dto.edadMinima : cat.edadMinima;
     const edadMax = dto.edadMaxima !== undefined ? dto.edadMaxima : cat.edadMaxima;
     validarEdades(edadMin, edadMax);
+    validarAniosNacimiento(
+        dto.anioNacimientoDesde !== undefined ? dto.anioNacimientoDesde : cat.anioNacimientoDesde,
+        dto.anioNacimientoHasta !== undefined ? dto.anioNacimientoHasta : cat.anioNacimientoHasta,
+    );
 
     return prisma.categoria.update({
         where: { idCategoria: id },
@@ -136,6 +155,8 @@ export async function updateCategoria(id: number, dto: UpdateCategoriaDto) {
             ...(dto.nota !== undefined && { nota: dto.nota?.trim() ?? null }),
             ...(dto.edadMinima !== undefined && { edadMinima: dto.edadMinima }),
             ...(dto.edadMaxima !== undefined && { edadMaxima: dto.edadMaxima }),
+            ...(dto.anioNacimientoDesde !== undefined && { anioNacimientoDesde: dto.anioNacimientoDesde }),
+            ...(dto.anioNacimientoHasta !== undefined && { anioNacimientoHasta: dto.anioNacimientoHasta }),
         },
     });
 }

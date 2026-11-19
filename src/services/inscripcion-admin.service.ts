@@ -204,7 +204,8 @@ export const inscribirEnTorneo = async (datos: InscribirEnTorneoDto) => {
         torneo.fecha,
         categoria.edadMinima,
         categoria.edadMaxima,
-        categoria.tipo_validacion_edad
+        categoria.tipo_validacion_edad,
+        { desde: categoria.anioNacimientoDesde, hasta: categoria.anioNacimientoHasta }
     );
     if (!check.puede) throw new ForbiddenError(check.motivo ?? 'El jugador no cumple los requisitos de edad');
     const edadInscripcion = check.edad;
@@ -417,7 +418,7 @@ export const getCategoriasByTorneo = async (idTorneo: number) => {
             idTorneoCat: true,
             rondas: true,
             ritmo_juego: true,
-            categoria: { select: { idCategoria: true, nombre: true, costo: true, edadMinima: true, edadMaxima: true, tipo_validacion_edad: true } },
+            categoria: { select: { idCategoria: true, nombre: true, costo: true, edadMinima: true, edadMaxima: true, anioNacimientoDesde: true, anioNacimientoHasta: true, tipo_validacion_edad: true } },
         },
     });
 };

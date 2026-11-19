@@ -192,6 +192,11 @@ model Categoria {
   edadMinima           Int?
   edadMaxima           Int?
 
+  // Regla por año de nacimiento (la que usan las convocatorias: "nacidos de 2011 a 2014").
+  // Si alguno está definido, tiene prioridad sobre edadMinima/edadMaxima y es independiente del año del torneo.
+  anioNacimientoDesde  Int?
+  anioNacimientoHasta  Int?
+
   // CRÍTICO: Cómo se valida la edad para esta categoría
   // anio_torneo  → edad = año_torneo - año_nacimiento (estándar FIDE juvenil)
   // fecha_exacta → edad exacta a la fecha del torneo

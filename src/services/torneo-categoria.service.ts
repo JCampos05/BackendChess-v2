@@ -32,6 +32,9 @@ const includeCategoria = {
             costo: true,
             edadMinima: true,
             edadMaxima: true,
+            anioNacimientoDesde: true,
+            anioNacimientoHasta: true,
+            tipo_validacion_edad: true,
         },
     },
 };

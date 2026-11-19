@@ -163,9 +163,27 @@ export const jugadorPuedeInscribirse = (
     fechaTorneo: Date,
     edadMinima: number | null,
     edadMaxima: number | null,
-    tipoValidacion: 'anio_torneo' | 'fecha_exacta'
+    tipoValidacion: 'anio_torneo' | 'fecha_exacta',
+    anios?: { desde?: number | null; hasta?: number | null }
 ): { puede: boolean; edad: number; motivo?: string } => {
     const edad = calcularEdadParaTorneo(fechaNacimiento, fechaTorneo, tipoValidacion);
+
+    // Regla por año de nacimiento (convocatorias: "nacidos de 2011 a 2014"): si está definida, manda sobre la edad.
+    const desde = anios?.desde ?? null;
+    const hasta = anios?.hasta ?? null;
+    if (desde !== null || hasta !== null) {
+        const anioNac = fechaNacimiento.getUTCFullYear();
+        const rango = desde !== null && hasta !== null ? `de ${desde} a ${hasta}`
+            : desde !== null ? `en ${desde} o después` : `en ${hasta} o antes`;
+        if ((desde !== null && anioNac < desde) || (hasta !== null && anioNac > hasta)) {
+            return {
+                puede: false,
+                edad,
+                motivo: `El jugador nació en ${anioNac}. La categoría es para nacidos ${rango}.`,
+            };
+        }
+        return { puede: true, edad };
+    }
 
     if (edadMinima !== null && edad < edadMinima) {
         return {

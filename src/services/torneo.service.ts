@@ -343,7 +343,7 @@ export const obtenerCategoriasTorneo = async (idTorneo: number) => {
     const asignaciones = await prisma.torneoCategoria.findMany({
         where: { idTorneo, activo: true },
         include: {
-            categoria: { select: { idCategoria: true, nombre: true, costo: true, edadMinima: true, edadMaxima: true } },
+            categoria: { select: { idCategoria: true, nombre: true, costo: true, edadMinima: true, edadMaxima: true, anioNacimientoDesde: true, anioNacimientoHasta: true, tipo_validacion_edad: true } },
         },
         orderBy: { idCategoria: 'asc' },
     });
@@ -356,6 +356,9 @@ export const obtenerCategoriasTorneo = async (idTorneo: number) => {
         costo:       a.categoria.costo,
         edadMinima:  a.categoria.edadMinima,
         edadMaxima:  a.categoria.edadMaxima,
+        anioNacimientoDesde: a.categoria.anioNacimientoDesde,
+        anioNacimientoHasta: a.categoria.anioNacimientoHasta,
+        tipo_validacion_edad: a.categoria.tipo_validacion_edad,
         torneo_categoria: {
             idTorneoCat:          a.idTorneoCat,
             rondas:               a.rondas,

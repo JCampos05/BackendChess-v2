@@ -35,7 +35,7 @@ export const listarCategoriasPublicas = async (idTorneo: number) => {
             cierre_inscripciones: true,
             cupo_maximo: true,
             categoria: {
-                select: { idCategoria: true, nombre: true, costo: true, edadMinima: true, edadMaxima: true },
+                select: { idCategoria: true, nombre: true, costo: true, edadMinima: true, edadMaxima: true, anioNacimientoDesde: true, anioNacimientoHasta: true, tipo_validacion_edad: true },
             },
         },
         orderBy: { idCategoria: 'asc' },
@@ -56,6 +56,9 @@ export const listarCategoriasPublicas = async (idTorneo: number) => {
             costo:               tc.categoria.costo,
             edadMinima:          tc.categoria.edadMinima,
             edadMaxima:          tc.categoria.edadMaxima,
+            anioNacimientoDesde: tc.categoria.anioNacimientoDesde,
+            anioNacimientoHasta: tc.categoria.anioNacimientoHasta,
+            tipoValidacionEdad:  tc.categoria.tipo_validacion_edad,
             rondas:              tc.rondas,
             cierreInscripciones: cierreEfectivo,
             cupoMaximo:          tc.cupo_maximo,

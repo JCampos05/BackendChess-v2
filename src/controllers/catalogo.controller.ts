@@ -23,13 +23,15 @@ export const getCategoriaById = async (req: AuthRequest, res: Response, next: Ne
 
 export const createCategoria = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
-        const { nombre, costo, nota, edadMinima, edadMaxima } = req.body;
+        const { nombre, costo, nota, edadMinima, edadMaxima, anioNacimientoDesde, anioNacimientoHasta } = req.body;
         const data = await CatSvc.createCategoria({
             nombre,
             costo: parseFloat(costo),
             nota,
             edadMinima: edadMinima != null && edadMinima !== '' ? parseInt(edadMinima) : null,
             edadMaxima: edadMaxima != null && edadMaxima !== '' ? parseInt(edadMaxima) : null,
+            anioNacimientoDesde: anioNacimientoDesde != null && anioNacimientoDesde !== '' ? parseInt(anioNacimientoDesde) : null,
+            anioNacimientoHasta: anioNacimientoHasta != null && anioNacimientoHasta !== '' ? parseInt(anioNacimientoHasta) : null,
         });
         res.status(201).json({ ok: true, mensaje: 'Categoría creada exitosamente', data });
     } catch (e) { next(e); }
@@ -37,7 +39,7 @@ export const createCategoria = async (req: AuthRequest, res: Response, next: Nex
 
 export const updateCategoria = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
-        const { nombre, costo, nota, edadMinima, edadMaxima } = req.body;
+        const { nombre, costo, nota, edadMinima, edadMaxima, anioNacimientoDesde, anioNacimientoHasta } = req.body;
         const data = await CatSvc.updateCategoria(parseInt(req.params.id), {
             ...(nombre !== undefined && { nombre }),
             ...(costo !== undefined && { costo: parseFloat(costo) }),
@@ -47,6 +49,12 @@ export const updateCategoria = async (req: AuthRequest, res: Response, next: Nex
             }),
             ...(edadMaxima !== undefined && {
                 edadMaxima: edadMaxima != null && edadMaxima !== '' ? parseInt(edadMaxima) : null,
+            }),
+            ...(anioNacimientoDesde !== undefined && {
+                anioNacimientoDesde: anioNacimientoDesde != null && anioNacimientoDesde !== '' ? parseInt(anioNacimientoDesde) : null,
+            }),
+            ...(anioNacimientoHasta !== undefined && {
+                anioNacimientoHasta: anioNacimientoHasta != null && anioNacimientoHasta !== '' ? parseInt(anioNacimientoHasta) : null,
             }),
         });
         res.json({ ok: true, mensaje: 'Categoría actualizada exitosamente', data });

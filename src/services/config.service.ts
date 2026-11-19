@@ -70,6 +70,8 @@ export const listarCategorias = async (soloActivas = true) => {
             nota:                 true,
             edadMinima:           true,
             edadMaxima:           true,
+            anioNacimientoDesde:  true,
+            anioNacimientoHasta:  true,
             tipo_validacion_edad: true,
         },
     });

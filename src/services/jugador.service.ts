@@ -533,7 +533,7 @@ export const verificarElegibilidad = async (
     if (idCategoria && jugador.fecha_nacimiento) {
         const categoria = await prisma.categoria.findUnique({
             where: { idCategoria },
-            select: { edadMinima: true, edadMaxima: true, tipo_validacion_edad: true },
+            select: { edadMinima: true, edadMaxima: true, anioNacimientoDesde: true, anioNacimientoHasta: true, tipo_validacion_edad: true },
         });
 
         if (categoria) {
@@ -542,7 +542,8 @@ export const verificarElegibilidad = async (
                 torneo.fecha,
                 categoria.edadMinima,
                 categoria.edadMaxima,
-                categoria.tipo_validacion_edad
+                categoria.tipo_validacion_edad,
+                { desde: categoria.anioNacimientoDesde, hasta: categoria.anioNacimientoHasta }
             );
             if (!resultado.puede) {
                 return { elegible: false, motivo: resultado.motivo, edad: resultado.edad };
