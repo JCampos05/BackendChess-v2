@@ -1,10 +1,19 @@
 import { z } from 'zod';
 
+/**
+ * Teléfono tolerante: acepta espacios, guiones, puntos y paréntesis ("667 155 6134") y los quita antes de validar,
+ * porque hay registros antiguos guardados con formato y el panel los reenvía tal cual al editar.
+ */
+const telefonoSchema = z
+    .string()
+    .transform(t => t.replace(/[\s\-().]/g, ''))
+    .pipe(z.string().max(15).regex(/^\d+$/, 'Solo dígitos'));
+
 export const crearJugadorSchema = z.object({
     nombre: z.string().min(1, 'El nombre es requerido').max(100),
     apellido1: z.string().min(1, 'El primer apellido es requerido').max(100),
     apellido2: z.string().max(100).optional(),
-    telefono: z.string().max(15).regex(/^\d+$/, 'Solo dígitos').optional(),
+    telefono: telefonoSchema.optional(),
     fecha_nacimiento: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato YYYY-MM-DD').optional(),
     idCategoria: z.number().int().positive().optional(),
     notas: z.string().optional(),
@@ -22,7 +31,7 @@ export const actualizarJugadorSchema = z.object({
     // explícitamente `null` cuando el campo queda vacío (ver edicion-inscripcion.ts)
     // — sin .nullable(), Zod rechaza null con 400 aunque la BD sí lo acepte.
     apellido2: z.string().max(100).optional().nullable(),
-    telefono: z.string().max(15).regex(/^\d+$/, 'Solo dígitos').optional().nullable(),
+    telefono: telefonoSchema.optional().nullable(),
     fecha_nacimiento: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato YYYY-MM-DD').optional().nullable(),
     idCategoria: z.number().int().positive().optional(),
     notas: z.string().optional().nullable(),
