@@ -29,7 +29,7 @@ const INCLUDE_BASE = {
             telefono:      true,
         },
     },
-    // Patrocinadores activos (landing y listados públicos): sin datos de contacto, que son internos
+    // Patrocinadores activos (landing y listados públicos): solo se expone `contacto` para mostrar su teléfono (decisión del usuario, 2026-11-20)
     patrocinadores: {
         where:   { patrocinador: { activo: true } },
         orderBy: [{ orden: 'asc' as const }, { idTorneoPatrocinador: 'asc' as const }],
@@ -37,7 +37,7 @@ const INCLUDE_BASE = {
             nivel:  true,
             orden:  true,
             patrocinador: {
-                select: { idPatrocinador: true, nombre: true, logo_url: true, sitio_web: true },
+                select: { idPatrocinador: true, nombre: true, logo_url: true, sitio_web: true, contacto: true },
             },
         },
     },
